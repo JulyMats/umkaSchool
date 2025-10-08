@@ -1,12 +1,17 @@
 import { Globe, Sun } from 'lucide-react';
 
-export default function Header() {
+interface HeaderProps {
+  title: string;
+  subtitle?: string;
+}
+
+export default function Header({ title, subtitle }: HeaderProps) {
   return (
     <div className="flex flex-col pb-4">
       <div className="flex items-center justify-between">
       <div className="text-left">
-        <h1 className="text-2xl font-bold">Welcome back, Alex!</h1>
-        <p className="text-gray-500">Let's practice some mental arithmetic today</p>
+        <h1 className="text-2xl font-bold">{title}</h1>
+        {subtitle && <p className="text-gray-500">{subtitle}</p>}
       </div>
       <div className="flex gap-4">
         <button className="p-2 hover:bg-gray-100 rounded-lg">
