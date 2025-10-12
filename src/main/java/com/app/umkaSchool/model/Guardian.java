@@ -1,0 +1,33 @@
+package com.app.umkaSchool.model;
+
+import com.app.umkaSchool.model.enums.GuardianRelationship;
+import jakarta.persistence.*;
+import lombok.Data;
+
+import java.util.UUID;
+
+@Data
+@Entity
+@Table(name = "guardian")
+public class Guardian {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "guardian_id")
+    private UUID id;
+
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
+
+    @Column(name = "last_name", nullable = false)
+    private String lastName;
+
+    @Column(nullable = false)
+    private String email;
+
+    @Column(nullable = false)
+    private String phone;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private GuardianRelationship relationship;
+}
