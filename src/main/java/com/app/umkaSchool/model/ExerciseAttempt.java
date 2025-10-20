@@ -12,8 +12,7 @@ import java.util.UUID;
 @Table(name = "exercise_attempt")
 public class ExerciseAttempt {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "attempt_id")
+    @Column(name = "attempt_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)

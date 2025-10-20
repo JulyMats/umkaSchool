@@ -13,8 +13,7 @@ import java.util.UUID;
 @Table(name = "student")
 public class Student {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "student_id")
+    @Column(name = "student_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
     @OneToOne(fetch = FetchType.LAZY)
@@ -22,7 +21,7 @@ public class Student {
     private AppUser user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "teacher_id", nullable = false)
+    @JoinColumn(name = "teacher_id", nullable = true)
     private Teacher teacher;
 
     @ManyToOne(fetch = FetchType.LAZY)
