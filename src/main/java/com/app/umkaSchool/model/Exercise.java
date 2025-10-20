@@ -13,15 +13,14 @@ import java.util.UUID;
 @Table(name = "exercise")
 public class Exercise {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "exercise_id")
+    @Column(name = "exercise_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_type_id", nullable = false)
     private ExerciseType exerciseType;
 
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "jsonb", nullable = false)
     private String parameters;
 
     @Column(nullable = false)

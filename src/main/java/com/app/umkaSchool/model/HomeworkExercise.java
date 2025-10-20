@@ -3,7 +3,8 @@ package com.app.umkaSchool.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.time.ZonedDateTime;
+import java.util.Objects;
+import java.util.UUID;
 
 @Data
 @Entity
@@ -28,8 +29,6 @@ public class HomeworkExercise {
     @Column(name = "required_attempts")
     private Integer requiredAttempts;
 
-    @Column(name = "due_date", nullable = false)
-    private ZonedDateTime dueDate;
 }
 
 @Embeddable

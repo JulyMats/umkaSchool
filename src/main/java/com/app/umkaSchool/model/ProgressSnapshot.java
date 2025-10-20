@@ -14,8 +14,7 @@ import java.util.UUID;
 @Table(name = "progress_snapshot")
 public class ProgressSnapshot {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "progress_snapshot_id")
+    @Column(name = "progress_snapshot_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -1,22 +1,28 @@
 package com.app.umkaSchool.model;
 
 import com.app.umkaSchool.model.enums.ThemeMode;
-import com.app.umkaSchool.model.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "app_user", schema = "school")
-public class AppUser {
+@Table(name = "app_user")
+public class AppUser implements UserDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "app_user_id")
+    @Column(name = "app_user_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
     @Enumerated(EnumType.STRING)
@@ -38,7 +44,7 @@ public class AppUser {
     private String salt;
 
     @Column(name = "app_language", nullable = false)
-    private String appLanguage = "en";
+    private String appLanguage = "EN";
 
     @Column(name = "avatar_url", nullable = false)
     private String avatarUrl;
@@ -60,4 +66,63 @@ public class AppUser {
     @Enumerated(EnumType.STRING)
     @Column(name = "app_theme", nullable = false)
     private ThemeMode appTheme = ThemeMode.LIGHT;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Student student;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Teacher teacher;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserToken> tokens;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + userRole.name()));
+    }
+
+    @Override
+    public String getPassword() {
+        return passwordHash;
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return isActive;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return isActive;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return isActive;
+    }
+
+    // explicit getter/setter for `isActive` to avoid Lombok/IDE confusion
+    public boolean getActive() {
+        return this.isActive;
+    }
+
+    public void setActive(boolean active) {
+        this.isActive = active;
+    }
+
+    public enum UserRole {
+        STUDENT,
+        TEACHER,
+        ADMIN
+    }
 }

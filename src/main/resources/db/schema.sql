@@ -1,28 +1,33 @@
 -- Created by Redgate Data Modeler (https://datamodeler.redgate-platform.com)
 -- Last modification date: 2025-10-11 22:04:01.004
 
+-- Schema: school
+CREATE SCHEMA school;
+-- Set the search path to use it by default
+SET search_path TO school;
+
 -- Enums
-CREATE TYPE guardian_relationship AS ENUM ('mother', 'father', 'guardian', 'other');
-CREATE TYPE theme_mode AS ENUM ('light', 'dark');
-CREATE TYPE homework_status AS ENUM ('pending', 'completed', 'overdue');
+CREATE TYPE guardian_relationship AS ENUM ('MOTHER', 'FATHER', 'GUARDIAN', 'OTHER');
+CREATE TYPE theme_mode AS ENUM ('LIGHT', 'DARK');
+CREATE TYPE homework_status AS ENUM ('PENDING', 'COMPLETED', 'OVERDUE');
 
 -- tables
 -- Table: app_user
 CREATE TABLE app_user (
     app_user_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_role varchar(16) NOT NULL CHECK (user_role IN ('student', 'teacher', 'admin')),
+    user_role varchar(16) NOT NULL CHECK (user_role IN ('STUDENT', 'TEACHER', 'ADMIN')),
     first_name varchar(100) NOT NULL,
     last_name varchar(100) NOT NULL,
     email varchar(255) UNIQUE NOT NULL,
     password_hash varchar(255) NOT NULL,
     salt varchar(255),
-    app_language varchar(10) NOT NULL DEFAULT 'en',
+    app_language varchar(10) NOT NULL DEFAULT 'EN',
     avatar_url varchar(512) NOT NULL,
     is_active boolean NOT NULL DEFAULT true,
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now(),
     last_login_at timestamptz NULL,
-    app_theme theme_mode NOT NULL DEFAULT 'light'
+    app_theme theme_mode NOT NULL DEFAULT 'LIGHT'
 );
 
 -- Table: teacher
@@ -40,7 +45,7 @@ CREATE TABLE guardian (
     last_name varchar(100) NOT NULL,
     email varchar(255) NOT NULL,
     phone varchar(50) NOT NULL,
-    relationship guardian_relationship NOT NULL DEFAULT 'father'
+    relationship guardian_relationship NOT NULL DEFAULT 'FATHER'
 );
 
 -- Table: student_group
@@ -63,7 +68,7 @@ CREATE TABLE student (
     student_group_id uuid REFERENCES student_group(student_group_id) ON DELETE SET NULL,
     date_of_birth date NOT NULL,
     enrollment_date timestamptz NOT NULL DEFAULT now(),
-    last_activity_at timestamptz 
+    last_activity_at timestamptz
 );
 
 -- Table: exercise_type
@@ -136,7 +141,7 @@ CREATE TABLE homework_assignment (
     teacher_id uuid REFERENCES teacher(teacher_id) ON DELETE SET NULL,
     assigned_at timestamptz NOT NULL DEFAULT now(),
     due_date timestamptz NOT NULL,
-    homework_assignment_status homework_status NOT NULL DEFAULT 'pending'
+    homework_assignment_status homework_status NOT NULL DEFAULT 'PENDING'
 );
 
 -- Table: homework_assignment_student_group
@@ -187,23 +192,23 @@ CREATE TABLE student_achievement (
 
 -- Table: progress_snapshot
 CREATE TABLE progress_snapshot (
-    progress_snapshot_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    student_id uuid NOT NULL REFERENCES student(student_id) ON DELETE CASCADE,
-    snapshot_date date NOT NULL,
-    problems_solved int NOT NULL DEFAULT 0,
-    total_practice_seconds bigint NOT NULL DEFAULT 0,
-    accuracy_percent numeric(5,2) NOT NULL DEFAULT 0.0 CHECK (accuracy_percent BETWEEN 0 AND 100),
-    current_streak int NOT NULL DEFAULT 0,
-    created_at timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (student_id, snapshot_date)
+       progress_snapshot_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+       student_id uuid NOT NULL REFERENCES student(student_id) ON DELETE CASCADE,
+       snapshot_date date NOT NULL,
+       problems_solved int NOT NULL DEFAULT 0,
+       total_practice_seconds bigint NOT NULL DEFAULT 0,
+       accuracy_percent numeric(5,2) NOT NULL DEFAULT 0.0 CHECK (accuracy_percent BETWEEN 0 AND 100),
+       current_streak int NOT NULL DEFAULT 0,
+       created_at timestamptz NOT NULL DEFAULT now(),
+       UNIQUE (student_id, snapshot_date)
 );
 
 -- Table: user_token
 CREATE TABLE user_token (
     token_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id uuid NOT NULL REFERENCES user(user_id) ON DELETE CASCADE,
+    app_user_id uuid NOT NULL REFERENCES app_user(app_user_id) ON DELETE CASCADE,
     token_hash text NOT NULL,
-    token_type varchar(20) NOT NULL CHECK (token_type IN ('email_verification', 'password_reset', 'refresh_token')),
+    token_type varchar(20) NOT NULL CHECK (token_type IN ('EMAIL_VERIFICATION', 'PASSWORD_RESET', 'REFRESH_TOKEN')),
     created_at timestamptz DEFAULT now(),
     expires_at timestamptz NOT NULL,
     is_used boolean DEFAULT false
