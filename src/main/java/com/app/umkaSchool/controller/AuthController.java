@@ -23,15 +23,8 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody RegisterRequest request) {
-        System.out.println("Received registration request for email: " + request.getEmail());
-        try {
-            authService.signup(request);
-            System.out.println("Registration successful for email: " + request.getEmail());
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            System.err.println("Registration failed: " + e.getMessage());
-            throw e;
-        }
+        authService.signup(request);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/signin")
