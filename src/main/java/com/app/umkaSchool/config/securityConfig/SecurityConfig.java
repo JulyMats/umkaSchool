@@ -1,5 +1,9 @@
+/*
 package com.app.umkaSchool.config.securityConfig;
 
+import com.app.umkaSchool.repository.UserTokenRepository;
+import com.app.umkaSchool.service.TokenService;
+import jakarta.servlet.Filter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -8,30 +12,38 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.List;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
+    // Register the security filter chain and accept the token filter bean so we can insert it
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, Filter tokenAuthenticationFilter) throws Exception {
         http
-            .cors().and()
-            .csrf().disable()
-            .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and()
+            .cors(cors -> {})
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // register our token filter before Spring's username/password filter
+            .addFilterBefore(tokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .anyRequest().authenticated()
             );
-        
+
         return http.build();
+    }
+
+    // Token filter bean - will be injected with TokenService and UserTokenRepository
+    @Bean
+    public Filter tokenAuthenticationFilter(TokenService tokenService, UserTokenRepository userTokenRepository) {
+        return new TokenAuthenticationFilter(tokenService, userTokenRepository);
     }
 
     @Bean
@@ -41,7 +53,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
@@ -52,4 +64,4 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-
+*/

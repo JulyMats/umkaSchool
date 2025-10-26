@@ -1,3 +1,4 @@
+/*
 package com.app.umkaSchool.controller;
 
 import com.app.umkaSchool.dto.auth.ForgotPasswordRequest;
@@ -48,3 +49,4 @@ public class AuthController {
     }
 }
 
+*/

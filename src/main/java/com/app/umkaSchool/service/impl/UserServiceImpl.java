@@ -1,3 +1,4 @@
+/*
 package com.app.umkaSchool.service.impl;
 
 import com.app.umkaSchool.dto.auth.RegisterRequest;
@@ -48,3 +49,4 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 }
+*/

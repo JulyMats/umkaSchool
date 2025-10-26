@@ -1,3 +1,4 @@
+/*
 package com.app.umkaSchool.service;
 
 import com.app.umkaSchool.dto.auth.LoginRequest;
@@ -10,3 +11,4 @@ public interface AuthService {
     void resetPassword(String token, String newPassword);
 }
 
+*/

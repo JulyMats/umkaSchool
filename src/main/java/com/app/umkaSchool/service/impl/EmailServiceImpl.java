@@ -1,3 +1,4 @@
+/*
 package com.app.umkaSchool.service.impl;
 
 import com.app.umkaSchool.service.EmailService;
@@ -16,3 +17,4 @@ public class EmailServiceImpl implements EmailService {
     }
 }
 
+*/

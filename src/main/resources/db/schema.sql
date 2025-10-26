@@ -7,6 +7,7 @@ CREATE SCHEMA school;
 SET search_path TO school;
 
 -- Enums
+
 CREATE TYPE guardian_relationship AS ENUM ('MOTHER', 'FATHER', 'GUARDIAN', 'OTHER');
 CREATE TYPE theme_mode AS ENUM ('LIGHT', 'DARK');
 CREATE TYPE homework_status AS ENUM ('PENDING', 'COMPLETED', 'OVERDUE');

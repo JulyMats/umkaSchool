@@ -3,8 +3,6 @@ package com.app.umkaSchool.model;
 import com.app.umkaSchool.model.enums.ThemeMode;
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
@@ -111,7 +109,6 @@ public class AppUser implements UserDetails {
         return isActive;
     }
 
-    // explicit getter/setter for `isActive` to avoid Lombok/IDE confusion
     public boolean getActive() {
         return this.isActive;
     }
