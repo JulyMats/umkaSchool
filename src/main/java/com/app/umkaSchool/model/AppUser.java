@@ -22,7 +22,8 @@ import java.util.UUID;
 @Table(name = "app_user")
 public class AppUser implements UserDetails {
     @Id
-    @Column(name = "app_user_id", insertable = false, updatable = false, nullable = false)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "app_user_id", nullable = false)
     private UUID id;
 
     @Enumerated(EnumType.STRING)
@@ -65,6 +66,7 @@ public class AppUser implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "app_theme", nullable = false)
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
     private ThemeMode appTheme = ThemeMode.LIGHT;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
