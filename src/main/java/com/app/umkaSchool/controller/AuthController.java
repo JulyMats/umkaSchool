@@ -46,4 +46,15 @@ public class AuthController {
         authService.resetPassword(request.getToken(), request.getNewPassword());
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
+        // Expecting header format: "Bearer <token>"
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.badRequest().body("Missing or invalid Authorization header");
+        }
+        String token = authHeader.substring(7);
+        authService.logout(token);
+        return ResponseEntity.ok().build();
+    }
 }
