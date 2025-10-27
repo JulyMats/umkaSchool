@@ -9,7 +9,10 @@ import com.app.umkaSchool.service.AuthService;
 import com.app.umkaSchool.service.EmailService;
 import com.app.umkaSchool.service.TokenService;
 import com.app.umkaSchool.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +21,7 @@ import java.util.Optional;
 
 @Service
 public class AuthServiceImpl implements AuthService {
+    private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
 
     private final UserService userService;
     private final AppUserRepository userRepository;
@@ -25,6 +29,9 @@ public class AuthServiceImpl implements AuthService {
     private final TokenService tokenService;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
 
     @Autowired
     public AuthServiceImpl(UserService userService,
@@ -47,6 +54,13 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Email already in use");
         }
         userService.createUser(request);
+
+        // Send welcome email after successful signup
+        emailService.sendWelcomeEmail(
+            request.getEmail(),
+            request.getFirstName(),
+            request.getLastName()
+        );
     }
 
     @Override
@@ -76,12 +90,19 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void forgotPassword(String email, String appBaseUrl) {
+        logger.info("🔐 Password reset requested for email: {}", email);
+        logger.info("App base URL: {}", appBaseUrl);
+
         var userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
+            logger.info("❌ User not found with email: {}", email);
             // do not reveal user existence
             return;
         }
+
         var user = userOpt.get();
+        logger.info("✅ User found: {} {}", user.getFirstName(), user.getLastName());
+
         String rawToken = tokenService.generateToken();
         String hash = tokenService.hashToken(rawToken);
 
@@ -99,8 +120,20 @@ public class AuthServiceImpl implements AuthService {
         token.setExpiresAt(ZonedDateTime.now().plusHours(2));
         token.setUsed(false);
         userTokenRepository.save(token);
-        String resetLink = appBaseUrl + "/reset-password?token=" + rawToken;
+
+        logger.info("✅ Token saved to database");
+
+        // Use configured frontend URL if appBaseUrl is empty or null
+        String baseUrl = (appBaseUrl == null || appBaseUrl.trim().isEmpty())
+            ? frontendUrl
+            : appBaseUrl;
+
+        String resetLink = baseUrl + "/reset-password?token=" + rawToken;
+        logger.info("📧 Sending email with reset link: {}", resetLink);
+
         emailService.sendPasswordReset(user.getEmail(), resetLink);
+
+        logger.info("📬 Email service call completed");
     }
 
     @Override
