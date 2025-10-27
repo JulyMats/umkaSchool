@@ -84,6 +84,13 @@ public class AuthServiceImpl implements AuthService {
         var user = userOpt.get();
         String rawToken = tokenService.generateToken();
         String hash = tokenService.hashToken(rawToken);
+
+        // TODO: REMOVE BEFORE PRODUCTION! Logging for testing purposes
+        System.out.println("=================================================");
+        System.out.println("PASSWORD RESET TOKEN FOR: " + email);
+        System.out.println("TOKEN: " + rawToken);
+        System.out.println("=================================================");
+
         UserToken token = new UserToken();
         token.setUser(user);
         token.setTokenHash(hash);
@@ -111,4 +118,3 @@ public class AuthServiceImpl implements AuthService {
         userTokenRepository.save(ut);
     }
 }
-

@@ -17,6 +17,11 @@ public interface UserTokenRepository extends JpaRepository<UserToken, UUID> {
             ZonedDateTime now
     );
 
+    Optional<UserToken> findByTokenHashAndTokenType(
+            String tokenHash,
+            UserToken.TokenType tokenType
+    );
+
     Optional<UserToken> findByUser_IdAndTokenTypeAndUsedFalseAndExpiresAtAfter(
             UUID userId,
             UserToken.TokenType tokenType,
@@ -25,4 +30,3 @@ public interface UserTokenRepository extends JpaRepository<UserToken, UUID> {
 
     List<UserToken> findByUser_Id(UUID userId);
 }
-

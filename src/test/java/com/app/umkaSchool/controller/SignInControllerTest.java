@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional // Откатывает изменения после каждого теста
+@Transactional // Rollback changes after each test
 class SignInControllerTest {
 
     @Autowired
@@ -36,7 +36,7 @@ class SignInControllerTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        // Создаем тестового пользователя перед каждым тестом
+        // Create test user before each test
         RegisterRequest registerRequest = new RegisterRequest();
         registerRequest.setFirstName("Test");
         registerRequest.setLastName("User");
@@ -60,7 +60,7 @@ class SignInControllerTest {
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.emptyString()))); // Проверяем, что токен не пустой
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.emptyString()))); // Verify token is not empty
     }
 
     @Test
@@ -73,7 +73,7 @@ class SignInControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Ожидаем 400 для неверного пароля
+                .andExpect(status().isBadRequest()); // Expect 400 for wrong password
     }
 
     @Test
@@ -86,7 +86,7 @@ class SignInControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Ожидаем 400 для несуществующего пользователя
+                .andExpect(status().isBadRequest()); // Expect 400 for non-existent user
     }
 
     @Test
@@ -99,7 +99,7 @@ class SignInControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Валидация должна отклонить пустой email
+                .andExpect(status().isBadRequest()); // Validation should reject empty email
     }
 
     @Test
@@ -112,32 +112,31 @@ class SignInControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Валидация должна отклонить пустой пароль
+                .andExpect(status().isBadRequest()); // Validation should reject empty password
     }
 
     @Test
     void testSignin_ShortPassword() throws Exception {
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setEmail(testEmail);
-        loginRequest.setPassword("12345"); // Меньше 6 символов
+        loginRequest.setPassword("12345"); // Less than 6 characters
 
         mockMvc.perform(post("/api/auth/signin")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Валидация должна отклонить короткий пароль
+                .andExpect(status().isBadRequest()); // Validation should reject short password
     }
 
     @Test
     void testSignin_MissingFields() throws Exception {
         LoginRequest loginRequest = new LoginRequest();
-        // Не устанавливаем email и password
+        // Don't set email and password
 
         mockMvc.perform(post("/api/auth/signin")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Валидация должна отклонить запрос без полей
+                .andExpect(status().isBadRequest()); // Validation should reject request without fields
     }
 }
-
