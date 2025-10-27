@@ -150,4 +150,27 @@ public class AuthServiceImpl implements AuthService {
         ut.setUsed(true);
         userTokenRepository.save(ut);
     }
+
+    @Override
+    public void logout(String token) {
+        logger.info("🔓 Logout requested");
+
+        String hash = tokenService.hashToken(token);
+        var opt = userTokenRepository.findByTokenHashAndTokenTypeAndUsedFalseAndExpiresAtAfter(
+                hash,
+                UserToken.TokenType.REFRESH_TOKEN,
+                ZonedDateTime.now()
+        );
+
+        if (opt.isEmpty()) {
+            logger.warn("❌ Token not found or already expired");
+            throw new IllegalArgumentException("Invalid or expired token");
+        }
+
+        var userToken = opt.get();
+        userToken.setUsed(true);
+        userTokenRepository.save(userToken);
+
+        logger.info("✅ User logged out successfully");
+    }
 }
