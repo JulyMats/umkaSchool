@@ -3,15 +3,18 @@ package com.app.umkaSchool.model;
 import com.app.umkaSchool.model.enums.GuardianRelationship;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "guardian")
+@Table(name = "guardian", schema = "school")
 public class Guardian {
     @Id
-    @Column(name = "guardian_id", insertable = false, updatable = false, nullable = false)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "guardian_id", nullable = false)
     private UUID id;
 
     @Column(name = "first_name", nullable = false)
@@ -27,6 +30,7 @@ public class Guardian {
     private String phone;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(nullable = false, columnDefinition = "guardian_relationship")
     private GuardianRelationship relationship;
 }
