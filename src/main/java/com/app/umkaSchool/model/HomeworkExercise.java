@@ -1,23 +1,31 @@
 package com.app.umkaSchool.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.util.Objects;
 import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "homework_exercise")
+@Table(name = "homework_exercise", schema = "school")
 public class HomeworkExercise {
     @EmbeddedId
-    private HomeworkExerciseId id;
+    private HomeworkExerciseId id = new HomeworkExerciseId();
 
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("homeworkId")
     @JoinColumn(name = "homework_id")
     private Homework homework;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("exerciseId")
     @JoinColumn(name = "exercise_id")
@@ -28,28 +36,4 @@ public class HomeworkExercise {
 
     @Column(name = "required_attempts")
     private Integer requiredAttempts;
-
-}
-
-@Embeddable
-class HomeworkExerciseId implements java.io.Serializable {
-    @Column(name = "homework_id")
-    private UUID homeworkId;
-
-    @Column(name = "exercise_id")
-    private UUID exerciseId;
-
-    // equals and hashCode methods
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        HomeworkExerciseId that = (HomeworkExerciseId) o;
-        return homeworkId.equals(that.homeworkId) && exerciseId.equals(that.exerciseId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(homeworkId, exerciseId);
-    }
 }

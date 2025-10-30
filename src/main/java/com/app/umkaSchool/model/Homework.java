@@ -1,7 +1,10 @@
 package com.app.umkaSchool.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -12,10 +15,11 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "homework")
+@Table(name = "homework", schema = "school")
 public class Homework {
     @Id
-    @Column(name = "homework_id", insertable = false, updatable = false, nullable = false)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "homework_id", nullable = false)
     private UUID id;
 
     @Column(nullable = false)
@@ -23,6 +27,9 @@ public class Homework {
 
     private String description;
 
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id", nullable = false)
     private Teacher teacher;
@@ -35,6 +42,9 @@ public class Homework {
     @Column(name = "updated_at", nullable = false)
     private ZonedDateTime updatedAt;
 
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "homework", cascade = CascadeType.ALL)
     private Set<HomeworkExercise> exercises = new HashSet<>();
 }
