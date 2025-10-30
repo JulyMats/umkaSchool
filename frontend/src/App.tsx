@@ -7,6 +7,9 @@ import Homework from "./pages/Homework";
 import DailyChallenge from "./pages/DailyChallenge";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import "./App.css";
 
@@ -21,6 +24,9 @@ function AppContent() {
     <Router>
       <Routes>
         <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/" replace />} />
+        <Route path="/forgot-password" element={!isAuthenticated ? <ForgotPassword /> : <Navigate to="/" replace />} />
+        <Route path="/reset-password" element={!isAuthenticated ? <ResetPassword /> : <Navigate to="/" replace />} />
+        <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/" replace />} />
         
         {/* Protected Routes */}
         <Route
@@ -31,7 +37,7 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 bg-gray-50">
                   <Routes>
-                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/exercises" element={<Exercises />} />
                     <Route path="/progress" element={<Progress />} />
                     <Route path="/homework" element={<Homework />} />

@@ -1,9 +1,10 @@
 import { Home, BookOpen, BarChart3, Book, Zap, Settings, User, LogOut } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import avatar from "../assets/avatar.png";
 
 const menuItems = [
-  { icon: Home, label: "Home", path: "/" },
+  { icon: Home, label: "Home", path: "/dashboard" },
   { icon: BookOpen, label: "Exercises", path: "/exercises" },
   { icon: BarChart3, label: "Progress", path: "/progress" },
   { icon: Book, label: "Homework", path: "/homework" },
@@ -12,6 +13,14 @@ const menuItems = [
 ];
 
 export default function Sidebar() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/register', { replace: true });
+  };
+
   return (
     <div className="flex flex-col justify-between w-64 min-h-screen border-r border-gray-200 p-6">
       <div>
@@ -58,7 +67,10 @@ export default function Sidebar() {
           <li className="flex items-center gap-2 py-2 cursor-pointer hover:bg-gray-50 px-3 rounded-lg">
             <User size={18} /> Profile
           </li>
-          <li className="flex items-center gap-2 py-2 cursor-pointer hover:bg-gray-50 px-3 rounded-lg">
+          <li 
+            onClick={handleLogout}
+            className="flex items-center gap-2 py-2 cursor-pointer hover:bg-gray-50 px-3 rounded-lg"
+          >
             <LogOut size={18} /> Logout
           </li>
         </ul>

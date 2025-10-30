@@ -26,10 +26,13 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(formData.email, formData.password);
-      navigate('/'); // Redirect to dashboard after successful login
-    } catch (error) {
-      setError('Invalid email or password');
+      await login({
+        email: formData.email,
+        password: formData.password
+      });
+      navigate('/dashboard');
+    } catch (error: any) {
+      setError(error.response?.data?.message || 'Invalid email or password');
     }
   };
 
@@ -105,7 +108,7 @@ export default function Login() {
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <input
-                  id="remember-me"
+                  id="remember-me" 
                   name="rememberMe"
                   type="checkbox"
                   checked={formData.rememberMe}
