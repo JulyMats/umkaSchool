@@ -164,7 +164,7 @@ CREATE TABLE exercise_attempt (
     student_id uuid NOT NULL REFERENCES student(student_id) ON DELETE CASCADE,
     exercise_id uuid NOT NULL REFERENCES exercise(exercise_id),
     started_at timestamptz,
-    completed_at timestamptz NOT NULL DEFAULT now(),
+    completed_at timestamptz,
     score int NOT NULL,
     time_spent_seconds int NOT NULL,
     accuracy numeric(5,2) NOT NULL CHECK (accuracy BETWEEN 0 AND 100),
