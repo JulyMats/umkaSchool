@@ -120,11 +120,11 @@ class AuthControllerTest {
         request2.setPassword("password456");
         request2.setRole("TEACHER");
 
-        // Using assertThrows to verify that an exception is thrown
-        org.junit.jupiter.api.Assertions.assertThrows(Exception.class, () -> {
-            mockMvc.perform(post("/api/auth/signup")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request2)));
-        });
+        // Should return 400 Bad Request for duplicate email
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request2)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
     }
 }
