@@ -1,7 +1,10 @@
 package com.app.umkaSchool.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.util.UUID;
 
@@ -13,6 +16,9 @@ public class Teacher {
     @Column(name = "teacher_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "app_user_id", nullable = false)
     private AppUser user;
