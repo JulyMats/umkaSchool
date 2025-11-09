@@ -1,58 +1,52 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from "../components/Layout";
 import { Clock, CheckCircle, XCircle, Book } from 'lucide-react';
+import { homeworkService, Homework as HomeworkItem } from '../services/homework.service';
 
-interface HomeworkItem {
-  id: string;
-  title: string;
-  description: string;
-  dueDate: string;
-  status: 'pending' | 'completed' | 'overdue';
-  subject: string;
-  timeEstimate: string;
-}
+// TODO: Replace this with actual student ID from authentication context
+const CURRENT_STUDENT_ID = "bd09a8cb-1596-415f-bd20-6702957193aa";
 
 export default function Homework() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const [homework, setHomework] = useState<HomeworkItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const homework: HomeworkItem[] = [
-    {
-      id: '1',
-      title: 'Addition and Subtraction Practice',
-      description: 'Complete 20 mixed addition and subtraction problems with numbers up to 100',
-      dueDate: '2025-10-10',
-      status: 'pending',
-      subject: 'Basic Operations',
-      timeEstimate: '15 mins'
-    },
-    {
-      id: '2',
-      title: 'Multiplication Tables (2-5)',
-      description: 'Practice multiplication tables and complete the quiz',
-      dueDate: '2025-10-12',
-      status: 'pending',
-      subject: 'Multiplication',
-      timeEstimate: '20 mins'
-    },
-    {
-      id: '3',
-      title: 'Division Basics',
-      description: 'Complete the division worksheet with single-digit divisors',
-      dueDate: '2025-10-09',
-      status: 'overdue',
-      subject: 'Division',
-      timeEstimate: '25 mins'
-    },
-    {
-      id: '4',
-      title: 'Mental Math Challenge',
-      description: 'Complete the timed mental math exercises',
-      dueDate: '2025-10-07',
-      status: 'completed',
-      subject: 'Mental Math',
-      timeEstimate: '10 mins'
-    }
-  ];
+  useEffect(() => {
+    const fetchHomework = async () => {
+      try {
+        const data = await homeworkService.getCurrentStudentHomework(CURRENT_STUDENT_ID);
+        setHomework(data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load homework. Please try again later.');
+        console.error('Error fetching homework:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHomework();
+  }, []);
+
+  if (loading) {
+    return (
+      <Layout title="Homework" subtitle="Loading homework...">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout title="Homework" subtitle="Error loading homework">
+        <div className="text-red-500 text-center p-4">{error}</div>
+      </Layout>
+    );
+  }
+;
 
   const filteredHomework = homework.filter(item => {
     if (filter === 'all') return true;
@@ -131,7 +125,7 @@ export default function Homework() {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-lg truncate">{item.title}</h3>
-                <p className="text-gray-500 text-sm">{item.subject}</p>
+                <p className="text-gray-500 text-sm">Assigned by: {item.teacherName}</p>
               </div>
             </div>
 
@@ -139,10 +133,6 @@ export default function Homework() {
               {getStatusIcon(item.status)}
               <span className="capitalize">{item.status}</span>
             </div>
-            
-            <p className="text-gray-600 mb-4 flex-grow">
-              {item.description}
-            </p>
             
             <div className="space-y-4 mt-auto">
               <div className="flex flex-wrap gap-4 text-sm text-gray-500">
