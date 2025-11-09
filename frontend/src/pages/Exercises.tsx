@@ -1,53 +1,55 @@
 import { Search } from 'lucide-react';
 import Layout from '../components/Layout';
+import { useState, useEffect } from 'react';
+import { exerciseTypeService, ExerciseType } from '../services/exerciseType.service';
 
-interface ExerciseCard {
-  title: string;
-  description: string;
-  duration: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  type: string;
-  icon?: string;
-}
+type ExerciseCard = ExerciseType;
 
 export default function Exercises() {
-  const exercises: ExerciseCard[] = [
-    {
-      title: "Addition",
-      description: "Practice adding numbers from 1 to 20 quickly and accurately. Great for beginners!",
-      duration: "5 mins",
-      difficulty: "beginner",
-      type: "warmup"
-    },
-    {
-      title: "Multiplication",
-      description: "Learn tables from 1 to 12 with interactive exercises and timed challenges.",
-      duration: "10 mins",
-      difficulty: "intermediate",
-      type: "multiplication"
-    },
-    {
-      title: "Division",
-      description: "Learn advanced mental division techniques to solve problems quickly without a calculator.",
-      duration: "15 mins",
-      difficulty: "advanced",
-      type: "division"
-    },
-    {
-      title: "Subtraction",
-      description: "Master the art of subtracting two-digit numbers mentally with these targeted exercises.",
-      duration: "8 mins",
-      difficulty: "intermediate",
-      type: "subtraction"
-    },
-    {
-      title: "Mixed Operations",
-      description: "Challenge yourself with problems that combine multiple operations in one context.",
-      duration: "10 mins",
-      difficulty: "intermediate",
-      type: "mixed"
-    }
-  ];
+  const [exercises, setExercises] = useState<ExerciseCard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const fetchExercises = async () => {
+      try {
+        const exerciseTypes = await exerciseTypeService.getAllExerciseTypes();
+        setExercises(exerciseTypes);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load exercises. Please try again later.');
+        console.error('Error fetching exercises:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExercises();
+  }, []);
+
+  if (loading) {
+    return (
+      <Layout title="Exercises" subtitle="Loading exercises...">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout title="Exercises" subtitle="Error loading exercises">
+        <div className="text-red-500 text-center p-4">{error}</div>
+      </Layout>
+    );
+  }
+
+  const filteredExercises = exercises.filter(exercise =>
+    exercise.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    exercise.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <Layout
@@ -58,20 +60,22 @@ export default function Exercises() {
         <input
           type="text"
           placeholder="Search exercises..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10 pr-4 py-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {exercises.map((exercise) => (
+        {filteredExercises.map((exercise) => (
           <div
-            key={exercise.title}
+            key={exercise.id}
             className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="mb-4">
               <div className="flex justify-between items-start">
-                <h3 className="text-lg font-semibold mb-2">{exercise.title}</h3>
+                <h3 className="text-lg font-semibold mb-2">{exercise.name}</h3>
                 <span className={`
                   px-3 py-1 rounded-full text-xs font-medium
                   ${exercise.difficulty === 'beginner' ? 'bg-green-100 text-green-700' : ''}
