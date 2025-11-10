@@ -1,5 +1,6 @@
 package com.app.umkaSchool.controller;
 
+import com.app.umkaSchool.dto.auth.RegisterRequest;
 import com.app.umkaSchool.dto.group.CreateGroupRequest;
 import com.app.umkaSchool.dto.group.GroupResponse;
 import com.app.umkaSchool.dto.group.UpdateGroupRequest;
@@ -52,11 +53,24 @@ class GroupControllerTest {
     }
 
     private TeacherResponse createTestTeacher(String email) throws Exception {
+        // First, create user via signup
+        RegisterRequest signupRequest = new RegisterRequest();
+        signupRequest.setEmail(email);
+        signupRequest.setFirstName("Test");
+        signupRequest.setLastName("Teacher");
+        signupRequest.setPassword("password123");
+        signupRequest.setRole("TEACHER");
+
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signupRequest)))
+                .andExpect(status().isOk());
+
+        // Then create teacher profile
         CreateTeacherRequest teacherRequest = new CreateTeacherRequest();
         teacherRequest.setFirstName("Test");
         teacherRequest.setLastName("Teacher");
         teacherRequest.setEmail(email);
-        teacherRequest.setPassword("password123");
         teacherRequest.setBio("Test teacher");
         teacherRequest.setPhone("+1234567890");
 

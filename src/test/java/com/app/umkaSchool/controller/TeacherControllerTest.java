@@ -1,5 +1,6 @@
 package com.app.umkaSchool.controller;
 
+import com.app.umkaSchool.dto.auth.RegisterRequest;
 import com.app.umkaSchool.dto.teacher.CreateTeacherRequest;
 import com.app.umkaSchool.dto.teacher.TeacherResponse;
 import com.app.umkaSchool.dto.teacher.UpdateTeacherRequest;
@@ -44,13 +45,31 @@ class TeacherControllerTest {
         appUserRepository.deleteAll();
     }
 
+    private void createUserViaSignup(String email, String firstName, String lastName, String password) throws Exception {
+        RegisterRequest signupRequest = new RegisterRequest();
+        signupRequest.setEmail(email);
+        signupRequest.setFirstName(firstName);
+        signupRequest.setLastName(lastName);
+        signupRequest.setPassword(password);
+        signupRequest.setRole("TEACHER");
+
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signupRequest)))
+                .andExpect(status().isOk());
+    }
+
     @Test
     void createTeacher_ShouldReturnCreatedTeacher() throws Exception {
+        // First, create user via signup
+        createUserViaSignup("alice.smith@test.com", "Alice", "Smith", "password123");
+
+        // Then create teacher profile
         CreateTeacherRequest request = new CreateTeacherRequest();
         request.setFirstName("Alice");
         request.setLastName("Smith");
         request.setEmail("alice.smith@test.com");
-        request.setPassword("password123");
+        request.setAvatarUrl("https://example.com/avatars/alice.jpg");
         request.setBio("Experienced math teacher");
         request.setPhone("+1234567890");
 
@@ -67,12 +86,14 @@ class TeacherControllerTest {
 
     @Test
     void updateTeacher_ShouldReturnUpdatedTeacher() throws Exception {
-        // Create teacher first
+        // Create user via signup
+        createUserViaSignup("alice.update@test.com", "Alice", "Smith", "password123");
+
+        // Create teacher
         CreateTeacherRequest createRequest = new CreateTeacherRequest();
         createRequest.setFirstName("Alice");
         createRequest.setLastName("Smith");
         createRequest.setEmail("alice.update@test.com");
-        createRequest.setPassword("password123");
         createRequest.setBio("Math teacher");
         createRequest.setPhone("+1234567890");
 
@@ -99,12 +120,14 @@ class TeacherControllerTest {
 
     @Test
     void getTeacherById_ShouldReturnTeacher() throws Exception {
-        // Create teacher first
+        // Create user via signup
+        createUserViaSignup("alice.get@test.com", "Alice", "Smith", "password123");
+
+        // Create teacher
         CreateTeacherRequest createRequest = new CreateTeacherRequest();
         createRequest.setFirstName("Alice");
         createRequest.setLastName("Smith");
         createRequest.setEmail("alice.get@test.com");
-        createRequest.setPassword("password123");
         createRequest.setBio("Math teacher");
         createRequest.setPhone("+1234567890");
 
@@ -125,12 +148,14 @@ class TeacherControllerTest {
 
     @Test
     void getAllTeachers_ShouldReturnListOfTeachers() throws Exception {
+        // Create user via signup
+        createUserViaSignup("alice.all@test.com", "Alice", "Smith", "password123");
+
         // Create a teacher
         CreateTeacherRequest createRequest = new CreateTeacherRequest();
         createRequest.setFirstName("Alice");
         createRequest.setLastName("Smith");
         createRequest.setEmail("alice.all@test.com");
-        createRequest.setPassword("password123");
         createRequest.setBio("Math teacher");
         createRequest.setPhone("+1234567890");
 
@@ -147,12 +172,14 @@ class TeacherControllerTest {
 
     @Test
     void deleteTeacher_ShouldReturnNoContent() throws Exception {
+        // Create user via signup
+        createUserViaSignup("alice.delete@test.com", "Alice", "Smith", "password123");
+
         // Create teacher first
         CreateTeacherRequest createRequest = new CreateTeacherRequest();
         createRequest.setFirstName("Alice");
         createRequest.setLastName("Smith");
         createRequest.setEmail("alice.delete@test.com");
-        createRequest.setPassword("password123");
         createRequest.setBio("Math teacher");
         createRequest.setPhone("+1234567890");
 

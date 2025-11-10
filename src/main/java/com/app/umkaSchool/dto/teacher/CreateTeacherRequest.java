@@ -19,10 +19,7 @@ public class CreateTeacherRequest {
     @Email(message = "Email should be valid")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters")
-    private String password;
-
+    private String avatarUrl;
     private String bio;
     private String phone;
 }
