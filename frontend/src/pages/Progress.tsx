@@ -1,8 +1,8 @@
 import Layout from "../components/Layout";
 import { CalendarDays, Brain, Target, Clock } from 'lucide-react';
-import { ReactElement, useState } from 'react';
-
-type TimePeriod = 'day' | 'week' | 'month' | 'all';
+import { ReactElement, useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { statsService, TimePeriod, StudentStats, SubjectProgress } from '../services/stats.service';
 
 interface ProgressMetric {
   title: string;
@@ -10,13 +10,6 @@ interface ProgressMetric {
   change: string;
   isPositive: boolean;
   icon: ReactElement;
-}
-
-interface ProgressChart {
-  subject: string;
-  accuracy: number;
-  totalProblems: number;
-  averageTime: string;
 }
 
 interface TimeOption {
@@ -32,70 +25,126 @@ const timeOptions: TimeOption[] = [
 ];
 
 export default function Progress() {
+  const { student } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('week');
-  const metrics: ProgressMetric[] = [
+  const [stats, setStats] = useState<StudentStats | null>(null);
+  const [previousStats, setPreviousStats] = useState<StudentStats | null>(null);
+  const [subjectProgress, setSubjectProgress] = useState<SubjectProgress[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!student?.id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch current period stats
+        const currentStats = await statsService.getStudentStats(student.id, selectedPeriod);
+        setStats(currentStats);
+
+        // Fetch previous period for comparison
+        let previousPeriod: TimePeriod = 'all';
+        if (selectedPeriod === 'week') {
+          previousPeriod = 'month';
+        } else if (selectedPeriod === 'month') {
+          previousPeriod = 'all';
+        }
+        const prevStats = await statsService.getStudentStats(student.id, previousPeriod);
+        setPreviousStats(prevStats);
+
+        // Fetch subject progress
+        const subjects = await statsService.getSubjectProgress(student.id, selectedPeriod);
+        setSubjectProgress(subjects);
+      } catch (error) {
+        console.error('Error fetching progress:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [student?.id, selectedPeriod]);
+
+  const getChangeText = (current: number, previous: number, label: string): string => {
+    const diff = current - previous;
+    if (diff > 0) {
+      return `+${diff} ${label}`;
+    } else if (diff < 0) {
+      return `${diff} ${label}`;
+    }
+    return `No change`;
+  };
+
+  const metrics: ProgressMetric[] = stats ? [
     {
       title: "Total Practice Time",
-      value: "24h 35m",
-      change: "+2.5h this week",
+      value: stats.totalPracticeTime,
+      change: previousStats ? getChangeText(
+        parseInt(stats.totalPracticeTime.split('h')[0]) || 0,
+        parseInt(previousStats.totalPracticeTime.split('h')[0]) || 0,
+        'h'
+      ) : 'No previous data',
       isPositive: true,
       icon: <Clock className="w-5 h-5" />
     },
     {
       title: "Problems Solved",
-      value: "847",
-      change: "+124 this week",
+      value: stats.problemsSolved.toString(),
+      change: previousStats ? getChangeText(
+        stats.problemsSolved,
+        previousStats.problemsSolved,
+        'problems'
+      ) : 'No previous data',
       isPositive: true,
       icon: <Brain className="w-5 h-5" />
     },
     {
       title: "Accuracy Rate",
-      value: "92%",
-      change: "+5% this week",
+      value: `${stats.accuracyRate}%`,
+      change: previousStats ? getChangeText(
+        stats.accuracyRate,
+        previousStats.accuracyRate,
+        '%'
+      ) : 'No previous data',
       isPositive: true,
       icon: <Target className="w-5 h-5" />
     },
     {
       title: "Current Streak",
-      value: "12 days",
-      change: "Best: 15 days",
+      value: `${stats.currentStreak} ${stats.currentStreak === 1 ? 'day' : 'days'}`,
+      change: `Best: ${stats.bestStreak} days`,
       isPositive: true,
       icon: <CalendarDays className="w-5 h-5" />
     }
-  ];
+  ] : [];
 
-  const subjectProgress: ProgressChart[] = [
-    {
-      subject: "Addition",
-      accuracy: 95,
-      totalProblems: 250,
-      averageTime: "3.2s"
-    },
-    {
-      subject: "Subtraction",
-      accuracy: 88,
-      totalProblems: 180,
-      averageTime: "4.5s"
-    },
-    {
-      subject: "Multiplication",
-      accuracy: 85,
-      totalProblems: 220,
-      averageTime: "5.8s"
-    },
-    {
-      subject: "Division",
-      accuracy: 78,
-      totalProblems: 150,
-      averageTime: "7.2s"
-    },
-    {
-      subject: "Mixed Operations",
-      accuracy: 82,
-      totalProblems: 120,
-      averageTime: "6.5s"
-    }
-  ];
+  if (loading) {
+    return (
+      <Layout
+        title="Your Progress"
+        subtitle="Loading your progress..."
+      >
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!student) {
+    return (
+      <Layout
+        title="Your Progress"
+        subtitle="Please log in to view your progress"
+      >
+        <div className="text-center text-gray-500 p-8">
+          Student information not available. Please log in again.
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout
@@ -149,34 +198,40 @@ export default function Progress() {
             View Details
           </button>
         </div>
-        <div className="space-y-6">
-          {subjectProgress.map((subject) => (
-            <div key={subject.subject} className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="font-medium">{subject.subject}</span>
-                <span className="text-sm text-gray-500">
-                  {subject.totalProblems} problems
-                </span>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="flex-1 bg-gray-100 rounded-full h-2">
-                  <div
-                    className="bg-blue-500 h-2 rounded-full"
-                    style={{ width: `${subject.accuracy}%` }}
-                  />
+        {subjectProgress.length === 0 ? (
+          <div className="text-center text-gray-500 py-8">
+            No progress data available for the selected period.
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {subjectProgress.map((subject) => (
+              <div key={subject.subject} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">{subject.subject}</span>
+                  <span className="text-sm text-gray-500">
+                    {subject.totalProblems} problems
+                  </span>
                 </div>
-                <span className="text-sm font-medium w-16">
-                  {subject.accuracy}%
-                </span>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 bg-gray-100 rounded-full h-2">
+                    <div
+                      className="bg-blue-500 h-2 rounded-full"
+                      style={{ width: `${subject.accuracy}%` }}
+                    />
+                  </div>
+                  <span className="text-sm font-medium w-16">
+                    {subject.accuracy}%
+                  </span>
+                </div>
+                <div className="flex justify-end">
+                  <span className="text-sm text-gray-500">
+                    Avg. time per problem: {subject.averageTime}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-end">
-                <span className="text-sm text-gray-500">
-                  Avg. time per problem: {subject.averageTime}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Recent Activity - Can be expanded later */}

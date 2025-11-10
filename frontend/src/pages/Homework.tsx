@@ -2,32 +2,75 @@ import { useState, useEffect } from 'react';
 import Layout from "../components/Layout";
 import { Clock, CheckCircle, XCircle, Book } from 'lucide-react';
 import { homeworkService, Homework as HomeworkItem } from '../services/homework.service';
-
-// TODO: Replace this with actual student ID from authentication context
-const CURRENT_STUDENT_ID = "bd09a8cb-1596-415f-bd20-6702957193aa";
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Homework() {
+  const { student, user, isAuthenticated } = useAuth();
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [homework, setHomework] = useState<HomeworkItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('[Homework] Component mounted/updated');
+    console.log('[Homework] Auth state:', {
+      isAuthenticated,
+      hasUser: !!user,
+      userRole: user?.role,
+      hasStudent: !!student,
+      studentId: student?.id,
+      studentEmail: student?.email
+    });
+
     const fetchHomework = async () => {
+      if (!student?.id) {
+        console.warn('[Homework] No student ID available');
+        setLoading(false);
+        // Check if user is authenticated but student data is missing
+        if (student === null && user?.role === 'STUDENT') {
+          console.warn('[Homework] User is a student but student profile is null');
+          setError('Student profile not found. Please complete your profile setup or contact your teacher.');
+        } else if (!isAuthenticated) {
+          console.warn('[Homework] User is not authenticated');
+          setError('Please log in to view your homework.');
+        } else {
+          console.warn('[Homework] Student information not available');
+          setError('Student information not available. Please log in again.');
+        }
+        return;
+      }
+
+      console.log('[Homework] Fetching homework for student ID:', student.id);
+
       try {
-        const data = await homeworkService.getCurrentStudentHomework(CURRENT_STUDENT_ID);
+        console.log('[Homework] Calling homeworkService.getCurrentStudentHomework with studentId:', student.id);
+        const data = await homeworkService.getCurrentStudentHomework(student.id);
+        console.log('[Homework] Homework data received:', data);
+        console.log('[Homework] Number of homework items:', data.length);
         setHomework(data);
         setError(null);
-      } catch (err) {
-        setError('Failed to load homework. Please try again later.');
-        console.error('Error fetching homework:', err);
+      } catch (err: any) {
+        console.error('[Homework] Error fetching homework:', err);
+        console.error('[Homework] Error details:', {
+          message: err?.message,
+          response: err?.response?.data,
+          status: err?.response?.status,
+          config: {
+            url: err?.config?.url,
+            method: err?.config?.method,
+            headers: err?.config?.headers
+          }
+        });
+        const errorMessage = err?.message || 'Failed to load homework. Please try again later.';
+        setError(errorMessage);
       } finally {
         setLoading(false);
+        console.log('[Homework] Fetch complete, loading set to false');
       }
     };
 
     fetchHomework();
-  }, []);
+  }, [student?.id]);
 
   if (loading) {
     return (

@@ -1,90 +1,76 @@
 import Layout from "../components/Layout";
 import { Star, Trophy, Clock, Zap, Target, Flame, Brain, TrendingUp } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { exerciseTypeService, ExerciseType } from '../services/exerciseType.service';
+import { useAuth } from '../contexts/AuthContext';
+import { exerciseAttemptService } from '../services/exerciseAttempt.service';
 
-interface Challenge {
-  id: string;
-  title: string;
-  description: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  timeEstimate: string;
-  points: number;
+interface Challenge extends ExerciseType {
   category: 'daily' | 'special' | 'streak';
-  type: string;
-  completionRate?: string;
+  completionRate?: number;
 }
 
 export default function DailyChallenge() {
+  const { student } = useAuth();
+  const navigate = useNavigate();
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const challenges: Challenge[] = [
-    {
-      id: '1',
-      title: 'Speed Master',
-      description: 'Complete 20 addition problems in under 2 minutes. Push your mental math skills to the limit!',
-      difficulty: 'intermediate',
-      timeEstimate: '5 mins',
-      points: 100,
-      category: 'daily',
-      type: 'Speed Challenge',
-      completionRate: '75%'
-    },
-    {
-      id: '2',
-      title: 'Division Pro',
-      description: 'Master division with two-digit numbers. Can you solve all problems without a calculator?',
-      difficulty: 'advanced',
-      timeEstimate: '10 mins',
-      points: 150,
-      category: 'special',
-      type: 'Mastery Challenge',
-      completionRate: '45%'
-    },
-    {
-      id: '3',
-      title: 'Pattern Detective',
-      description: 'Identify and continue number patterns. Train your analytical thinking!',
-      difficulty: 'beginner',
-      timeEstimate: '7 mins',
-      points: 75,
-      category: 'daily',
-      type: 'Pattern Recognition',
-      completionRate: '85%'
-    },
-    {
-      id: '4',
-      title: 'Multiplication Marathon',
-      description: 'Test your multiplication skills with a mix of easy and hard problems. How far can you go?',
-      difficulty: 'intermediate',
-      timeEstimate: '15 mins',
-      points: 200,
-      category: 'streak',
-      type: 'Endurance Challenge',
-      completionRate: '60%'
-    },
-    {
-      id: '5',
-      title: 'Mental Math Master',
-      description: 'Solve arithmetic problems without writing anything down. Pure mental calculations!',
-      difficulty: 'advanced',
-      timeEstimate: '8 mins',
-      points: 125,
-      category: 'special',
-      type: 'Mental Math',
-      completionRate: '40%'
-    },
-    {
-      id: '6',
-      title: 'Number Ninja',
-      description: 'Quick calculations with mixed operations. Perfect your mental math techniques!',
-      difficulty: 'beginner',
-      timeEstimate: '6 mins',
-      points: 80,
-      category: 'daily',
-      type: 'Mixed Operations',
-      completionRate: '80%'
-    }
-  ];
+  useEffect(() => {
+    const fetchChallenges = async () => {
+      try {
+        const exerciseTypes = await exerciseTypeService.getAllExerciseTypes();
+        
+        // Convert exercise types to challenges
+        const challengesData: Challenge[] = await Promise.all(
+          exerciseTypes.map(async (exerciseType) => {
+            // Determine category based on difficulty
+            let category: 'daily' | 'special' | 'streak' = 'daily';
+            if (exerciseType.difficulty === 'advanced') {
+              category = 'special';
+            } else if (exerciseType.difficulty === 'intermediate') {
+              category = 'streak';
+            }
+
+            // Calculate completion rate if student is available
+            let completionRate: number | undefined;
+            if (student?.id) {
+              try {
+                const attempts = await exerciseAttemptService.getAttemptsByStudent(student.id);
+                const completedAttempts = attempts.filter(
+                  a => a.exerciseTypeName === exerciseType.name && a.completedAt
+                );
+                const totalAttempts = attempts.filter(
+                  a => a.exerciseTypeName === exerciseType.name
+                );
+                if (totalAttempts.length > 0) {
+                  completionRate = Math.round((completedAttempts.length / totalAttempts.length) * 100);
+                }
+              } catch (error) {
+                console.error('Error calculating completion rate:', error);
+              }
+            }
+
+            return {
+              ...exerciseType,
+              category,
+              completionRate
+            };
+          })
+        );
+
+        setChallenges(challengesData);
+      } catch (error) {
+        console.error('Error fetching challenges:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChallenges();
+  }, [student?.id]);
 
   const getDifficultyColor = (difficulty: Challenge['difficulty']) => {
     switch (difficulty) {
@@ -116,6 +102,23 @@ export default function DailyChallenge() {
     ? challenges
     : challenges.filter(challenge => challenge.difficulty === selectedDifficulty);
 
+  const dailyChallenges = challenges.filter(c => c.category === 'daily');
+  const completedDaily = dailyChallenges.filter(c => c.completionRate && c.completionRate >= 100).length;
+  const remainingDaily = dailyChallenges.length - completedDaily;
+
+  if (loading) {
+    return (
+      <Layout
+        title="Daily Challenges"
+        subtitle="Loading challenges..."
+      >
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout
       title="Daily Challenges"
@@ -133,11 +136,11 @@ export default function DailyChallenge() {
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <Target className="w-5 h-5" />
-            <span>7 challenges remaining</span>
+            <span>{remainingDaily} challenges remaining</span>
           </div>
           <div className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
-            <span>500 bonus points</span>
+            <span>Practice to improve</span>
           </div>
         </div>
       </div>
@@ -188,28 +191,33 @@ export default function DailyChallenge() {
               <div className="flex gap-4 text-sm text-gray-500">
                 <span className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  {challenge.timeEstimate}
+                  {challenge.duration}
                 </span>
                 <span className="flex items-center gap-1">
                   <Brain className="w-4 h-4" />
-                  {challenge.points} pts
+                  {challenge.difficulty}
                 </span>
               </div>
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-24 h-2 bg-gray-100 rounded-full">
-                  <div
-                    className="h-2 bg-green-500 rounded-full"
-                    style={{ width: challenge.completionRate }}
-                  />
+              {challenge.completionRate !== undefined && (
+                <div className="flex items-center gap-2">
+                  <div className="w-24 h-2 bg-gray-100 rounded-full">
+                    <div
+                      className="h-2 bg-green-500 rounded-full"
+                      style={{ width: `${challenge.completionRate}%` }}
+                    />
+                  </div>
+                  <span className="text-sm text-gray-500">
+                    {challenge.completionRate}% completed
+                  </span>
                 </div>
-                <span className="text-sm text-gray-500">
-                  {challenge.completionRate} completed
-                </span>
-              </div>
-              <button className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
+              )}
+              <button 
+                onClick={() => navigate('/exercises')}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+              >
                 Start Challenge
               </button>
             </div>
