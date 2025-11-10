@@ -60,16 +60,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const logout = () => {
-        const token = localStorage.getItem('token');
-
-        // Call backend logout endpoint if token exists
-        if (token) {
-            authService.logout().catch(error => {
-                console.error('Logout API call failed:', error);
-                // Continue with local logout even if API call fails
-            });
-        }
-
         localStorage.removeItem('token');
         authService.setAuthToken(null);
         setUser(null);

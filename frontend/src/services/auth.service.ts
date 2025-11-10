@@ -19,8 +19,9 @@ export const authService = {
         return response.data;
     },
 
-    async register(data: SignUpRequest): Promise<void> {
-        await axiosInstance.post('/api/auth/signup', data);
+    async register(data: SignUpRequest): Promise<{ id: string; role: string }> {
+        const response = await axiosInstance.post('/api/auth/signup', data);
+        return response.data;
     },
 
     async forgotPassword(email: string): Promise<void> {
