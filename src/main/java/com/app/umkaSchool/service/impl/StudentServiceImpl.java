@@ -50,9 +50,25 @@ public class StudentServiceImpl implements StudentService {
     public StudentResponse createStudent(CreateStudentRequest request) {
         logger.info("Creating new student: {}", request.getEmail());
 
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already in use");
+        // Find existing user by email
+        AppUser user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("User with email " + request.getEmail() + " not found. User must be created first via signup."));
+
+        // Check if student already exists for this user
+        if (studentRepository.findByUser_Id(user.getId()).isPresent()) {
+            throw new IllegalArgumentException("Student profile already exists for this user");
         }
+
+        // Update user information
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+
+        // Update avatar URL if provided
+        if (request.getAvatarUrl() != null && !request.getAvatarUrl().isEmpty()) {
+            user.setAvatarUrl(request.getAvatarUrl());
+        }
+
+        user = userRepository.save(user);
 
         // Create or get guardian
         Guardian guardian = guardianRepository.findByEmail(request.getGuardianEmail())
@@ -67,17 +83,6 @@ public class StudentServiceImpl implements StudentService {
                     return guardianRepository.save(newGuardian);
                 });
 
-        // Create user
-        AppUser user = new AppUser();
-        user.setUserRole(AppUser.UserRole.STUDENT);
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setEmail(request.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setAvatarUrl("/default-avatar.png");
-        user.setAppLanguage("EN");
-        user.setActive(true);
-        user = userRepository.save(user);
 
         // Create student
         Student student = new Student();

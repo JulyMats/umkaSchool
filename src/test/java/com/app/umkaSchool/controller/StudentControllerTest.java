@@ -1,8 +1,10 @@
 package com.app.umkaSchool.controller;
 
+import com.app.umkaSchool.dto.auth.RegisterRequest;
 import com.app.umkaSchool.dto.student.CreateStudentRequest;
 import com.app.umkaSchool.dto.student.StudentResponse;
 import com.app.umkaSchool.dto.student.UpdateStudentRequest;
+import com.app.umkaSchool.model.AppUser;
 import com.app.umkaSchool.repository.AppUserRepository;
 import com.app.umkaSchool.repository.StudentRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,14 +48,32 @@ class StudentControllerTest {
         appUserRepository.deleteAll();
     }
 
+    private void createUserViaSignup(String email, String firstName, String lastName, String password) throws Exception {
+        RegisterRequest signupRequest = new RegisterRequest();
+        signupRequest.setEmail(email);
+        signupRequest.setFirstName(firstName);
+        signupRequest.setLastName(lastName);
+        signupRequest.setPassword(password);
+        signupRequest.setRole("STUDENT");
+
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signupRequest)))
+                .andExpect(status().isOk());
+    }
+
     @Test
     void createStudent_ShouldReturnCreatedStudent() throws Exception {
+        // First, create user via signup
+        createUserViaSignup("john.doe@test.com", "John", "Doe", "password123");
+
+        // Then create student profile
         CreateStudentRequest request = new CreateStudentRequest();
         request.setFirstName("John");
         request.setLastName("Doe");
         request.setEmail("john.doe@test.com");
-        request.setPassword("password123");
         request.setDateOfBirth(LocalDate.of(2010, 5, 15));
+        request.setAvatarUrl("https://example.com/avatar.jpg");
         request.setGuardianFirstName("Jane");
         request.setGuardianLastName("Doe");
         request.setGuardianEmail("jane.doe@test.com");
@@ -73,12 +93,14 @@ class StudentControllerTest {
 
     @Test
     void updateStudent_ShouldReturnUpdatedStudent() throws Exception {
-        // Create student first
+        // Create user via signup
+        createUserViaSignup("john.update@test.com", "John", "Doe", "password123");
+
+        // Create student
         CreateStudentRequest createRequest = new CreateStudentRequest();
         createRequest.setFirstName("John");
         createRequest.setLastName("Doe");
         createRequest.setEmail("john.update@test.com");
-        createRequest.setPassword("password123");
         createRequest.setDateOfBirth(LocalDate.of(2010, 5, 15));
         createRequest.setGuardianFirstName("Jane");
         createRequest.setGuardianLastName("Doe");
@@ -107,12 +129,14 @@ class StudentControllerTest {
 
     @Test
     void getStudentById_ShouldReturnStudent() throws Exception {
-        // Create student first
+        // Create user via signup
+        createUserViaSignup("john.get@test.com", "John", "Doe", "password123");
+
+        // Create student
         CreateStudentRequest createRequest = new CreateStudentRequest();
         createRequest.setFirstName("John");
         createRequest.setLastName("Doe");
         createRequest.setEmail("john.get@test.com");
-        createRequest.setPassword("password123");
         createRequest.setDateOfBirth(LocalDate.of(2010, 5, 15));
         createRequest.setGuardianFirstName("Jane");
         createRequest.setGuardianLastName("Doe");
@@ -137,12 +161,14 @@ class StudentControllerTest {
 
     @Test
     void getAllStudents_ShouldReturnListOfStudents() throws Exception {
+        // Create user via signup
+        createUserViaSignup("john.all@test.com", "John", "Doe", "password123");
+
         // Create a student
         CreateStudentRequest createRequest = new CreateStudentRequest();
         createRequest.setFirstName("John");
         createRequest.setLastName("Doe");
         createRequest.setEmail("john.all@test.com");
-        createRequest.setPassword("password123");
         createRequest.setDateOfBirth(LocalDate.of(2010, 5, 15));
         createRequest.setGuardianFirstName("Jane");
         createRequest.setGuardianLastName("Doe");
@@ -163,12 +189,14 @@ class StudentControllerTest {
 
     @Test
     void deleteStudent_ShouldReturnNoContent() throws Exception {
+        // Create user via signup
+        createUserViaSignup("john.delete@test.com", "John", "Doe", "password123");
+
         // Create student first
         CreateStudentRequest createRequest = new CreateStudentRequest();
         createRequest.setFirstName("John");
         createRequest.setLastName("Doe");
         createRequest.setEmail("john.delete@test.com");
-        createRequest.setPassword("password123");
         createRequest.setDateOfBirth(LocalDate.of(2010, 5, 15));
         createRequest.setGuardianFirstName("Jane");
         createRequest.setGuardianLastName("Doe");

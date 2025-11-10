@@ -20,13 +20,12 @@ public class CreateStudentRequest {
     @Email(message = "Email should be valid")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters")
-    private String password;
-
     @NotNull(message = "Date of birth is required")
     @Past(message = "Date of birth must be in the past")
     private LocalDate dateOfBirth;
+
+    // Avatar URL (optional)
+    private String avatarUrl;
 
     // Guardian info
     @NotBlank(message = "Guardian first name is required")

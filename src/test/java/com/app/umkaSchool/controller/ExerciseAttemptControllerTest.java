@@ -1,5 +1,6 @@
 package com.app.umkaSchool.controller;
 
+import com.app.umkaSchool.dto.auth.RegisterRequest;
 import com.app.umkaSchool.dto.exercise.CreateExerciseRequest;
 import com.app.umkaSchool.dto.exercise.ExerciseResponse;
 import com.app.umkaSchool.dto.exerciseattempt.CreateExerciseAttemptRequest;
@@ -50,12 +51,24 @@ class ExerciseAttemptControllerTest {
 
     @BeforeEach
     void setup() throws Exception {
+        // First, create user via signup
+        RegisterRequest signupRequest = new RegisterRequest();
+        signupRequest.setEmail("test.attempt@student.com");
+        signupRequest.setFirstName("Test");
+        signupRequest.setLastName("Student");
+        signupRequest.setPassword("password123");
+        signupRequest.setRole("STUDENT");
+
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signupRequest)))
+                .andExpect(status().isOk());
+
         // Create a student
         CreateStudentRequest studentRequest = new CreateStudentRequest();
         studentRequest.setFirstName("Test");
         studentRequest.setLastName("Student");
         studentRequest.setEmail("test.attempt@student.com");
-        studentRequest.setPassword("password123");
         studentRequest.setDateOfBirth(LocalDate.of(2010, 5, 15));
         studentRequest.setGuardianFirstName("Test");
         studentRequest.setGuardianLastName("Guardian");
@@ -273,4 +286,3 @@ class ExerciseAttemptControllerTest {
                 .andExpect(status().isBadRequest());
     }
 }
-
