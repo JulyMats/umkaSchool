@@ -41,12 +41,11 @@ export default function StudentProfileCompletion() {
             return;
         }
 
-        const { userId } = JSON.parse(registrationData);
         setLoading(true);
         setError(null);
 
         try {
-            const { userId, firstName, lastName, email } = JSON.parse(registrationData);
+            const { firstName, lastName, email } = JSON.parse(registrationData);
             await profileService.createStudentProfile({
                 firstName,
                 lastName,

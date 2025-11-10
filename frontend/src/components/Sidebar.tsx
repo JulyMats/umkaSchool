@@ -14,11 +14,35 @@ const menuItems = [
 
 export default function Sidebar() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user, student } = useAuth();
 
   const handleLogout = () => {
     logout();
     navigate('/register', { replace: true });
+  };
+
+  // Get user's full name - prefer student data, fallback to user data
+  const firstName = student?.firstName || user?.firstName || '';
+  const lastName = student?.lastName || user?.lastName || '';
+  const fullName = `${firstName} ${lastName}`.trim() || 'User';
+
+  // Get avatar - prefer student avatar, then user avatar, then default
+  const avatarUrl = student?.avatarUrl || user?.avatarUrl || avatar;
+
+  // Get role display name
+  const getRoleDisplayName = () => {
+    const role = user?.role;
+    if (!role) return 'User';
+    switch (role) {
+      case 'STUDENT':
+        return 'Student';
+      case 'TEACHER':
+        return 'Teacher';
+      case 'ADMIN':
+        return 'Admin';
+      default:
+        return role;
+    }
   };
 
   return (
@@ -54,13 +78,17 @@ export default function Sidebar() {
         <hr className="border-t border-gray-200 -mx-6 mb-4" />
         <div className="flex items-center gap-3 mb-4">
           <img
-            src={avatar}
+            src={avatarUrl}
             alt="profile"
-            className="w-10 h-10 rounded-full bg-gray-100"
+            className="w-10 h-10 rounded-full bg-gray-100 object-cover"
+            onError={(e) => {
+              // Fallback to default avatar if image fails to load
+              (e.target as HTMLImageElement).src = avatar;
+            }}
           />
-          <div className="text-left">
-            <p className="font-semibold">Alex Johnson</p>
-            <p className="text-sm text-gray-500">Student</p>
+          <div className="text-left flex-1 min-w-0">
+            <p className="font-semibold truncate">{fullName}</p>
+            <p className="text-sm text-gray-500">{getRoleDisplayName()}</p>
           </div>
         </div>
         <ul>
