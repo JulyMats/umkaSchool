@@ -2,6 +2,8 @@ package com.app.umkaSchool.service.impl;
 
 import com.app.umkaSchool.dto.auth.LoginRequest;
 import com.app.umkaSchool.dto.auth.RegisterRequest;
+import com.app.umkaSchool.dto.auth.SignupResponse;
+import com.app.umkaSchool.model.AppUser;
 import com.app.umkaSchool.model.UserToken;
 import com.app.umkaSchool.repository.AppUserRepository;
 import com.app.umkaSchool.repository.UserTokenRepository;
@@ -49,11 +51,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void signup(RegisterRequest request) {
+    public SignupResponse signup(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("Email already in use");
         }
-        userService.createUser(request);
+        AppUser user = userService.createUser(request);
 
         // Send welcome email after successful signup
         emailService.sendWelcomeEmail(
@@ -61,6 +63,11 @@ public class AuthServiceImpl implements AuthService {
             request.getFirstName(),
             request.getLastName()
         );
+
+        return SignupResponse.builder()
+            .id(user.getId())
+            .role(user.getUserRole().name())
+            .build();
     }
 
     @Override
