@@ -1,5 +1,6 @@
 package com.app.umkaSchool.controller;
 
+import com.app.umkaSchool.dto.auth.RegisterRequest;
 import com.app.umkaSchool.dto.exercise.CreateExerciseRequest;
 import com.app.umkaSchool.dto.exercise.ExerciseResponse;
 import com.app.umkaSchool.dto.exercisetype.CreateExerciseTypeRequest;
@@ -65,12 +66,24 @@ class HomeworkControllerTest {
 
     @BeforeEach
     void setup() throws Exception {
+        // First, create user via signup
+        RegisterRequest signupRequest = new RegisterRequest();
+        signupRequest.setEmail("test.homework.teacher@test.com");
+        signupRequest.setFirstName("Test");
+        signupRequest.setLastName("Teacher");
+        signupRequest.setPassword("password123");
+        signupRequest.setRole("TEACHER");
+
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signupRequest)))
+                .andExpect(status().isOk());
+
         // Create a teacher
         CreateTeacherRequest teacherRequest = new CreateTeacherRequest();
         teacherRequest.setFirstName("Test");
         teacherRequest.setLastName("Teacher");
         teacherRequest.setEmail("test.homework.teacher@test.com");
-        teacherRequest.setPassword("password123");
         teacherRequest.setBio("Test teacher");
         teacherRequest.setPhone("+1234567890");
 

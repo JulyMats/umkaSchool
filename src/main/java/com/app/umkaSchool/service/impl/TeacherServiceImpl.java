@@ -49,20 +49,24 @@ public class TeacherServiceImpl implements TeacherService {
     public TeacherResponse createTeacher(CreateTeacherRequest request) {
         logger.info("Creating new teacher: {}", request.getEmail());
 
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already in use");
+        // Find existing user by email
+        AppUser user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("User with email " + request.getEmail() + " not found. User must be created first via signup."));
+
+        // Check if teacher already exists for this user
+        if (teacherRepository.findByUser_Id(user.getId()).isPresent()) {
+            throw new IllegalArgumentException("Teacher profile already exists for this user");
         }
 
-        // Create user
-        AppUser user = new AppUser();
-        user.setUserRole(AppUser.UserRole.TEACHER);
+        // Update user information
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
-        user.setEmail(request.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setAvatarUrl("/default-avatar.png");
-        user.setAppLanguage("EN");
-        user.setActive(true);
+
+        // Update avatar URL if provided
+        if (request.getAvatarUrl() != null && !request.getAvatarUrl().isEmpty()) {
+            user.setAvatarUrl(request.getAvatarUrl());
+        }
+
         user = userRepository.save(user);
 
         // Create teacher
