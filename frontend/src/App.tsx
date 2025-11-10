@@ -10,6 +10,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import StudentProfileCompletion from "./pages/StudentProfileCompletion";
+import TeacherProfileCompletion from "./pages/TeacherProfileCompletion";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import "./App.css";
 
@@ -27,7 +29,9 @@ function AppContent() {
         <Route path="/forgot-password" element={!isAuthenticated ? <ForgotPassword /> : <Navigate to="/" replace />} />
         <Route path="/reset-password" element={!isAuthenticated ? <ResetPassword /> : <Navigate to="/" replace />} />
         <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/" replace />} />
-        
+        <Route path="/complete-profile/student" element={!isAuthenticated ? <StudentProfileCompletion /> : <Navigate to="/" replace />} />
+        <Route path="/complete-profile/teacher" element={!isAuthenticated ? <TeacherProfileCompletion /> : <Navigate to="/" replace />} />
+
         {/* Protected Routes */}
         <Route
           path="/*"

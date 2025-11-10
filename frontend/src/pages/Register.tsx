@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { authService, type SignUpRequest } from '../services/auth.service';
 
 export default function Register() {
-  const { register, login } = useAuth();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<SignUpRequest>({
     firstName: '',
     lastName: '',
     email: '',
@@ -28,13 +27,30 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await register(formData);
-      // After successful registration, login with the same credentials
-      await login({
+      // Register user
+      console.log('Sending registration data:', formData);
+      const { id, role } = await authService.register(formData);
+      console.log('Received from server:', { id, role });
+      
+      // Store user info for profile completion
+      const registrationData = {
+        userId: id,
         email: formData.email,
-        password: formData.password
-      });
-      navigate('/dashboard');
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        role: formData.role
+      };
+      sessionStorage.setItem('registrationData', JSON.stringify(registrationData));
+
+      // Navigate to profile completion based on role
+      if (formData.role === 'STUDENT') {
+        console.log('Navigating to student profile completion');
+        navigate('/complete-profile/student');
+      } else {
+        console.log('Navigating to teacher profile completion');
+        navigate('/complete-profile/teacher');
+      }
     } catch (error: any) {
       console.error('Registration error:', error);
       setError(error.response?.data?.message || error.message || 'Registration failed');
