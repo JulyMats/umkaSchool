@@ -1,9 +1,6 @@
 package com.app.umkaSchool.controller;
 
-import com.app.umkaSchool.dto.auth.ForgotPasswordRequest;
-import com.app.umkaSchool.dto.auth.LoginRequest;
-import com.app.umkaSchool.dto.auth.RegisterRequest;
-import com.app.umkaSchool.dto.auth.ResetPasswordRequest;
+import com.app.umkaSchool.dto.auth.*;
 import com.app.umkaSchool.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +19,9 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@Valid @RequestBody RegisterRequest request) {
-        authService.signup(request);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<SignupResponse> signup(@Valid @RequestBody RegisterRequest request) {
+        SignupResponse response = authService.signup(request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/signin")
