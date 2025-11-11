@@ -2,11 +2,14 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { authService, SignInRequest, SignUpRequest } from '../services/auth.service';
 import { userService, User } from '../services/user.service';
 import { studentService, Student } from '../services/student.service';
+import { teacherService, Teacher } from '../services/teacher.service';
 
 interface AuthContextType {
     user: User | null;
     student: Student | null;
+    teacher: Teacher | null;
     isAuthenticated: boolean;
+    isLoading: boolean;
     login: (credentials: SignInRequest) => Promise<void>;
     register: (data: SignUpRequest) => Promise<void>;
     logout: () => void;
@@ -20,6 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [student, setStudent] = useState<Student | null>(null);
+    const [teacher, setTeacher] = useState<Teacher | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -37,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     const studentData = await studentService.getStudentByUserId(userData.id);
                     console.log('[AuthContext] Student data received:', { id: studentData.id, firstName: studentData.firstName, lastName: studentData.lastName });
                     setStudent(studentData);
+                    setTeacher(null);
                 } catch (error: any) {
                     console.error('[AuthContext] Failed to fetch student data:', error);
                     console.error('[AuthContext] Student fetch error details:', {
@@ -46,10 +51,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     });
                     // Student profile might not be created yet
                     setStudent(null);
+                    setTeacher(null);
+                }
+            } else if (userData.role === 'TEACHER') {
+                try {
+                    console.log('[AuthContext] User is a teacher, fetching teacher data for userId:', userData.id);
+                    const teacherData = await teacherService.getTeacherByUserId(userData.id);
+                    console.log('[AuthContext] Teacher data received:', { id: teacherData.id, firstName: teacherData.firstName, lastName: teacherData.lastName });
+                    setTeacher(teacherData);
+                    setStudent(null);
+                } catch (error: any) {
+                    console.error('[AuthContext] Failed to fetch teacher data:', error);
+                    console.error('[AuthContext] Teacher fetch error details:', {
+                        message: error?.message,
+                        response: error?.response?.data,
+                        status: error?.response?.status
+                    });
+                    // Teacher profile might not be created yet
+                    setTeacher(null);
+                    setStudent(null);
                 }
             } else {
                 console.log('[AuthContext] User is not a student, role:', userData.role);
                 setStudent(null);
+                setTeacher(null);
             }
         } catch (error: any) {
             console.error('[AuthContext] Failed to fetch user data:', error);
@@ -158,6 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         authService.setAuthToken(null);
         setUser(null);
         setStudent(null);
+        setTeacher(null);
         setIsAuthenticated(false);
     };
 
@@ -173,7 +199,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         <AuthContext.Provider value={{
             user,
             student,
+            teacher,
             isAuthenticated,
+            isLoading,
             login,
             register,
             logout,

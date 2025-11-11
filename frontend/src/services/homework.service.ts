@@ -1,5 +1,7 @@
 import axiosInstance from './axios.config';
 
+export type HomeworkStatus = 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE';
+
 export interface HomeworkAssignment {
     id: string;
     homeworkId: string;
@@ -8,7 +10,7 @@ export interface HomeworkAssignment {
     teacherName: string;
     assignedAt: string;
     dueDate: string;
-    status: 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE';
+    status: HomeworkStatus;
     assignedGroupIds: string[];
     assignedStudentIds: string[];
 }
@@ -21,6 +23,55 @@ export interface Homework {
     status: 'pending' | 'completed' | 'overdue';
     teacherName: string;
     timeEstimate: string;
+}
+
+export interface HomeworkExercise {
+    exerciseId: string;
+    exerciseTypeName: string;
+    difficulty: number | null;
+    points: number | null;
+}
+
+export interface HomeworkDetail {
+    id: string;
+    title: string;
+    description: string;
+    teacherId: string;
+    teacherName: string;
+    createdAt: string;
+    updatedAt: string;
+    exercises: HomeworkExercise[];
+}
+
+export interface CreateHomeworkPayload {
+    title: string;
+    description: string;
+    teacherId: string;
+    exerciseIds: string[];
+}
+
+export interface UpdateHomeworkPayload {
+    title?: string;
+    description?: string;
+    teacherId?: string;
+    exerciseIds?: string[];
+}
+
+export interface HomeworkAssignmentDetail extends HomeworkAssignment {}
+
+export interface CreateHomeworkAssignmentPayload {
+    homeworkId: string;
+    teacherId: string;
+    dueDate: string;
+    groupIds?: string[];
+    studentIds?: string[];
+}
+
+export interface UpdateHomeworkAssignmentPayload {
+    dueDate?: string;
+    status?: HomeworkStatus;
+    groupIds?: string[];
+    studentIds?: string[];
 }
 
 const mapApiStatusToUiStatus = (apiStatus: string): 'pending' | 'completed' | 'overdue' => {
@@ -44,6 +95,35 @@ const calculateTimeEstimate = (dueDate: string, assignedAt: string): string => {
     const estimatedMinutes = Math.round((diffInHours * 60) * 0.2);
     return `${estimatedMinutes} mins`;
 };
+
+const mapHomeworkResponse = (response: any): HomeworkDetail => ({
+    id: response.id,
+    title: response.title,
+    description: response.description,
+    teacherId: response.teacherId,
+    teacherName: response.teacherName,
+    createdAt: response.createdAt,
+    updatedAt: response.updatedAt,
+    exercises: (response.exercises || []).map((exercise: any) => ({
+        exerciseId: exercise.exerciseId,
+        exerciseTypeName: exercise.exerciseTypeName,
+        difficulty: exercise.difficulty ?? null,
+        points: exercise.points ?? null
+    }))
+});
+
+const mapHomeworkAssignmentResponse = (assignment: any): HomeworkAssignmentDetail => ({
+    id: assignment.id,
+    homeworkId: assignment.homeworkId,
+    homeworkTitle: assignment.homeworkTitle,
+    teacherId: assignment.teacherId,
+    teacherName: assignment.teacherName,
+    assignedAt: assignment.assignedAt,
+    dueDate: assignment.dueDate,
+    status: assignment.status,
+    assignedGroupIds: assignment.assignedGroupIds || [],
+    assignedStudentIds: assignment.assignedStudentIds || []
+});
 
 export const homeworkService = {
     // Get homework assignments for the current student
@@ -123,5 +203,71 @@ export const homeworkService = {
                 throw new Error(error.message || 'Failed to load homework');
             }
         }
+    },
+
+    // Teacher homework management
+    getHomeworkByTeacher: async (teacherId: string): Promise<HomeworkDetail[]> => {
+        const response = await axiosInstance.get(`/api/homework/teacher/${teacherId}`);
+        return (response.data || []).map(mapHomeworkResponse);
+    },
+
+    getAllHomework: async (): Promise<HomeworkDetail[]> => {
+        const response = await axiosInstance.get('/api/homework');
+        return (response.data || []).map(mapHomeworkResponse);
+    },
+
+    createHomework: async (payload: CreateHomeworkPayload): Promise<HomeworkDetail> => {
+        const response = await axiosInstance.post('/api/homework', payload);
+        return mapHomeworkResponse(response.data);
+    },
+
+    updateHomework: async (homeworkId: string, payload: UpdateHomeworkPayload): Promise<HomeworkDetail> => {
+        const response = await axiosInstance.put(`/api/homework/${homeworkId}`, payload);
+        return mapHomeworkResponse(response.data);
+    },
+
+    deleteHomework: async (homeworkId: string): Promise<void> => {
+        await axiosInstance.delete(`/api/homework/${homeworkId}`);
+    },
+
+    // Teacher assignment management
+    getAssignmentsByTeacher: async (teacherId: string): Promise<HomeworkAssignmentDetail[]> => {
+        const response = await axiosInstance.get(`/api/homework-assignments/teacher/${teacherId}`);
+        return (response.data || []).map(mapHomeworkAssignmentResponse);
+    },
+
+    getAssignmentById: async (assignmentId: string): Promise<HomeworkAssignmentDetail> => {
+        const response = await axiosInstance.get(`/api/homework-assignments/${assignmentId}`);
+        return mapHomeworkAssignmentResponse(response.data);
+    },
+
+    createHomeworkAssignment: async (
+        payload: CreateHomeworkAssignmentPayload
+    ): Promise<HomeworkAssignmentDetail> => {
+        const response = await axiosInstance.post('/api/homework-assignments', {
+            homeworkId: payload.homeworkId,
+            teacherId: payload.teacherId,
+            dueDate: new Date(payload.dueDate).toISOString(),
+            groupIds: payload.groupIds,
+            studentIds: payload.studentIds
+        });
+        return mapHomeworkAssignmentResponse(response.data);
+    },
+
+    updateHomeworkAssignment: async (
+        assignmentId: string,
+        payload: UpdateHomeworkAssignmentPayload
+    ): Promise<HomeworkAssignmentDetail> => {
+        const response = await axiosInstance.put(`/api/homework-assignments/${assignmentId}`, {
+            dueDate: payload.dueDate ? new Date(payload.dueDate).toISOString() : undefined,
+            status: payload.status,
+            groupIds: payload.groupIds,
+            studentIds: payload.studentIds
+        });
+        return mapHomeworkAssignmentResponse(response.data);
+    },
+
+    deleteHomeworkAssignment: async (assignmentId: string): Promise<void> => {
+        await axiosInstance.delete(`/api/homework-assignments/${assignmentId}`);
     }
 };

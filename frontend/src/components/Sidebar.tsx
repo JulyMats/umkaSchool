@@ -1,29 +1,52 @@
-import { Home, BookOpen, BarChart3, Book, Zap, Settings, User, LogOut } from "lucide-react";
+import {
+  Home,
+  BookOpen,
+  BarChart3,
+  Book,
+  Zap,
+  Settings,
+  User,
+  LogOut,
+  LayoutDashboard,
+  Users,
+  Layers,
+  ClipboardList
+} from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import avatar from "../assets/avatar.png";
 
-const menuItems = [
-  { icon: Home, label: "Home", path: "/dashboard" },
-  { icon: BookOpen, label: "Exercises", path: "/exercises" },
-  { icon: BarChart3, label: "Progress", path: "/progress" },
-  { icon: Book, label: "Homework", path: "/homework" },
-  { icon: Zap, label: "Daily Challenge", path: "/challenges" },
-  { icon: Settings, label: "Settings", path: "/settings" },
-];
-
 export default function Sidebar() {
   const navigate = useNavigate();
-  const { logout, user, student } = useAuth();
+  const location = useLocation();
+  const { logout, user, student, teacher } = useAuth();
 
   const handleLogout = () => {
     logout();
     navigate('/register', { replace: true });
   };
 
-  // Get user's full name - prefer student data, fallback to user data
-  const firstName = student?.firstName || user?.firstName || '';
-  const lastName = student?.lastName || user?.lastName || '';
+  // Determine menu items based on role
+  const menuItems = user?.role === 'TEACHER'
+    ? [
+        { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+        { icon: Users, label: "Students", path: "/students" },
+        { icon: Layers, label: "Groups", path: "/groups" },
+        { icon: ClipboardList, label: "Homework", path: "/homework" },
+        { icon: Settings, label: "Settings", path: "/settings" },
+      ]
+    : [
+        { icon: Home, label: "Home", path: "/dashboard" },
+        { icon: BookOpen, label: "Exercises", path: "/exercises" },
+        { icon: BarChart3, label: "Progress", path: "/progress" },
+        { icon: Book, label: "Homework", path: "/homework" },
+        { icon: Zap, label: "Daily Challenge", path: "/challenges" },
+        { icon: Settings, label: "Settings", path: "/settings" },
+      ];
+
+  // Get user's full name - prefer role-specific data, fallback to user data
+  const firstName = teacher?.firstName || student?.firstName || user?.firstName || '';
+  const lastName = teacher?.lastName || student?.lastName || user?.lastName || '';
   const fullName = `${firstName} ${lastName}`.trim() || 'User';
 
   // Get avatar - prefer student avatar, then user avatar, then default
@@ -56,7 +79,7 @@ export default function Sidebar() {
         <p className="text-sm text-left text-gray-500 mb-2">MENU</p>
         <ul>
           {menuItems.map((item) => {
-            const isActive = useLocation().pathname === item.path;
+            const isActive = location.pathname === item.path;
             return (
               <li key={item.label}>
                 <Link
