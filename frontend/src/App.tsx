@@ -12,14 +12,53 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import StudentProfileCompletion from "./pages/StudentProfileCompletion";
 import TeacherProfileCompletion from "./pages/TeacherProfileCompletion";
+import TeacherDashboard from "./pages/TeacherDashboard";
+import TeacherStudents from "./pages/TeacherStudents";
+import TeacherGroups from "./pages/TeacherGroups";
+import TeacherHomework from "./pages/TeacherHomework";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import "./App.css";
 
 function AppContent() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
 
   const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     return isAuthenticated ? children : <Navigate to="/login" replace />;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+      </div>
+    );
+  }
+
+  const renderProtectedRoutes = () => {
+    if (user?.role === 'TEACHER') {
+      return (
+        <>
+          <Route path="/dashboard" element={<TeacherDashboard />} />
+          <Route path="/students" element={<TeacherStudents />} />
+          <Route path="/groups" element={<TeacherGroups />} />
+          <Route path="/homework" element={<TeacherHomework />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </>
+      );
+    }
+
+    return (
+      <>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/exercises" element={<Exercises />} />
+        <Route path="/progress" element={<Progress />} />
+        <Route path="/homework" element={<Homework />} />
+        <Route path="/challenges" element={<DailyChallenge />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </>
+    );
   };
 
   return (
@@ -41,12 +80,7 @@ function AppContent() {
                 <Sidebar />
                 <main className="flex-1 bg-gray-50">
                   <Routes>
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/exercises" element={<Exercises />} />
-                    <Route path="/progress" element={<Progress />} />
-                    <Route path="/homework" element={<Homework />} />
-                    <Route path="/challenges" element={<DailyChallenge />} />
-                    <Route path="/settings" element={<Settings />} />
+                    {renderProtectedRoutes()}
                   </Routes>
                 </main>
               </div>
