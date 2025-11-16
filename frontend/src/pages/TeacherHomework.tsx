@@ -700,8 +700,7 @@ function HomeworkModal({
                                                 {exercise.exerciseTypeName}
                                             </p>
                                             <p className="text-xs text-gray-500">
-                                                Difficulty: {exercise.difficulty ?? 'N/A'} • Estimated:{' '}
-                                                {exercise.estimatedSeconds ?? 0}s
+                                                Difficulty: {exercise.difficulty ?? 'N/A'}
                                             </p>
                                         </div>
                                         <input
