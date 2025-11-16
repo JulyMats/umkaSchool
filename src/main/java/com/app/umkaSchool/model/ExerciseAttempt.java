@@ -5,8 +5,10 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
-import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -39,15 +41,25 @@ public class ExerciseAttempt {
     @Column(name = "completed_at")
     private ZonedDateTime completedAt;
 
+    // JSON settings chosen by the student for this attempt (answer timeout, flip interval, cards count, digits allowed)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "settings", columnDefinition = "jsonb", nullable = false)
+    private String settings;
+
+    @Column(name = "total_attempts", nullable = false)
+    private Long totalAttempts = 0L;
+
+    @Column(name = "total_correct", nullable = false)
+    private Long totalCorrect = 0L;
+
     @Column(nullable = false)
     private Integer score;
 
-    @Column(name = "time_spent_seconds", nullable = false)
-    private Integer timeSpentSeconds;
+    // Transient helper to compute duration in seconds from startedAt and completedAt
+    @Transient
+    public long getDurationSeconds() {
+        if (startedAt == null || completedAt == null) return 0L;
+        return Duration.between(startedAt, completedAt).getSeconds();
+    }
 
-    @Column(nullable = false, precision = 5, scale = 2)
-    private BigDecimal accuracy;
-
-    @Column(nullable = false)
-    private Integer mistakes;
 }

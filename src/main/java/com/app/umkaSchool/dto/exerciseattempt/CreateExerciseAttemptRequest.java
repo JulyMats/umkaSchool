@@ -1,35 +1,40 @@
 package com.app.umkaSchool.dto.exerciseattempt;
 
-import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
+import jakarta.validation.constraints.NotNull;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CreateExerciseAttemptRequest {
-    @NotNull(message = "Student ID is required")
+
+    @NotNull(message = "studentId is required")
     private UUID studentId;
 
-    @NotNull(message = "Exercise ID is required")
+    @NotNull(message = "exerciseId is required")
     private UUID exerciseId;
 
+    @NotNull(message = "startedAt is required")
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private ZonedDateTime startedAt;
 
-    @NotNull(message = "Score is required")
-    @Min(value = 0, message = "Score must be at least 0")
+    // optional
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private ZonedDateTime completedAt;
+
+    // JSON settings chosen by the student for this attempt (e.g. answer timeout, flip interval, cards count, digits allowed)
+    private String settings;
+
+    // score and totals (can be zero initially)
     private Integer score;
-
-    @NotNull(message = "Time spent in seconds is required")
-    @Min(value = 1, message = "Time spent must be at least 1 second")
-    private Integer timeSpentSeconds;
-
-    @NotNull(message = "Accuracy is required")
-    @DecimalMin(value = "0.00", message = "Accuracy must be between 0 and 100")
-    @DecimalMax(value = "100.00", message = "Accuracy must be between 0 and 100")
-    private BigDecimal accuracy;
-
-    @Min(value = 0, message = "Mistakes must be at least 0")
-    private Integer mistakes = 0;
+    private Long totalAttempts;
+    private Long totalCorrect;
 }

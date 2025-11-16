@@ -6,7 +6,6 @@ export interface Exercise {
     exerciseTypeName: string;
     parameters: string;
     difficulty: number;
-    estimatedSeconds: number;
     points: number;
     createdById: string;
     createdByName: string;
@@ -18,16 +17,14 @@ export interface CreateExercisePayload {
     exerciseTypeId: string;
     parameters: string;
     difficulty: number;
-    estimatedSeconds: number;
     points: number;
-    createdById: string;
+    createdById?: string;
 }
 
 export interface UpdateExercisePayload {
     exerciseTypeId?: string;
     parameters?: string;
     difficulty?: number;
-    estimatedSeconds?: number;
     points?: number;
 }
 

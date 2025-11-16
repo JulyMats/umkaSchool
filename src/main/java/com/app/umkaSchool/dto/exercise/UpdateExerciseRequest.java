@@ -15,9 +15,6 @@ public class UpdateExerciseRequest {
     @Max(value = 10, message = "Difficulty must be between 1 and 10")
     private Integer difficulty;
 
-    @Min(value = 1, message = "Estimated seconds must be at least 1")
-    private Integer estimatedSeconds;
-
     @Min(value = 0, message = "Points must be at least 0")
     private Integer points;
 

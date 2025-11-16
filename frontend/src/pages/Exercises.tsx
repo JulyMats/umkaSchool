@@ -1,11 +1,13 @@
 import { Search } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { exerciseTypeService, ExerciseType } from '../services/exerciseType.service';
 
 type ExerciseCard = ExerciseType;
 
 export default function Exercises() {
+  const navigate = useNavigate();
   const [exercises, setExercises] = useState<ExerciseCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +88,18 @@ export default function Exercises() {
                 </span>
               </div>
               <p className="text-gray-600 text-sm mb-4">{exercise.description}</p>
+              {exercise.parameterRanges?.digitTypes && exercise.parameterRanges.digitTypes.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {exercise.parameterRanges.digitTypes.map((digitType, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-medium"
+                    >
+                      {digitType}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -96,7 +110,10 @@ export default function Exercises() {
                   {exercise.duration}
                 </span>
               </div>
-              <button className="bg-blue-500 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
+              <button 
+                onClick={() => navigate(`/exercises/${exercise.id}/setup`, { state: { exerciseType: exercise } })}
+                className="bg-blue-500 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+              >
                 Start
               </button>
             </div>

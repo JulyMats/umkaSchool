@@ -18,5 +18,7 @@ public class UpdateExerciseTypeRequest {
     @Min(value = 1, message = "Average time must be at least 1 second")
     private Integer avgTimeSeconds;
 
+    private String parameterRanges; // JSON: {"cardCount": [2, 20], "displaySpeed": [0.5, 3.0], "timePerQuestion": [2, 20]}
+
     private UUID createdById; // Teacher ID
 }

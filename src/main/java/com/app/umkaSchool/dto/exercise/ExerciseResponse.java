@@ -18,7 +18,6 @@ public class ExerciseResponse {
     private String exerciseTypeName;
     private String parameters; // JSON string
     private Integer difficulty;
-    private Integer estimatedSeconds;
     private Integer points;
     private UUID createdById;
     private String createdByName;

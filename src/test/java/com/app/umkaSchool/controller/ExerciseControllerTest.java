@@ -75,7 +75,6 @@ class ExerciseControllerTest {
         request.setExerciseTypeId(exerciseTypeId);
         request.setParameters("{\"operand1\": 5, \"operand2\": 3}");
         request.setDifficulty(3);
-        request.setEstimatedSeconds(120);
         request.setPoints(10);
 
         mockMvc.perform(post("/api/exercises")
@@ -85,7 +84,6 @@ class ExerciseControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.exerciseTypeId").value(exerciseTypeId.toString()))
                 .andExpect(jsonPath("$.difficulty").value(3))
-                .andExpect(jsonPath("$.estimatedSeconds").value(120))
                 .andExpect(jsonPath("$.points").value(10));
     }
 
@@ -96,7 +94,6 @@ class ExerciseControllerTest {
         createRequest.setExerciseTypeId(exerciseTypeId);
         createRequest.setParameters("{\"operand1\": 5, \"operand2\": 3}");
         createRequest.setDifficulty(3);
-        createRequest.setEstimatedSeconds(120);
         createRequest.setPoints(10);
 
         String createResponse = mockMvc.perform(post("/api/exercises")
@@ -127,7 +124,6 @@ class ExerciseControllerTest {
         createRequest.setExerciseTypeId(exerciseTypeId);
         createRequest.setParameters("{\"operand1\": 5, \"operand2\": 3}");
         createRequest.setDifficulty(3);
-        createRequest.setEstimatedSeconds(120);
         createRequest.setPoints(10);
 
         String createResponse = mockMvc.perform(post("/api/exercises")
@@ -152,7 +148,6 @@ class ExerciseControllerTest {
         createRequest.setExerciseTypeId(exerciseTypeId);
         createRequest.setParameters("{\"operand1\": 5, \"operand2\": 3}");
         createRequest.setDifficulty(3);
-        createRequest.setEstimatedSeconds(120);
         createRequest.setPoints(10);
 
         mockMvc.perform(post("/api/exercises")
@@ -174,7 +169,6 @@ class ExerciseControllerTest {
         createRequest.setExerciseTypeId(exerciseTypeId);
         createRequest.setParameters("{\"operand1\": 5, \"operand2\": 3}");
         createRequest.setDifficulty(3);
-        createRequest.setEstimatedSeconds(120);
         createRequest.setPoints(10);
 
         mockMvc.perform(post("/api/exercises")
@@ -195,7 +189,6 @@ class ExerciseControllerTest {
         createRequest.setExerciseTypeId(exerciseTypeId);
         createRequest.setParameters("{\"operand1\": 5, \"operand2\": 3}");
         createRequest.setDifficulty(5);
-        createRequest.setEstimatedSeconds(120);
         createRequest.setPoints(10);
 
         mockMvc.perform(post("/api/exercises")
@@ -216,7 +209,6 @@ class ExerciseControllerTest {
         createRequest.setExerciseTypeId(exerciseTypeId);
         createRequest.setParameters("{\"operand1\": 5, \"operand2\": 3}");
         createRequest.setDifficulty(3);
-        createRequest.setEstimatedSeconds(120);
         createRequest.setPoints(10);
 
         String createResponse = mockMvc.perform(post("/api/exercises")
@@ -238,7 +230,6 @@ class ExerciseControllerTest {
         request.setExerciseTypeId(exerciseTypeId);
         request.setParameters("{\"operand1\": 5, \"operand2\": 3}");
         request.setDifficulty(15); // Invalid: must be between 1 and 10
-        request.setEstimatedSeconds(120);
         request.setPoints(10);
 
         mockMvc.perform(post("/api/exercises")
@@ -254,7 +245,6 @@ class ExerciseControllerTest {
         request.setExerciseTypeId(UUID.randomUUID()); // Non-existent exercise type
         request.setParameters("{\"operand1\": 5, \"operand2\": 3}");
         request.setDifficulty(3);
-        request.setEstimatedSeconds(120);
         request.setPoints(10);
 
         mockMvc.perform(post("/api/exercises")

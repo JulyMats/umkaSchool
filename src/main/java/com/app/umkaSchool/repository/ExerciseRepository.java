@@ -9,13 +9,8 @@ import java.util.UUID;
 
 @Repository
 public interface ExerciseRepository extends JpaRepository<Exercise, UUID> {
-    List<Exercise> findByExerciseType_IdOrderByDifficultyAsc(UUID exerciseTypeId);
-
-    List<Exercise> findByCreatedBy_IdOrderByCreatedAtDesc(UUID teacherId);
-
-    List<Exercise> findByDifficultyOrderByCreatedAtDesc(Integer difficulty);
-
     List<Exercise> findAllByOrderByCreatedAtDesc();
+    List<Exercise> findByExerciseType_IdOrderByDifficultyAsc(UUID exerciseTypeId);
+    List<Exercise> findByCreatedBy_IdOrderByCreatedAtDesc(UUID teacherId);
+    List<Exercise> findByDifficultyOrderByCreatedAtDesc(Integer difficulty);
 }
-
-

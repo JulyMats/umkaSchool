@@ -9,35 +9,42 @@ import com.app.umkaSchool.model.Student;
 import com.app.umkaSchool.repository.ExerciseAttemptRepository;
 import com.app.umkaSchool.repository.ExerciseRepository;
 import com.app.umkaSchool.repository.StudentRepository;
-import com.app.umkaSchool.service.ExerciseAttemptService;
+import com.app.umkaSchool.service.AchievementService;
+import com.app.umkaSchool.service.ProgressSnapshotService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-public class ExerciseAttemptServiceImpl implements ExerciseAttemptService {
+public class ExerciseAttemptServiceImpl {
     private static final Logger logger = LoggerFactory.getLogger(ExerciseAttemptServiceImpl.class);
 
     private final ExerciseAttemptRepository exerciseAttemptRepository;
     private final StudentRepository studentRepository;
     private final ExerciseRepository exerciseRepository;
+    private final ProgressSnapshotService progressSnapshotService;
+    private final AchievementService achievementService;
 
     @Autowired
     public ExerciseAttemptServiceImpl(ExerciseAttemptRepository exerciseAttemptRepository,
                                       StudentRepository studentRepository,
-                                      ExerciseRepository exerciseRepository) {
+                                      ExerciseRepository exerciseRepository,
+                                      ProgressSnapshotService progressSnapshotService,
+                                      AchievementService achievementService) {
         this.exerciseAttemptRepository = exerciseAttemptRepository;
         this.studentRepository = studentRepository;
         this.exerciseRepository = exerciseRepository;
+        this.progressSnapshotService = progressSnapshotService;
+        this.achievementService = achievementService;
     }
 
-    @Override
     @Transactional
     public ExerciseAttemptResponse createExerciseAttempt(CreateExerciseAttemptRequest request) {
         logger.info("Creating new exercise attempt for student: {} and exercise: {}",
@@ -53,18 +60,18 @@ public class ExerciseAttemptServiceImpl implements ExerciseAttemptService {
         attempt.setStudent(student);
         attempt.setExercise(exercise);
         attempt.setStartedAt(request.getStartedAt());
-        attempt.setScore(request.getScore());
-        attempt.setTimeSpentSeconds(request.getTimeSpentSeconds());
-        attempt.setAccuracy(request.getAccuracy());
-        attempt.setMistakes(request.getMistakes());
+        attempt.setScore(0);
+        attempt.setSettings(request.getSettings() == null ? "{}" : request.getSettings());
+        attempt.setTotalAttempts(0L);
+        attempt.setTotalCorrect(0L);
 
         attempt = exerciseAttemptRepository.save(attempt);
         logger.info("Exercise attempt created successfully: {}", attempt.getId());
 
+        // Not updating snapshot yet — will update on completion
         return mapToResponse(attempt);
     }
 
-    @Override
     @Transactional
     public ExerciseAttemptResponse updateExerciseAttempt(UUID attemptId, UpdateExerciseAttemptRequest request) {
         logger.info("Updating exercise attempt: {}", attemptId);
@@ -90,63 +97,81 @@ public class ExerciseAttemptServiceImpl implements ExerciseAttemptService {
         if (request.getScore() != null) {
             attempt.setScore(request.getScore());
         }
-        if (request.getTimeSpentSeconds() != null) {
-            attempt.setTimeSpentSeconds(request.getTimeSpentSeconds());
+        if (request.getTotalAttempts() != null) {
+            attempt.setTotalAttempts(request.getTotalAttempts());
         }
-        if (request.getAccuracy() != null) {
-            attempt.setAccuracy(request.getAccuracy());
+        if (request.getTotalCorrect() != null) {
+            attempt.setTotalCorrect(request.getTotalCorrect());
         }
-        if (request.getMistakes() != null) {
-            attempt.setMistakes(request.getMistakes());
+        if (request.getSettings() != null) {
+            attempt.setSettings(request.getSettings());
+        }
+
+        boolean shouldUpdateSnapshot = false;
+        if (request.getCompletedAt() != null) {
+            attempt.setCompletedAt(request.getCompletedAt());
+            shouldUpdateSnapshot = true;
+        } else if (attempt.getCompletedAt() == null && attempt.getScore() != null && attempt.getScore() > 0) {
+            attempt.setCompletedAt(ZonedDateTime.now());
+            shouldUpdateSnapshot = true;
         }
 
         attempt = exerciseAttemptRepository.save(attempt);
         logger.info("Exercise attempt updated successfully: {}", attemptId);
 
+        if (shouldUpdateSnapshot) {
+            try {
+                progressSnapshotService.createOrUpdateTodaySnapshot(attempt.getStudent());
+                logger.info("Progress snapshot updated for student: {}", attempt.getStudent().getId());
+                
+                // Check and award achievements after snapshot is updated
+                try {
+                    achievementService.checkAndAward(attempt.getStudent(), attempt);
+                } catch (Exception e) {
+                    logger.error("Error checking achievements for student {}: {}", attempt.getStudent().getId(), e.getMessage());
+                }
+            } catch (Exception e) {
+                logger.error("Error updating progress snapshot for student {}: {}", attempt.getStudent().getId(), e.getMessage());
+            }
+        }
+
         return mapToResponse(attempt);
     }
 
-    @Override
     public ExerciseAttemptResponse getExerciseAttemptById(UUID attemptId) {
         ExerciseAttempt attempt = exerciseAttemptRepository.findById(attemptId)
                 .orElseThrow(() -> new IllegalArgumentException("Exercise attempt not found"));
         return mapToResponse(attempt);
     }
 
-    @Override
     public List<ExerciseAttemptResponse> getAllExerciseAttempts() {
         return exerciseAttemptRepository.findAll().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
-    @Override
     public List<ExerciseAttemptResponse> getExerciseAttemptsByStudent(UUID studentId) {
         return exerciseAttemptRepository.findByStudent_IdOrderByCompletedAtDesc(studentId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
-    @Override
     public List<ExerciseAttemptResponse> getExerciseAttemptsByExercise(UUID exerciseId) {
         return exerciseAttemptRepository.findByExercise_IdOrderByCompletedAtDesc(exerciseId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
-    @Override
     public List<ExerciseAttemptResponse> getExerciseAttemptsByStudentAndExercise(UUID studentId, UUID exerciseId) {
         return exerciseAttemptRepository.findByStudent_IdAndExercise_IdOrderByCompletedAtDesc(studentId, exerciseId).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
-    @Override
     public Long countAttemptsByStudent(UUID studentId) {
         return exerciseAttemptRepository.countByStudent_Id(studentId);
     }
 
-    @Override
     @Transactional
     public void deleteExerciseAttempt(UUID attemptId) {
         logger.info("Deleting exercise attempt: {}", attemptId);
@@ -158,13 +183,19 @@ public class ExerciseAttemptServiceImpl implements ExerciseAttemptService {
         logger.info("Exercise attempt deleted successfully: {}", attemptId);
     }
 
-    @Override
     public ExerciseAttempt getExerciseAttemptEntity(UUID attemptId) {
         return exerciseAttemptRepository.findById(attemptId)
                 .orElseThrow(() -> new IllegalArgumentException("Exercise attempt not found"));
     }
 
     private ExerciseAttemptResponse mapToResponse(ExerciseAttempt attempt) {
+        Long totalAttempts = attempt.getTotalAttempts() == null ? 0L : attempt.getTotalAttempts();
+        Long totalCorrect = attempt.getTotalCorrect() == null ? 0L : attempt.getTotalCorrect();
+        java.math.BigDecimal accuracy = java.math.BigDecimal.ZERO;
+        if (totalAttempts > 0) {
+            accuracy = java.math.BigDecimal.valueOf(totalCorrect * 100.0 / totalAttempts).setScale(2, java.math.RoundingMode.HALF_UP);
+        }
+
         return ExerciseAttemptResponse.builder()
                 .id(attempt.getId())
                 .studentId(attempt.getStudent().getId())
@@ -175,11 +206,10 @@ public class ExerciseAttemptServiceImpl implements ExerciseAttemptService {
                 .startedAt(attempt.getStartedAt())
                 .completedAt(attempt.getCompletedAt())
                 .score(attempt.getScore())
-                .timeSpentSeconds(attempt.getTimeSpentSeconds())
-                .accuracy(attempt.getAccuracy())
-                .mistakes(attempt.getMistakes())
+                .totalAttempts(totalAttempts)
+                .totalCorrect(totalCorrect)
+                .durationSeconds(attempt.getDurationSeconds())
+                .accuracy(accuracy)
                 .build();
     }
 }
-
-

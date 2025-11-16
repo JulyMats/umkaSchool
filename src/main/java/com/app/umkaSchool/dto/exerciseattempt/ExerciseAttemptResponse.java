@@ -22,10 +22,8 @@ public class ExerciseAttemptResponse {
     private ZonedDateTime startedAt;
     private ZonedDateTime completedAt;
     private Integer score;
-    private Integer timeSpentSeconds;
-    private BigDecimal accuracy;
-    private Integer mistakes;
+    private Long totalAttempts;
+    private Long totalCorrect;
+    private Long durationSeconds;
+    private BigDecimal accuracy; // computed as totalCorrect * 100 / totalAttempts
 }
-
-
-

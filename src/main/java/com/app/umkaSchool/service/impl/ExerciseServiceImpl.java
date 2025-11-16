@@ -49,7 +49,6 @@ public class ExerciseServiceImpl implements ExerciseService {
         exercise.setExerciseType(exerciseType);
         exercise.setParameters(request.getParameters());
         exercise.setDifficulty(request.getDifficulty());
-        exercise.setEstimatedSeconds(request.getEstimatedSeconds());
         exercise.setPoints(request.getPoints());
 
         if (request.getCreatedById() != null) {
@@ -83,9 +82,6 @@ public class ExerciseServiceImpl implements ExerciseService {
         }
         if (request.getDifficulty() != null) {
             exercise.setDifficulty(request.getDifficulty());
-        }
-        if (request.getEstimatedSeconds() != null) {
-            exercise.setEstimatedSeconds(request.getEstimatedSeconds());
         }
         if (request.getPoints() != null) {
             exercise.setPoints(request.getPoints());
@@ -162,7 +158,6 @@ public class ExerciseServiceImpl implements ExerciseService {
                 .exerciseTypeName(exercise.getExerciseType().getName())
                 .parameters(exercise.getParameters())
                 .difficulty(exercise.getDifficulty())
-                .estimatedSeconds(exercise.getEstimatedSeconds())
                 .points(exercise.getPoints())
                 .createdById(exercise.getCreatedBy() != null ? exercise.getCreatedBy().getId() : null)
                 .createdByName(exercise.getCreatedBy() != null ?

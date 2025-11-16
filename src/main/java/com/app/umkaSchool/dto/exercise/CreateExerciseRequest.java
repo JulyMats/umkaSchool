@@ -21,10 +21,6 @@ public class CreateExerciseRequest {
     @Max(value = 10, message = "Difficulty must be between 1 and 10")
     private Integer difficulty;
 
-    @NotNull(message = "Estimated seconds is required")
-    @Min(value = 1, message = "Estimated seconds must be at least 1")
-    private Integer estimatedSeconds;
-
     @NotNull(message = "Points are required")
     @Min(value = 0, message = "Points must be at least 0")
     private Integer points;

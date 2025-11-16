@@ -6,7 +6,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -30,6 +32,10 @@ public class ExerciseType {
 
     @Column(name = "avg_time_seconds", nullable = false)
     private Integer avgTimeSeconds;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "parameter_ranges", columnDefinition = "jsonb")
+    private String parameterRanges; // JSON: {"cardCount": [2, 20], "displaySpeed": [0.5, 3.0], "timePerQuestion": [2, 20]}
 
     @JsonIgnore
     @ToString.Exclude
