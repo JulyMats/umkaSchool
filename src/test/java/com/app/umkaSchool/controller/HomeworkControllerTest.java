@@ -114,7 +114,6 @@ class HomeworkControllerTest {
         exerciseRequest.setExerciseTypeId(exerciseType.getId());
         exerciseRequest.setParameters("{\"operand1\": 5, \"operand2\": 3}");
         exerciseRequest.setDifficulty(3);
-        exerciseRequest.setEstimatedSeconds(120);
         exerciseRequest.setPoints(10);
 
         String exerciseResponse = mockMvc.perform(post("/api/exercises")

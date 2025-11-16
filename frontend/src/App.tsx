@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Exercises from "./pages/Exercises";
+import ExerciseSetup from "./pages/ExerciseSetup";
+import ExercisePlay from "./pages/ExercisePlay";
 import Progress from "./pages/Progress";
 import Homework from "./pages/Homework";
 import DailyChallenge from "./pages/DailyChallenge";
@@ -51,6 +53,8 @@ function AppContent() {
     return (
       <>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/exercises/:exerciseTypeId/setup" element={<ExerciseSetup />} />
+        <Route path="/exercises/play" element={<ExercisePlay />} />
         <Route path="/exercises" element={<Exercises />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/homework" element={<Homework />} />
