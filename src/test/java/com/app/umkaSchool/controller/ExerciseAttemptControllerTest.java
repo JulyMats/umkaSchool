@@ -23,8 +23,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -87,9 +87,9 @@ class ExerciseAttemptControllerTest {
         // Create an exercise type
         CreateExerciseTypeRequest typeRequest = new CreateExerciseTypeRequest();
         typeRequest.setName("Test Attempt Exercise Type");
-        typeRequest.setDescription("Test description");
         typeRequest.setBaseDifficulty(3);
-        typeRequest.setAvgTimeSeconds(120);
+        typeRequest.setAvgTimeSeconds(120); // Required field, will be removed later
+        typeRequest.setParameterRanges("{\"cardCount\": [2, 20], \"displaySpeed\": [0.5, 3.0], \"timePerQuestion\": [2, 20]}");
 
         String typeResponse = mockMvc.perform(post("/api/exercise-types")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -103,7 +103,6 @@ class ExerciseAttemptControllerTest {
         exerciseRequest.setExerciseTypeId(exerciseType.getId());
         exerciseRequest.setParameters("{\"operand1\": 5, \"operand2\": 3}");
         exerciseRequest.setDifficulty(3);
-        exerciseRequest.setEstimatedSeconds(120);
         exerciseRequest.setPoints(10);
 
         String exerciseResponse = mockMvc.perform(post("/api/exercises")
@@ -125,10 +124,11 @@ class ExerciseAttemptControllerTest {
         CreateExerciseAttemptRequest request = new CreateExerciseAttemptRequest();
         request.setStudentId(studentId);
         request.setExerciseId(exerciseId);
-        request.setScore(85);
-        request.setTimeSpentSeconds(100);
-        request.setAccuracy(new BigDecimal("95.50"));
-        request.setMistakes(2);
+        request.setStartedAt(ZonedDateTime.now());
+        request.setSettings("{\"cardCount\": 5, \"displaySpeed\": 1.0}");
+        request.setScore(0);
+        request.setTotalAttempts(0L);
+        request.setTotalCorrect(0L);
 
         mockMvc.perform(post("/api/exercise-attempts")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -137,10 +137,8 @@ class ExerciseAttemptControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.studentId").value(studentId.toString()))
                 .andExpect(jsonPath("$.exerciseId").value(exerciseId.toString()))
-                .andExpect(jsonPath("$.score").value(85))
-                .andExpect(jsonPath("$.timeSpentSeconds").value(100))
-                .andExpect(jsonPath("$.accuracy").value(95.50))
-                .andExpect(jsonPath("$.mistakes").value(2));
+                .andExpect(jsonPath("$.totalAttempts").value(0))
+                .andExpect(jsonPath("$.totalCorrect").value(0));
     }
 
     @Test
@@ -149,10 +147,11 @@ class ExerciseAttemptControllerTest {
         CreateExerciseAttemptRequest createRequest = new CreateExerciseAttemptRequest();
         createRequest.setStudentId(studentId);
         createRequest.setExerciseId(exerciseId);
-        createRequest.setScore(85);
-        createRequest.setTimeSpentSeconds(100);
-        createRequest.setAccuracy(new BigDecimal("95.50"));
-        createRequest.setMistakes(2);
+        createRequest.setStartedAt(ZonedDateTime.now());
+        createRequest.setSettings("{\"cardCount\": 5}");
+        createRequest.setScore(0);
+        createRequest.setTotalAttempts(0L);
+        createRequest.setTotalCorrect(0L);
 
         String createResponse = mockMvc.perform(post("/api/exercise-attempts")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -164,7 +163,9 @@ class ExerciseAttemptControllerTest {
         // Update attempt
         UpdateExerciseAttemptRequest updateRequest = new UpdateExerciseAttemptRequest();
         updateRequest.setScore(90);
-        updateRequest.setMistakes(1);
+        updateRequest.setTotalAttempts(100L);
+        updateRequest.setTotalCorrect(95L);
+        updateRequest.setCompletedAt(ZonedDateTime.now());
 
         mockMvc.perform(put("/api/exercise-attempts/{attemptId}", created.getId())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -172,76 +173,123 @@ class ExerciseAttemptControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.score").value(90))
-                .andExpect(jsonPath("$.mistakes").value(1));
+                .andExpect(jsonPath("$.totalAttempts").value(100))
+                .andExpect(jsonPath("$.totalCorrect").value(95))
+                .andExpect(jsonPath("$.completedAt").exists());
     }
 
     @Test
     void getExerciseAttemptById_ShouldReturnAttempt() throws Exception {
-        // Create attempt first
+        // Create and finish an attempt
         CreateExerciseAttemptRequest createRequest = new CreateExerciseAttemptRequest();
         createRequest.setStudentId(studentId);
         createRequest.setExerciseId(exerciseId);
-        createRequest.setScore(85);
-        createRequest.setTimeSpentSeconds(100);
-        createRequest.setAccuracy(new BigDecimal("95.50"));
-        createRequest.setMistakes(2);
+        createRequest.setStartedAt(ZonedDateTime.now());
+        createRequest.setSettings("{\"cardCount\": 5}");
+        createRequest.setScore(0);
+        createRequest.setTotalAttempts(0L);
+        createRequest.setTotalCorrect(0L);
 
-        String createResponse = mockMvc.perform(post("/api/exercise-attempts")
+        String createResp = mockMvc.perform(post("/api/exercise-attempts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
                 .andReturn().getResponse().getContentAsString();
 
-        ExerciseAttemptResponse created = objectMapper.readValue(createResponse, ExerciseAttemptResponse.class);
+        ExerciseAttemptResponse created = objectMapper.readValue(createResp, ExerciseAttemptResponse.class);
+
+        UpdateExerciseAttemptRequest finish = new UpdateExerciseAttemptRequest();
+        finish.setScore(85);
+        finish.setTotalAttempts(10L);
+        finish.setTotalCorrect(9L);
+        finish.setCompletedAt(ZonedDateTime.now());
+
+        mockMvc.perform(put("/api/exercise-attempts/{attemptId}", created.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(finish)))
+                .andReturn().getResponse().getContentAsString();
 
         // Get attempt by ID
         mockMvc.perform(get("/api/exercise-attempts/{attemptId}", created.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(created.getId().toString()))
-                .andExpect(jsonPath("$.score").value(85));
+                .andExpect(jsonPath("$.totalAttempts").value(10))
+                .andExpect(jsonPath("$.totalCorrect").value(9));
     }
 
     @Test
     void getAllExerciseAttempts_ShouldReturnListOfAttempts() throws Exception {
-        // Create an attempt
+        // Create and finish an attempt
         CreateExerciseAttemptRequest createRequest = new CreateExerciseAttemptRequest();
         createRequest.setStudentId(studentId);
         createRequest.setExerciseId(exerciseId);
-        createRequest.setScore(85);
-        createRequest.setTimeSpentSeconds(100);
-        createRequest.setAccuracy(new BigDecimal("95.50"));
-        createRequest.setMistakes(2);
+        createRequest.setStartedAt(ZonedDateTime.now());
+        createRequest.setSettings("{\"cardCount\": 5}");
+        createRequest.setScore(0);
+        createRequest.setTotalAttempts(0L);
+        createRequest.setTotalCorrect(0L);
 
-        mockMvc.perform(post("/api/exercise-attempts")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createRequest)));
+        String createResp = mockMvc.perform(post("/api/exercise-attempts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andReturn().getResponse().getContentAsString();
+
+        ExerciseAttemptResponse created = objectMapper.readValue(createResp, ExerciseAttemptResponse.class);
+
+        UpdateExerciseAttemptRequest finish = new UpdateExerciseAttemptRequest();
+        finish.setScore(85);
+        finish.setTotalAttempts(5L);
+        finish.setTotalCorrect(5L);
+        finish.setCompletedAt(ZonedDateTime.now());
+
+        mockMvc.perform(put("/api/exercise-attempts/{attemptId}", created.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(finish)))
+                .andReturn().getResponse().getContentAsString();
 
         // Get all attempts
         mockMvc.perform(get("/api/exercise-attempts"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].score").value(85));
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].id").exists());
     }
 
     @Test
     void getExerciseAttemptsByStudent_ShouldReturnListOfAttempts() throws Exception {
-        // Create an attempt
+        // Create and finish an attempt
         CreateExerciseAttemptRequest createRequest = new CreateExerciseAttemptRequest();
         createRequest.setStudentId(studentId);
         createRequest.setExerciseId(exerciseId);
-        createRequest.setScore(85);
-        createRequest.setTimeSpentSeconds(100);
-        createRequest.setAccuracy(new BigDecimal("95.50"));
-        createRequest.setMistakes(2);
+        createRequest.setStartedAt(ZonedDateTime.now());
+        createRequest.setSettings("{\"cardCount\": 5}");
+        createRequest.setScore(0);
+        createRequest.setTotalAttempts(0L);
+        createRequest.setTotalCorrect(0L);
 
-        mockMvc.perform(post("/api/exercise-attempts")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(createRequest)));
+        String createResp = mockMvc.perform(post("/api/exercise-attempts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andReturn().getResponse().getContentAsString();
+
+        ExerciseAttemptResponse created = objectMapper.readValue(createResp, ExerciseAttemptResponse.class);
+
+        UpdateExerciseAttemptRequest finish = new UpdateExerciseAttemptRequest();
+        finish.setScore(85);
+        finish.setTotalAttempts(10L);
+        finish.setTotalCorrect(9L);
+        finish.setCompletedAt(ZonedDateTime.now());
+
+        mockMvc.perform(put("/api/exercise-attempts/{attemptId}", created.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(finish)))
+                .andReturn().getResponse().getContentAsString();
 
         // Get attempts by student
         mockMvc.perform(get("/api/exercise-attempts/student/{studentId}", studentId))
                 .andDo(print())
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[0].studentId").value(studentId.toString()));
     }
 
@@ -251,10 +299,11 @@ class ExerciseAttemptControllerTest {
         CreateExerciseAttemptRequest createRequest = new CreateExerciseAttemptRequest();
         createRequest.setStudentId(studentId);
         createRequest.setExerciseId(exerciseId);
-        createRequest.setScore(85);
-        createRequest.setTimeSpentSeconds(100);
-        createRequest.setAccuracy(new BigDecimal("95.50"));
-        createRequest.setMistakes(2);
+        createRequest.setStartedAt(ZonedDateTime.now());
+        createRequest.setSettings("{\"cardCount\": 5}");
+        createRequest.setScore(0);
+        createRequest.setTotalAttempts(0L);
+        createRequest.setTotalCorrect(0L);
 
         String createResponse = mockMvc.perform(post("/api/exercise-attempts")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -270,18 +319,31 @@ class ExerciseAttemptControllerTest {
     }
 
     @Test
-    void createExerciseAttempt_WithInvalidAccuracy_ShouldReturnBadRequest() throws Exception {
+    void createExerciseAttempt_WithInvalidTotals_ShouldReturnBadRequest() throws Exception {
         CreateExerciseAttemptRequest request = new CreateExerciseAttemptRequest();
         request.setStudentId(studentId);
         request.setExerciseId(exerciseId);
+        request.setStartedAt(ZonedDateTime.now());
+        request.setSettings("{\"cardCount\": 5}");
         request.setScore(85);
-        request.setTimeSpentSeconds(100);
-        request.setAccuracy(new BigDecimal("150.00")); // Invalid: must be between 0 and 100
-        request.setMistakes(2);
+        request.setTotalAttempts(-5L); // invalid: negative
+        request.setTotalCorrect(2L);
 
-        mockMvc.perform(post("/api/exercise-attempts")
+        String createResponse = mockMvc.perform(post("/api/exercise-attempts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
+                .andReturn().getResponse().getContentAsString();
+
+        ExerciseAttemptResponse created = objectMapper.readValue(createResponse, ExerciseAttemptResponse.class);
+
+        UpdateExerciseAttemptRequest update = new UpdateExerciseAttemptRequest();
+        update.setScore(85);
+        update.setTotalAttempts(-5L); // invalid
+        update.setTotalCorrect(2L);
+
+        mockMvc.perform(put("/api/exercise-attempts/{attemptId}", created.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(update)))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }

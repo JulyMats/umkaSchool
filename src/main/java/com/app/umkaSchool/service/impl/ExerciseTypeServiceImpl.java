@@ -46,6 +46,7 @@ public class ExerciseTypeServiceImpl implements ExerciseTypeService {
         exerciseType.setDescription(request.getDescription());
         exerciseType.setBaseDifficulty(request.getBaseDifficulty());
         exerciseType.setAvgTimeSeconds(request.getAvgTimeSeconds());
+        exerciseType.setParameterRanges(request.getParameterRanges());
 
         if (request.getCreatedById() != null) {
             Teacher teacher = teacherRepository.findById(request.getCreatedById())
@@ -148,6 +149,7 @@ public class ExerciseTypeServiceImpl implements ExerciseTypeService {
                 .description(exerciseType.getDescription())
                 .baseDifficulty(exerciseType.getBaseDifficulty())
                 .avgTimeSeconds(exerciseType.getAvgTimeSeconds())
+                .parameterRanges(exerciseType.getParameterRanges())
                 .createdById(exerciseType.getCreatedBy() != null ? exerciseType.getCreatedBy().getId() : null)
                 .createdByName(exerciseType.getCreatedBy() != null ?
                         exerciseType.getCreatedBy().getUser().getFirstName() + " " +

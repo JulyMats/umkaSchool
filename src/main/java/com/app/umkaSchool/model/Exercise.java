@@ -35,8 +35,6 @@ public class Exercise {
     @Column(nullable = false)
     private Integer difficulty;
 
-    @Column(name = "estimated_seconds", nullable = false)
-    private Integer estimatedSeconds;
 
     @Column(nullable = false)
     private Integer points;

@@ -78,6 +78,7 @@ CREATE TABLE exercise_type (
     description text,
     base_difficulty int NOT NULL CHECK (base_difficulty BETWEEN 1 AND 10),
     avg_time_seconds int NOT NULL,
+    parameter_ranges jsonb, -- JSON with min/max ranges: {"cardCount": [2, 20], "displaySpeed": [0.5, 3.0], "timePerQuestion": [2, 20]}
     created_by uuid REFERENCES teacher(teacher_id) ON DELETE SET NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now()
@@ -89,7 +90,6 @@ CREATE TABLE exercise (
     exercise_type_id uuid NOT NULL REFERENCES exercise_type(exercise_type_id) ON DELETE CASCADE,
     parameters jsonb NOT NULL,
     difficulty int NOT NULL CHECK (difficulty BETWEEN 1 AND 10),
-    estimated_seconds int NOT NULL,
     points int NOT NULL DEFAULT 0 CHECK (points >= 0),
     created_by uuid REFERENCES teacher(teacher_id) ON DELETE SET NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
@@ -166,9 +166,9 @@ CREATE TABLE exercise_attempt (
     started_at timestamptz,
     completed_at timestamptz,
     score int NOT NULL,
-    time_spent_seconds int NOT NULL,
-    accuracy numeric(5,2) NOT NULL CHECK (accuracy BETWEEN 0 AND 100),
-    mistakes int NOT NULL DEFAULT 0
+    settings jsonb NOT NULL DEFAULT '{}',
+    total_attempts bigint NOT NULL DEFAULT 0,
+    total_correct bigint NOT NULL DEFAULT 0
 );
 
 -- Table: achievement
@@ -195,10 +195,10 @@ CREATE TABLE progress_snapshot (
        progress_snapshot_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
        student_id uuid NOT NULL REFERENCES student(student_id) ON DELETE CASCADE,
        snapshot_date date NOT NULL,
-       problems_solved int NOT NULL DEFAULT 0,
        total_practice_seconds bigint NOT NULL DEFAULT 0,
-       accuracy_percent numeric(5,2) NOT NULL DEFAULT 0.0 CHECK (accuracy_percent BETWEEN 0 AND 100),
        current_streak int NOT NULL DEFAULT 0,
+       total_attempts bigint NOT NULL DEFAULT 0,
+       total_correct bigint NOT NULL DEFAULT 0,
        created_at timestamptz NOT NULL DEFAULT now(),
        UNIQUE (student_id, snapshot_date)
 );

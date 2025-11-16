@@ -18,6 +18,7 @@ public class ExerciseTypeResponse {
     private String description;
     private Integer baseDifficulty;
     private Integer avgTimeSeconds;
+    private String parameterRanges; // JSON: {"cardCount": [2, 20], "displaySpeed": [0.5, 3.0], "timePerQuestion": [2, 20]}
     private UUID createdById;
     private String createdByName;
     private ZonedDateTime createdAt;

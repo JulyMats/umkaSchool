@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axiosInstance from './axios.config';
 
 interface APIExerciseType {
     id: string;
@@ -6,10 +6,18 @@ interface APIExerciseType {
     description: string;
     baseDifficulty: number;
     avgTimeSeconds: number;
+    parameterRanges?: string; // JSON: {"cardCount": [2, 20], "displaySpeed": [0.5, 3.0], "timePerQuestion": [2, 20]}
     createdById: string;
     createdByName: string;
     createdAt: string;
     updatedAt: string;
+}
+
+export interface ParameterRanges {
+    cardCount?: [number, number]; // [min, max]
+    displaySpeed?: [number, number]; // [min, max]
+    timePerQuestion?: [number, number]; // [min, max]
+    digitTypes?: string[]; // ["single-digit", "two-digit", "three-digit", "four-digit"]
 }
 
 export interface ExerciseType {
@@ -18,6 +26,7 @@ export interface ExerciseType {
     description: string;
     difficulty: 'beginner' | 'intermediate' | 'advanced';
     duration: string;
+    parameterRanges?: ParameterRanges;
 }
 
 const mapDifficulty = (baseDifficulty: number): 'beginner' | 'intermediate' | 'advanced' => {
@@ -31,19 +40,38 @@ const formatDuration = (seconds: number): string => {
     return `${minutes} mins`;
 };
 
-const BASE_URL = 'http://localhost:8080/api';
+const parseParameterRanges = (parameterRangesJson: string | null): ParameterRanges | null => {
+    if (!parameterRangesJson) return null;
+    try {
+        return JSON.parse(parameterRangesJson) as ParameterRanges;
+    } catch (error) {
+        console.error('Error parsing parameterRanges:', error);
+        return null;
+    }
+};
 
 export const exerciseTypeService = {
     getAllExerciseTypes: async (): Promise<ExerciseType[]> => {
         try {
-            const response = await axios.get<APIExerciseType[]>(`${BASE_URL}/exercise-types`);
-            return response.data.map(apiExercise => ({
-                id: apiExercise.id,
-                name: apiExercise.name,
-                description: apiExercise.description,
-                difficulty: mapDifficulty(apiExercise.baseDifficulty),
-                duration: formatDuration(apiExercise.avgTimeSeconds)
-            }));
+            const response = await axiosInstance.get<APIExerciseType[]>('/api/exercise-types');
+            return response.data.map(apiExercise => {
+                let parameterRanges: ParameterRanges | undefined;
+                if (apiExercise.parameterRanges) {
+                    try {
+                        parameterRanges = JSON.parse(apiExercise.parameterRanges);
+                    } catch (e) {
+                        console.warn('Failed to parse parameterRanges for exercise type:', apiExercise.name, e);
+                    }
+                }
+                return {
+                    id: apiExercise.id,
+                    name: apiExercise.name,
+                    description: apiExercise.description,
+                    difficulty: mapDifficulty(apiExercise.baseDifficulty),
+                    duration: formatDuration(apiExercise.avgTimeSeconds),
+                    parameterRanges
+                };
+            });
         } catch (error) {
             console.error('Error fetching exercise types:', error);
             throw error;
@@ -52,14 +80,23 @@ export const exerciseTypeService = {
 
     getExerciseTypeById: async (id: string): Promise<ExerciseType> => {
         try {
-            const response = await axios.get<APIExerciseType>(`${BASE_URL}/exercise-types/${id}`);
+            const response = await axiosInstance.get<APIExerciseType>(`/api/exercise-types/${id}`);
             const apiExercise = response.data;
+            let parameterRanges: ParameterRanges | undefined;
+            if (apiExercise.parameterRanges) {
+                try {
+                    parameterRanges = JSON.parse(apiExercise.parameterRanges);
+                } catch (e) {
+                    console.warn('Failed to parse parameterRanges for exercise type:', apiExercise.name, e);
+                }
+            }
             return {
                 id: apiExercise.id,
                 name: apiExercise.name,
                 description: apiExercise.description,
                 difficulty: mapDifficulty(apiExercise.baseDifficulty),
-                duration: formatDuration(apiExercise.avgTimeSeconds)
+                duration: formatDuration(apiExercise.avgTimeSeconds),
+                parameterRanges
             };
         } catch (error) {
             console.error(`Error fetching exercise type with id ${id}:`, error);
