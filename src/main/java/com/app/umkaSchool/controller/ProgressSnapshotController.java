@@ -81,5 +81,31 @@ public class ProgressSnapshotController {
                         .orElse(ResponseEntity.notFound().build()))
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @GetMapping("/student/{studentId}/stats")
+    public ResponseEntity<com.app.umkaSchool.dto.stats.StatsResponse> getStudentStats(
+            @PathVariable UUID studentId,
+            @RequestParam(defaultValue = "all") String period) {
+        
+        Student student = studentRepository.findById(studentId)
+            .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+
+        // Validate period parameter
+        if (!isValidPeriod(period)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        com.app.umkaSchool.dto.stats.StatsResponse stats = progressSnapshotService.getStudentStats(student, period);
+        return ResponseEntity.ok(stats);
+    }
+
+    private boolean isValidPeriod(String period) {
+        return period != null && (
+            period.equalsIgnoreCase("day") ||
+            period.equalsIgnoreCase("week") ||
+            period.equalsIgnoreCase("month") ||
+            period.equalsIgnoreCase("all")
+        );
+    }
 }
 

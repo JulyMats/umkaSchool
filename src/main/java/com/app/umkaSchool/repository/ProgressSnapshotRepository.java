@@ -14,8 +14,8 @@ import java.util.UUID;
 
 @Repository
 public interface ProgressSnapshotRepository extends JpaRepository<ProgressSnapshot, UUID> {
-    @Query("SELECT ps FROM ProgressSnapshot ps JOIN FETCH ps.student s JOIN FETCH s.user WHERE ps.student = :student AND ps.snapshotDate = :snapshotDate")
-    Optional<ProgressSnapshot> findByStudentAndSnapshotDate(@Param("student") Student student, @Param("snapshotDate") LocalDate snapshotDate);
+    @Query("SELECT ps FROM ProgressSnapshot ps JOIN FETCH ps.student s JOIN FETCH s.user WHERE ps.student.id = :studentId AND ps.snapshotDate = :snapshotDate ORDER BY ps.createdAt DESC")
+    List<ProgressSnapshot> findAllByStudentIdAndSnapshotDateOrderByCreatedAtDesc(@Param("studentId") UUID studentId, @Param("snapshotDate") LocalDate snapshotDate);
     
     Optional<ProgressSnapshot> findByStudent_IdAndSnapshotDate(UUID studentId, LocalDate snapshotDate);
     
