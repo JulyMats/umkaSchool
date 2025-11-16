@@ -111,18 +111,26 @@ public class ExerciseAttemptServiceImpl {
         if (request.getCompletedAt() != null) {
             attempt.setCompletedAt(request.getCompletedAt());
             shouldUpdateSnapshot = true;
+            logger.info("Setting completedAt from request: {}, shouldUpdateSnapshot: {}", request.getCompletedAt(), shouldUpdateSnapshot);
         } else if (attempt.getCompletedAt() == null && attempt.getScore() != null && attempt.getScore() > 0) {
             attempt.setCompletedAt(ZonedDateTime.now());
             shouldUpdateSnapshot = true;
+            logger.info("Setting completedAt automatically (score > 0): {}, shouldUpdateSnapshot: {}", attempt.getCompletedAt(), shouldUpdateSnapshot);
+        } else {
+            logger.info("NOT updating snapshot - completedAt: {}, request.completedAt: {}, score: {}", 
+                attempt.getCompletedAt(), request.getCompletedAt(), attempt.getScore());
         }
 
         attempt = exerciseAttemptRepository.save(attempt);
-        logger.info("Exercise attempt updated successfully: {}", attemptId);
+        logger.info("Exercise attempt updated successfully: {} - totalAttempts: {}, totalCorrect: {}, completedAt: {}", 
+            attemptId, attempt.getTotalAttempts(), attempt.getTotalCorrect(), attempt.getCompletedAt());
 
         if (shouldUpdateSnapshot) {
             try {
-                progressSnapshotService.createOrUpdateTodaySnapshot(attempt.getStudent());
-                logger.info("Progress snapshot updated for student: {}", attempt.getStudent().getId());
+                logger.info("Calling updateSnapshotAfterSession for student: {}, attempt: {}", 
+                    attempt.getStudent().getId(), attempt.getId());
+                progressSnapshotService.updateSnapshotAfterSession(attempt.getStudent(), attempt);
+                logger.info("Progress snapshot updated incrementally for student: {}", attempt.getStudent().getId());
                 
                 // Check and award achievements after snapshot is updated
                 try {

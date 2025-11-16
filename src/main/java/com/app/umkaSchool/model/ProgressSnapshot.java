@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "progress_snapshot", uniqueConstraints = @UniqueConstraint(columnNames = {"student_id", "snapshot_date"}))
+@Table(name = "progress_snapshot")
 public class ProgressSnapshot {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

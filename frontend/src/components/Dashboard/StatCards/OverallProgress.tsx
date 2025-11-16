@@ -1,4 +1,4 @@
-import { BarChart3 } from "lucide-react";
+import { Target } from "lucide-react";
 import { useEffect, useState } from "react";
 import StatCard from "../StatCard";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -17,10 +17,12 @@ export default function OverallProgress() {
       }
 
       try {
+        // Get stats from backend API (uses latest snapshot for "all" period)
         const stats = await statsService.getStudentStats(student.id, 'all');
         setAccuracyRate(stats.accuracyRate);
       } catch (error) {
-        console.error('Error fetching overall progress:', error);
+        console.error('Error fetching accuracy:', error);
+        setAccuracyRate(0);
       } finally {
         setLoading(false);
       }
@@ -32,8 +34,8 @@ export default function OverallProgress() {
   if (loading) {
     return (
       <StatCard
-        icon={<BarChart3 size={16} />}
-        title="Overall Progress"
+        icon={<Target size={16} />}
+        title="Accuracy"
         value="..."
         progress={0}
         subtitle="Loading..."
@@ -51,8 +53,8 @@ export default function OverallProgress() {
 
   return (
     <StatCard
-      icon={<BarChart3 size={16} />}
-      title="Overall Progress"
+      icon={<Target size={16} />}
+      title="Accuracy"
       value={`${accuracyRate}%`}
       progress={accuracyRate}
       subtitle={getSubtitle()}

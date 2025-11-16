@@ -38,6 +38,8 @@ export default function ExercisePlay() {
   const answerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const totalAttemptsRef = useRef<number>(0);
   const totalCorrectRef = useRef<number>(0);
+  const isInitializingRef = useRef<boolean>(false);
+  const sessionCompletedRef = useRef<boolean>(false);
 
   const numbers = useMemo(() => (
     config ? generateNumbers(config.cardCount, config.digitLength) : []
@@ -69,11 +71,18 @@ export default function ExercisePlay() {
 
   // Initialize session and create ExerciseAttempt
   useEffect(() => {
-    if (!config || !student?.id) {
+    if (!config || !student?.id || sessionStarted || isInitializingRef.current) {
       return;
     }
 
     const initializeSession = async () => {
+      // Prevent duplicate initialization
+      if (isInitializingRef.current) {
+        return;
+      }
+      
+      isInitializingRef.current = true;
+
       try {
         // Create Exercise with settings
         const exerciseParams: any = {
@@ -128,6 +137,7 @@ export default function ExercisePlay() {
         setTotalCorrect(0);
         totalAttemptsRef.current = 0;
         totalCorrectRef.current = 0;
+        sessionCompletedRef.current = false; // Reset completion flag for new session
       } catch (error: any) {
         console.error('Failed to initialize session:', error);
         const errorMessage = error?.response?.data?.message || 
@@ -140,19 +150,22 @@ export default function ExercisePlay() {
           message: errorMessage
         });
         alert(`Failed to start session: ${errorMessage}`);
+        isInitializingRef.current = false; // Reset on error
         navigate('/exercises');
       }
     };
 
     initializeSession();
-  }, [config, student?.id, navigate]);
+  }, [config, student?.id, navigate, sessionStarted]);
 
   // Cleanup on unmount - complete the attempt
   useEffect(() => {
     return () => {
-      if (currentAttempt && sessionStarted && exerciseId) {
+      // Only complete if session hasn't been completed yet
+      if (currentAttempt && sessionStarted && exerciseId && !sessionCompletedRef.current) {
         // Use refs to get latest values
         const endTime = new Date();
+        sessionCompletedRef.current = true;
         exerciseAttemptService.updateAttempt(currentAttempt.id, {
           completedAt: endTime.toISOString(),
           totalAttempts: totalAttemptsRef.current,
@@ -165,13 +178,11 @@ export default function ExercisePlay() {
   }, [currentAttempt?.id, sessionStarted, exerciseId]);
 
   const completeSession = async () => {
-    if (!currentAttempt || !exerciseId) return;
+    if (!currentAttempt || !exerciseId || sessionCompletedRef.current) return;
 
     try {
+      sessionCompletedRef.current = true;
       const endTime = new Date();
-      const durationSeconds = sessionStartTime 
-        ? Math.floor((endTime.getTime() - sessionStartTime.getTime()) / 1000)
-        : 0;
 
       await exerciseAttemptService.updateAttempt(currentAttempt.id, {
         completedAt: endTime.toISOString(),
@@ -181,6 +192,8 @@ export default function ExercisePlay() {
       });
     } catch (error) {
       console.error('Failed to complete session:', error);
+      // Reset flag on error so cleanup can try again
+      sessionCompletedRef.current = false;
     }
   };
 

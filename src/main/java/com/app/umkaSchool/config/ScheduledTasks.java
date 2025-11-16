@@ -16,17 +16,18 @@ public class ScheduledTasks {
     }
 
     /**
-     * Runs daily at 1:00 AM to create/update progress snapshots for all students
+     * Runs daily at 1:00 AM to cleanup duplicate snapshots from yesterday.
+     * Deletes all snapshots from yesterday except the last one, if there were new attempts.
      * Cron format: second, minute, hour, day of month, month, day of week
      */
     @Scheduled(cron = "0 0 1 * * ?")
-    public void createDailyProgressSnapshots() {
-        logger.info("Starting scheduled daily progress snapshot creation");
+    public void cleanupYesterdaySnapshots() {
+        logger.info("Starting scheduled cleanup of yesterday's duplicate snapshots");
         try {
-            progressSnapshotService.createSnapshotsForAllStudentsToday();
-            logger.info("Daily progress snapshot creation completed successfully");
+            progressSnapshotService.cleanupYesterdaySnapshots();
+            logger.info("Cleanup of yesterday's snapshots completed successfully");
         } catch (Exception e) {
-            logger.error("Error during scheduled progress snapshot creation: {}", e.getMessage(), e);
+            logger.error("Error during scheduled snapshot cleanup: {}", e.getMessage(), e);
         }
     }
 }

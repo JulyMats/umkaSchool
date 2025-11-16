@@ -1,3 +1,4 @@
+import axiosInstance from './axios.config';
 import { exerciseAttemptService, ExerciseAttempt } from './exerciseAttempt.service';
 import { progressSnapshotService, ProgressSnapshot } from './progressSnapshot.service';
 
@@ -129,175 +130,69 @@ const calculateStreak = (attempts: ExerciseAttempt[]): { current: number; best: 
 export const statsService = {
     getStudentStats: async (studentId: string, period: TimePeriod = 'all'): Promise<StudentStats> => {
         try {
-            // Try to get stats from snapshots first (more efficient)
-            const { start, end } = getDateRange(period);
-            const startDateStr = formatDate(start);
-            const endDateStr = formatDate(end);
+            // Use backend API endpoint for statistics calculation
+            const response = await axiosInstance.get<{
+                totalPracticeTime: string;
+                problemsSolved: number;
+                accuracyRate: number;
+                currentStreak: number;
+                bestStreak: number;
+            }>(`/api/progress-snapshots/student/${studentId}/stats`, {
+                params: { period }
+            });
 
-            // Get snapshots for the period
-            let snapshots: ProgressSnapshot[] = [];
-            if (period === 'all') {
-                snapshots = await progressSnapshotService.getSnapshotsByStudent(studentId);
-            } else {
-                snapshots = await progressSnapshotService.getSnapshotsByDateRange(studentId, startDateStr, endDateStr);
-            }
-
-            // If we have snapshots, use the latest one for current stats
-            if (snapshots.length > 0) {
-                const latestSnapshot = snapshots[0]; // Already sorted desc
-                
-                // For period-specific stats, calculate from snapshots
-                let periodProblemsSolved = 0;
-                let periodPracticeSeconds = 0;
-                let periodAccuracySum = 0;
-                let snapshotCount = 0;
-
-                if (period === 'all') {
-                    // Use latest snapshot for all-time stats
-                    periodProblemsSolved = latestSnapshot.totalAttempts;
-                    periodPracticeSeconds = latestSnapshot.totalPracticeSeconds;
-                    // Calculate accuracy from totalAttempts and totalCorrect
-                    const accuracy = latestSnapshot.totalAttempts > 0 
-                        ? (latestSnapshot.totalCorrect / latestSnapshot.totalAttempts) * 100 
-                        : 0;
-                    periodAccuracySum = accuracy;
-                    snapshotCount = 1;
-                } else {
-                    // For period stats, we need snapshots for the start and end of the period
-                    const startDateStr = formatDate(start);
-                    const endDateStr = formatDate(end);
-                    
-                    // Find snapshot for the end of period (should be today for "day" period)
-                    const endSnapshot = snapshots.find(s => {
-                        const snapDate = new Date(s.snapshotDate + 'T00:00:00');
-                        const endDateOnly = new Date(endDateStr + 'T00:00:00');
-                        return snapDate.getTime() === endDateOnly.getTime();
-                    });
-                    
-                    // Find snapshot for the day before period starts
-                    const startDateOnly = new Date(startDateStr + 'T00:00:00');
-                    startDateOnly.setDate(startDateOnly.getDate() - 1); // Day before period starts
-                    const beforeStartDateStr = formatDate(startDateOnly);
-                    
-                    const beforePeriodSnapshot = snapshots.find(s => {
-                        const snapDate = new Date(s.snapshotDate + 'T00:00:00');
-                        const beforeDate = new Date(beforeStartDateStr + 'T00:00:00');
-                        return snapDate.getTime() === beforeDate.getTime();
-                    });
-                    
-                    // If we have snapshot for end of period, use it; otherwise use latest
-                    const periodEndSnapshot = endSnapshot || latestSnapshot;
-                    
-                    // Calculate difference: end snapshot - before period snapshot
-                    const baselineProblems = beforePeriodSnapshot?.totalAttempts || 0;
-                    const baselineSeconds = beforePeriodSnapshot?.totalPracticeSeconds || 0;
-                    
-                    periodProblemsSolved = periodEndSnapshot.totalAttempts - baselineProblems;
-                    periodPracticeSeconds = periodEndSnapshot.totalPracticeSeconds - baselineSeconds;
-                    
-                    // For accuracy, calculate from snapshots within the period
-                    const periodSnapshots = snapshots.filter(s => {
-                        const snapDate = new Date(s.snapshotDate + 'T00:00:00');
-                        return snapDate >= start && snapDate <= end;
-                    });
-                    
-                    if (periodSnapshots.length > 0) {
-                        // Calculate average accuracy from snapshots in period
-                        const totalAttempts = periodSnapshots.reduce((sum, s) => sum + s.totalAttempts, 0);
-                        const totalCorrect = periodSnapshots.reduce((sum, s) => sum + s.totalCorrect, 0);
-                        periodAccuracySum = totalAttempts > 0 ? (totalCorrect / totalAttempts) * 100 : 0;
-                        snapshotCount = periodSnapshots.length;
-                    } else if (endSnapshot) {
-                        // If no snapshots in period but we have end snapshot, use its accuracy
-                        const accuracy = endSnapshot.totalAttempts > 0 
-                            ? (endSnapshot.totalCorrect / endSnapshot.totalAttempts) * 100 
-                            : 0;
-                        periodAccuracySum = accuracy;
-                        snapshotCount = 1;
-                    } else {
-                        // Fallback to latest snapshot's accuracy
-                        const accuracy = latestSnapshot.totalAttempts > 0 
-                            ? (latestSnapshot.totalCorrect / latestSnapshot.totalAttempts) * 100 
-                            : 0;
-                        periodAccuracySum = accuracy;
-                        snapshotCount = 1;
-                    }
-                    
-                    // If period is "day" and we don't have snapshot for today, use fallback
-                    if (period === 'day' && !endSnapshot) {
-                        console.log('No snapshot for today, using direct calculation from attempts');
-                        // Will fall through to fallback below
-                        throw new Error('No snapshot for today');
-                    }
-                }
-
-                // Calculate streak from all attempts (needs real-time calculation)
-                const allAttempts = await exerciseAttemptService.getAttemptsByStudent(studentId);
-                const { current, best } = calculateStreak(allAttempts);
-
-                const accuracyRate = snapshotCount > 0 
-                    ? Math.round(periodAccuracySum / snapshotCount)
-                    : (latestSnapshot.totalAttempts > 0 
-                        ? Math.round((latestSnapshot.totalCorrect / latestSnapshot.totalAttempts) * 100) 
-                        : 0);
-
-                return {
-                    totalPracticeTime: formatTime(periodPracticeSeconds),
-                    problemsSolved: Math.max(0, periodProblemsSolved),
-                    accuracyRate: Math.max(0, accuracyRate),
-                    currentStreak: current,
-                    bestStreak: best
-                };
-            } else {
-                // No snapshots available, will use fallback below
-                console.log('No snapshots found, using direct calculation from attempts');
-            }
+            return {
+                totalPracticeTime: response.data.totalPracticeTime,
+                problemsSolved: response.data.problemsSolved,
+                accuracyRate: response.data.accuracyRate,
+                currentStreak: response.data.currentStreak,
+                bestStreak: response.data.bestStreak
+            };
         } catch (error) {
-            console.warn('Error fetching from snapshots, falling back to direct calculation:', error);
+            console.error('Error fetching stats from backend:', error);
+            // Fallback to direct calculation from attempts if backend fails
+            const attempts = await exerciseAttemptService.getAttemptsByStudent(studentId);
+            const { start, end } = getDateRange(period);
+
+            // Filter attempts by period - only attempts completed within the period
+            const filteredAttempts = attempts.filter(attempt => {
+                if (!attempt.completedAt) return false;
+                const attemptDate = new Date(attempt.completedAt);
+                // Include attempts from start of period (00:00:00) to end of period (23:59:59)
+                return attemptDate >= start && attemptDate <= end;
+            });
+
+            // Calculate total practice time from durationSeconds
+            const totalSeconds = filteredAttempts.reduce((sum, attempt) => {
+                return sum + (attempt.durationSeconds || 0);
+            }, 0);
+
+            // Calculate problems solved from totalAttempts
+            const problemsSolved = filteredAttempts.reduce((sum, attempt) => {
+                return sum + (attempt.totalAttempts || 0);
+            }, 0);
+
+            // Calculate accuracy rate from totalAttempts and totalCorrect
+            const totalAttempts = filteredAttempts.reduce((sum, attempt) => {
+                return sum + (attempt.totalAttempts || 0);
+            }, 0);
+            const totalCorrect = filteredAttempts.reduce((sum, attempt) => {
+                return sum + (attempt.totalCorrect || 0);
+            }, 0);
+            const accuracyRate = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+
+            // Calculate streak (using all attempts for streak calculation)
+            const allAttempts = await exerciseAttemptService.getAttemptsByStudent(studentId);
+            const { current, best } = calculateStreak(allAttempts);
+
+            return {
+                totalPracticeTime: formatTime(totalSeconds),
+                problemsSolved,
+                accuracyRate,
+                currentStreak: current,
+                bestStreak: best
+            };
         }
-
-        // Fallback to direct calculation from attempts if snapshots not available
-        const attempts = await exerciseAttemptService.getAttemptsByStudent(studentId);
-        const { start, end } = getDateRange(period);
-
-        // Filter attempts by period - only attempts completed within the period
-        const filteredAttempts = attempts.filter(attempt => {
-            if (!attempt.completedAt) return false;
-            const attemptDate = new Date(attempt.completedAt);
-            // Include attempts from start of period (00:00:00) to end of period (23:59:59)
-            return attemptDate >= start && attemptDate <= end;
-        });
-
-        // Calculate total practice time from durationSeconds
-        const totalSeconds = filteredAttempts.reduce((sum, attempt) => {
-            return sum + (attempt.durationSeconds || 0);
-        }, 0);
-
-        // Calculate problems solved from totalAttempts
-        const problemsSolved = filteredAttempts.reduce((sum, attempt) => {
-            return sum + (attempt.totalAttempts || 0);
-        }, 0);
-
-        // Calculate accuracy rate from totalAttempts and totalCorrect
-        const totalAttempts = filteredAttempts.reduce((sum, attempt) => {
-            return sum + (attempt.totalAttempts || 0);
-        }, 0);
-        const totalCorrect = filteredAttempts.reduce((sum, attempt) => {
-            return sum + (attempt.totalCorrect || 0);
-        }, 0);
-        const accuracyRate = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
-
-        // Calculate streak (using all attempts for streak calculation)
-        const allAttempts = await exerciseAttemptService.getAttemptsByStudent(studentId);
-        const { current, best } = calculateStreak(allAttempts);
-
-        return {
-            totalPracticeTime: formatTime(totalSeconds),
-            problemsSolved,
-            accuracyRate,
-            currentStreak: current,
-            bestStreak: best
-        };
     },
 
     getSubjectProgress: async (studentId: string, period: TimePeriod = 'all'): Promise<SubjectProgress[]> => {
