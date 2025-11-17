@@ -37,29 +37,46 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Decorative animals */}
+      <div className="absolute top-10 left-10 text-6xl animate-bounce" style={{ animationDuration: '3s' }}>🐻</div>
+      <div className="absolute top-20 right-20 text-5xl animate-bounce" style={{ animationDuration: '2.5s', animationDelay: '0.5s' }}>🦊</div>
+      <div className="absolute bottom-20 left-20 text-5xl animate-bounce" style={{ animationDuration: '2.8s', animationDelay: '1s' }}>🐰</div>
+      <div className="absolute bottom-10 right-10 text-6xl animate-bounce" style={{ animationDuration: '3.2s', animationDelay: '1.5s' }}>🐱</div>
+
+      <div className="w-full max-w-md relative z-10">
         {/* Logo and Title */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">UmkaSchool</h1>
-          <p className="text-gray-600 mt-2">Mental Arithmetic Training</p>
+          <div className="inline-block mb-4">
+            <span className="text-6xl">🎓</span>
+          </div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
+            UmkaSchool
+          </h1>
+          <p className="text-gray-700 mt-2 text-lg font-medium">Mental Arithmetic Training</p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-white rounded-2xl shadow-sm p-8">
-          <h2 className="text-2xl font-semibold mb-6">Welcome back!</h2>
+        <div className="bg-white rounded-3xl shadow-xl p-8 border-4 border-pink-200">
+          <div className="text-center mb-6">
+            <span className="text-4xl mb-2 block">👋</span>
+            <h2 className="text-3xl font-bold text-gray-800">Welcome back!</h2>
+            <p className="text-gray-600 mt-2">We're so happy to see you again! 🎉</p>
+          </div>
           
           {error && (
-            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg mb-6">
-              {error}
+            <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl mb-6 border-2 border-red-200 flex items-center gap-2">
+              <span className="text-xl">😕</span>
+              <span>{error}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email address
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <span>📧</span>
+                <span>Email address</span>
               </label>
               <input
                 id="email"
@@ -69,15 +86,16 @@ export default function Login() {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter your email"
+                className="w-full px-4 py-3 border-2 border-pink-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all"
+                placeholder="your.email@example.com"
               />
             </div>
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <span>🔒</span>
+                <span>Password</span>
               </label>
               <div className="relative">
                 <input
@@ -88,13 +106,13 @@ export default function Login() {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter your password"
+                  className="w-full px-4 py-3 border-2 border-pink-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all pr-12"
+                  placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-purple-600 transition-colors"
                 >
                   {showPassword ? 
                     <EyeOff className="w-5 h-5" /> : 
@@ -113,15 +131,15 @@ export default function Login() {
                   type="checkbox"
                   checked={formData.rememberMe}
                   onChange={handleChange}
-                  className="h-4 w-4 text-blue-600 rounded border-gray-300"
+                  className="h-5 w-5 text-purple-600 rounded border-2 border-pink-300 focus:ring-purple-400"
                 />
-                <label htmlFor="remember-me" className="ml-2 text-sm text-gray-600">
+                <label htmlFor="remember-me" className="ml-2 text-sm text-gray-700 font-medium">
                   Remember me
                 </label>
               </div>
               <Link
                 to="/forgot-password"
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                className="text-sm text-purple-600 hover:text-purple-800 font-medium transition-colors"
               >
                 Forgot password?
               </Link>
@@ -130,22 +148,23 @@ export default function Login() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white py-3 rounded-xl hover:from-pink-600 hover:via-purple-600 hover:to-blue-600 transition-all transform hover:scale-105 shadow-lg font-bold text-lg"
             >
               <LogIn className="w-5 h-5" />
-              Sign in
+              <span>Sign in</span>
+              <span>🚀</span>
             </button>
           </form>
 
           {/* Sign Up Link */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-700">
               Don't have an account?{' '}
               <Link
                 to="/register"
-                className="text-blue-600 hover:text-blue-800 font-medium"
+                className="text-purple-600 hover:text-purple-800 font-bold transition-colors"
               >
-                Sign up
+                Sign up now! ✨
               </Link>
             </p>
           </div>
