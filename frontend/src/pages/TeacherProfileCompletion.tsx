@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Layout from '../components/Layout';
 import { profileService } from '../services/profile.service';
 
 export default function TeacherProfileCompletion() {
@@ -9,7 +8,7 @@ export default function TeacherProfileCompletion() {
     const [error, setError] = useState<string | null>(null);
 
     // Profile data state
-    const [avatarUrl, setAvatarUrl] = useState('/avatars/teacher1.png');
+    const [avatarUrl, setAvatarUrl] = useState('/avatars/student1.png');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [bio, setBio] = useState('');
 
@@ -55,90 +54,110 @@ export default function TeacherProfileCompletion() {
     };
 
     const avatarOptions = [
-        '/avatars/teacher1.png',
-        '/avatars/teacher2.png',
-        '/avatars/teacher3.png',
-        '/avatars/teacher4.png'
+        '/avatars/student1.png',
+        '/avatars/student2.png',
+        '/avatars/student3.png',
+        '/avatars/student4.png',
+        '/avatars/student5.png',
+        '/avatars/student6.png',
+        '/avatars/student7.png',
+        '/avatars/student8.png'
     ];
 
     return (
-        <Layout title="Complete Your Teacher Profile" subtitle="Please provide additional information">
-            <div className="max-w-2xl mx-auto">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Avatar Selection */}
-                    <div className="space-y-4">
-                        <label className="block text-sm font-medium text-gray-700">
-                            Choose your avatar
-                        </label>
-                        <div className="grid grid-cols-4 gap-4">
-                            {avatarOptions.map((avatar, index) => (
-                                <div
-                                    key={avatar}
-                                    className={`cursor-pointer rounded-lg p-2 border-2 transition-all
-                                        ${avatarUrl === avatar
-                                            ? 'border-blue-500 bg-blue-50'
-                                            : 'border-transparent hover:border-gray-300'
-                                        }`}
-                                    onClick={() => setAvatarUrl(avatar)}
-                                >
-                                    <img
-                                        src={avatar}
-                                        alt={`Avatar option ${index + 1}`}
-                                        className="w-full h-auto rounded"
-                                    />
-                                </div>
-                            ))}
+        <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-pink-50 to-purple-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+            <div className="w-full max-w-2xl">
+                {/* Header */}
+                <div className="text-center mb-12">
+                    <h1 className="text-4xl font-semibold text-gray-900 mb-2">Complete Your Profile</h1>
+                    <p className="text-lg text-gray-600">Let's set up your teaching profile</p>
+                </div>
+
+                {/* Form Card */}
+                <div className="bg-white rounded-3xl shadow-sm p-8 sm:p-12">
+                    <form onSubmit={handleSubmit} className="space-y-10">
+                        {/* Avatar Selection */}
+                        <div className="space-y-4">
+                            <label className="block text-base font-medium text-gray-900 mb-6">
+                                Choose Your Avatar
+                            </label>
+                            <div className="grid grid-cols-4 sm:grid-cols-4 gap-4">
+                                {avatarOptions.map((avatar) => (
+                                    <button
+                                        key={avatar}
+                                        type="button"
+                                        onClick={() => setAvatarUrl(avatar)}
+                                        className={`relative aspect-square rounded-2xl overflow-hidden transition-all duration-200
+                                            ${avatarUrl === avatar
+                                                ? 'ring-4 ring-pink-400 ring-offset-2 scale-105'
+                                                : 'ring-1 ring-gray-200 hover:ring-pink-300 hover:scale-[1.02]'
+                                            }`}
+                                    >
+                                        <img
+                                            src={avatar}
+                                            alt="Avatar"
+                                            className="w-full h-full object-cover"
+                                        />
+                                        {avatarUrl === avatar && (
+                                            <div className="absolute inset-0 bg-pink-400/10 flex items-center justify-center">
+                                                <span className="text-2xl">✓</span>
+                                            </div>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Phone Number */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Phone Number
-                        </label>
-                        <input
-                            type="tel"
-                            required
-                            value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                    </div>
-
-                    {/* Professional Bio */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Professional Bio
-                        </label>
-                        <textarea
-                            required
-                            value={bio}
-                            onChange={(e) => setBio(e.target.value)}
-                            rows={4}
-                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Tell us about your teaching experience..."
-                        />
-                    </div>
-
-                    {error && (
-                        <div className="text-red-600 text-sm">
-                            {error}
+                        {/* Phone Number */}
+                        <div>
+                            <label className="block text-base font-medium text-gray-900 mb-3">
+                                Phone Number
+                            </label>
+                            <input
+                                type="tel"
+                                required
+                                value={phoneNumber}
+                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                className="w-full px-5 py-4 text-base bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-pink-400 focus:bg-white transition-all outline-none"
+                                placeholder="+1 (555) 123-4567"
+                            />
                         </div>
-                    )}
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-colors
-                            ${loading
-                                ? 'bg-blue-400 cursor-not-allowed'
-                                : 'bg-blue-500 hover:bg-blue-600'
-                            }`}
-                    >
-                        {loading ? 'Saving...' : 'Complete Profile'}
-                    </button>
-                </form>
+                        {/* Professional Bio */}
+                        <div>
+                            <label className="block text-base font-medium text-gray-900 mb-3">
+                                Professional Bio
+                            </label>
+                            <textarea
+                                required
+                                value={bio}
+                                onChange={(e) => setBio(e.target.value)}
+                                rows={5}
+                                className="w-full px-5 py-4 text-base bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-pink-400 focus:bg-white transition-all outline-none resize-none"
+                                placeholder="Tell us about your teaching experience and passion for education..."
+                            />
+                        </div>
+
+                        {error && (
+                            <div className="bg-red-50 text-red-600 px-5 py-4 rounded-2xl text-base">
+                                {error}
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className={`w-full py-5 px-6 rounded-2xl text-white font-semibold text-lg transition-all duration-200 shadow-sm
+                                ${loading
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 hover:shadow-lg transform hover:scale-[1.02]'
+                                }`}
+                        >
+                            {loading ? 'Saving...' : 'Complete Profile'}
+                        </button>
+                    </form>
+                </div>
             </div>
-        </Layout>
+        </div>
     );
 }
