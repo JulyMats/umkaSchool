@@ -36,7 +36,7 @@ export default function ProblemsSolved() {
   if (loading) {
     return (
       <StatCard
-        icon={<CheckCircle size={16} />}
+        icon={<CheckCircle size={22} />}
         title="Problems Solved"
         value="..."
         progress={0}
@@ -48,7 +48,7 @@ export default function ProblemsSolved() {
 
   return (
     <StatCard
-      icon={<CheckCircle size={16} />}
+      icon={<CheckCircle size={22} />}
       title="Problems Solved"
       value={problemsSolved}
       progress={progress}
