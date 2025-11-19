@@ -80,35 +80,47 @@ export default function Exercises() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredExercises.map((exercise) => (
-          <div
-            key={exercise.id}
-            className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full"
-          >
-            <div className="flex-1">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-lg font-semibold">{exercise.name}</h3>
-                <span className={`
-                  px-3 py-1 rounded-full text-xs font-medium flex-shrink-0
-                  ${exercise.difficulty === 'beginner' ? 'bg-green-100 text-green-700' : ''}
-                  ${exercise.difficulty === 'intermediate' ? 'bg-yellow-100 text-yellow-700' : ''}
-                  ${exercise.difficulty === 'advanced' ? 'bg-red-100 text-red-700' : ''}
-                `}>
-                  {exercise.difficulty.charAt(0).toUpperCase() + exercise.difficulty.slice(1)}
-                </span>
+        {filteredExercises.map((exercise, index) => {
+          const colorSchemes = [
+            { bg: 'bg-gradient-to-br from-pink-100 to-purple-100', border: 'border-pink-300', button: 'bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600', title: 'text-pink-700' },
+            { bg: 'bg-gradient-to-br from-blue-100 to-cyan-100', border: 'border-blue-300', button: 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600', title: 'text-blue-700' },
+            { bg: 'bg-gradient-to-br from-yellow-100 to-orange-100', border: 'border-yellow-300', button: 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600', title: 'text-orange-700' },
+            { bg: 'bg-gradient-to-br from-green-100 to-emerald-100', border: 'border-green-300', button: 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600', title: 'text-green-700' },
+            { bg: 'bg-gradient-to-br from-indigo-100 to-purple-100', border: 'border-indigo-300', button: 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600', title: 'text-indigo-700' },
+            { bg: 'bg-gradient-to-br from-rose-100 to-pink-100', border: 'border-rose-300', button: 'bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600', title: 'text-rose-700' },
+          ];
+          const colors = colorSchemes[index % colorSchemes.length];
+          
+          return (
+            <div
+              key={exercise.id}
+              className={`${colors.bg} ${colors.border} border-2 rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full transform hover:scale-105`}
+            >
+              <div className="flex-1">
+                <div className="flex flex-col items-center mb-3">
+                  <h3 className={`text-xl font-bold ${colors.title} text-center mb-2`}>{exercise.name}</h3>
+                  <span className={`
+                    px-3 py-1 rounded-full text-xs font-bold shadow-md
+                    ${exercise.difficulty === 'beginner' ? 'bg-green-400 text-white' : ''}
+                    ${exercise.difficulty === 'intermediate' ? 'bg-yellow-400 text-white' : ''}
+                    ${exercise.difficulty === 'advanced' ? 'bg-red-400 text-white' : ''}
+                  `}>
+                    {exercise.difficulty.charAt(0).toUpperCase() + exercise.difficulty.slice(1)}
+                  </span>
+                </div>
+                <p className="text-gray-700 text-sm font-medium leading-relaxed text-center">{exercise.description}</p>
               </div>
-              <p className="text-gray-600 text-sm">{exercise.description}</p>
+              <div className="flex justify-center mt-6">
+                <button 
+                  onClick={() => navigate(`/exercises/${exercise.id}/setup`, { state: { exerciseType: exercise } })}
+                  className={`${colors.button} text-white px-8 py-3 rounded-full text-sm font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110`}
+                >
+                  🚀 Start
+                </button>
+              </div>
             </div>
-            <div className="flex justify-end mt-4">
-              <button 
-                onClick={() => navigate(`/exercises/${exercise.id}/setup`, { state: { exerciseType: exercise } })}
-                className="bg-blue-500 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
-              >
-                Start
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </Layout>
   );
