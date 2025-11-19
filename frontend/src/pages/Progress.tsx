@@ -10,6 +10,7 @@ interface ProgressMetric {
   change: string;
   isPositive: boolean;
   icon: ReactElement;
+  color?: 'blue' | 'purple' | 'pink' | 'green';
 }
 
 interface TimeOption {
@@ -87,7 +88,8 @@ export default function Progress() {
         'h'
       ) : 'No previous data',
       isPositive: true,
-      icon: <Clock className="w-5 h-5" />
+      icon: <Clock className="w-5 h-5" />,
+      color: 'blue'
     },
     {
       title: "Problems Solved",
@@ -98,7 +100,8 @@ export default function Progress() {
         'problems'
       ) : 'No previous data',
       isPositive: true,
-      icon: <Brain className="w-5 h-5" />
+      icon: <Brain className="w-5 h-5" />,
+      color: 'purple'
     },
     {
       title: "Accuracy Rate",
@@ -109,14 +112,16 @@ export default function Progress() {
         '%'
       ) : 'No previous data',
       isPositive: true,
-      icon: <Target className="w-5 h-5" />
+      icon: <Target className="w-5 h-5" />,
+      color: 'pink'
     },
     {
       title: "Current Streak",
       value: `${stats.currentStreak} ${stats.currentStreak === 1 ? 'day' : 'days'}`,
       change: `Best: ${stats.bestStreak} days`,
       isPositive: true,
-      icon: <CalendarDays className="w-5 h-5" />
+      icon: <CalendarDays className="w-5 h-5" />,
+      color: 'green'
     }
   ] : [];
 
@@ -172,26 +177,56 @@ export default function Progress() {
 
       {/* Metrics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {metrics.map((metric) => (
-          <div key={metric.title} className="bg-white rounded-2xl p-6 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-gray-500 text-sm mb-1">{metric.title}</p>
-                <p className="text-2xl font-bold mb-2">{metric.value}</p>
-                <p className={`text-sm ${metric.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                  {metric.change}
-                </p>
-              </div>
-              <div className="bg-blue-50 p-3 rounded-xl">
-                {metric.icon}
+        {metrics.map((metric) => {
+          const colorClasses = {
+            blue: {
+              bg: 'bg-blue-50',
+              iconBg: 'bg-blue-100',
+              iconText: 'text-blue-600',
+              title: 'text-blue-600'
+            },
+            purple: {
+              bg: 'bg-purple-50',
+              iconBg: 'bg-purple-100',
+              iconText: 'text-purple-600',
+              title: 'text-purple-600'
+            },
+            pink: {
+              bg: 'bg-pink-50',
+              iconBg: 'bg-pink-100',
+              iconText: 'text-pink-600',
+              title: 'text-pink-600'
+            },
+            green: {
+              bg: 'bg-green-50',
+              iconBg: 'bg-green-100',
+              iconText: 'text-green-600',
+              title: 'text-green-600'
+            }
+          };
+          const colors = colorClasses[metric.color || 'blue'];
+          
+          return (
+            <div key={metric.title} className={`${colors.bg} rounded-2xl p-6 shadow-sm`}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className={`${colors.title} text-sm mb-1 font-medium`}>{metric.title}</p>
+                  <p className="text-2xl font-bold mb-2 text-gray-800">{metric.value}</p>
+                  <p className={`text-sm ${metric.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    {metric.change}
+                  </p>
+                </div>
+                <div className={`${colors.iconBg} ${colors.iconText} p-3 rounded-xl`}>
+                  {metric.icon}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Subject-wise Progress */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm">
+      <div className="bg-gradient-to-br from-white to-blue-50 rounded-2xl p-6 shadow-sm border border-blue-100">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">Subject-wise Progress</h2>
           <button className="text-blue-600 text-sm font-medium hover:text-blue-700">
@@ -213,13 +248,13 @@ export default function Progress() {
                   </span>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="flex-1 bg-gray-100 rounded-full h-2">
+                  <div className="flex-1 bg-gray-200 rounded-full h-3">
                     <div
-                      className="bg-blue-500 h-2 rounded-full"
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300"
                       style={{ width: `${subject.accuracy}%` }}
                     />
                   </div>
-                  <span className="text-sm font-medium w-16">
+                  <span className="text-sm font-medium w-16 text-gray-700">
                     {subject.accuracy}%
                   </span>
                 </div>
@@ -232,19 +267,6 @@ export default function Progress() {
             ))}
           </div>
         )}
-      </div>
-
-      {/* Recent Activity - Can be expanded later */}
-      <div className="mt-8 bg-white rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Recent Activity</h2>
-          <button className="text-blue-600 text-sm font-medium hover:text-blue-700">
-            View All
-          </button>
-        </div>
-        <div className="text-gray-500 text-center py-8">
-          Your recent activity will appear here
-        </div>
       </div>
     </Layout>
   );
