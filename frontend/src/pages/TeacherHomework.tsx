@@ -15,6 +15,8 @@ import {
 import { groupService, Group } from '../services/group.service';
 import { studentService, Student } from '../services/student.service';
 import { exerciseService, Exercise } from '../services/exercise.service';
+import { exerciseTypeService, ExerciseType } from '../services/exerciseType.service';
+import { DigitLength, DigitType } from '../types/exercise';
 
 type HomeworkModalMode = 'create' | 'edit';
 type AssignmentModalMode = 'create' | 'edit';
@@ -46,7 +48,7 @@ const assignmentInitialState: AssignmentFormState = {
     dueDate: '',
     selectedGroupIds: [],
     selectedStudentIds: [],
-    status: 'ASSIGNED'
+    status: 'PENDING'
 };
 
 export default function TeacherHomework() {
@@ -56,6 +58,7 @@ export default function TeacherHomework() {
     const [groups, setGroups] = useState<Group[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
     const [exercises, setExercises] = useState<Exercise[]>([]);
+    const [exerciseTypes, setExerciseTypes] = useState<ExerciseType[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [homeworkModalOpen, setHomeworkModalOpen] = useState(false);
@@ -83,13 +86,15 @@ export default function TeacherHomework() {
                     assignmentsResponse,
                     groupsResponse,
                     studentsResponse,
-                    exercisesResponse
+                    exercisesResponse,
+                    exerciseTypesResponse
                 ] = await Promise.all([
                     homeworkService.getHomeworkByTeacher(teacher.id),
                     homeworkService.getAssignmentsByTeacher(teacher.id),
                     groupService.getGroupsByTeacher(teacher.id),
                     studentService.getStudentsByTeacher(teacher.id),
-                    exerciseService.getExercisesByTeacher(teacher.id)
+                    exerciseService.getExercisesByTeacher(teacher.id),
+                    exerciseTypeService.getAllExerciseTypes()
                 ]);
 
                 setHomework(homeworkResponse);
@@ -97,6 +102,7 @@ export default function TeacherHomework() {
                 setGroups(groupsResponse);
                 setStudents(studentsResponse);
                 setExercises(exercisesResponse);
+                setExerciseTypes(exerciseTypesResponse);
             } catch (err: any) {
                 console.error('[TeacherHomework] Failed to load data', err);
                 setError(err?.message || 'Failed to load homework data. Please try again later.');
@@ -107,11 +113,6 @@ export default function TeacherHomework() {
 
         loadData();
     }, [teacher?.id]);
-
-    const activeAssignments = useMemo(
-        () => assignments.filter((assignment) => assignment.status !== 'COMPLETED'),
-        [assignments]
-    );
 
     const homeworkById = useMemo(() => {
         const map = new Map<string, HomeworkDetail>();
@@ -370,7 +371,7 @@ export default function TeacherHomework() {
             )}
 
             <div className="flex flex-col lg:flex-row gap-6">
-                <div className="flex-1 space-y-6">
+                <div className="flex-1 space-y-6 flex flex-col">
                     <div className="flex items-center justify-between">
                         <h2 className="text-lg font-semibold text-gray-900">Homework Library</h2>
                         <button
@@ -382,7 +383,7 @@ export default function TeacherHomework() {
                         </button>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-4 overflow-y-auto flex-1 max-h-[calc(100vh-250px)]">
                         {homework.map((item) => (
                             <div
                                 key={item.id}
@@ -405,11 +406,6 @@ export default function TeacherHomework() {
                                             <span>
                                                 Created {new Date(item.createdAt).toLocaleDateString()}
                                             </span>
-                                            {item.updatedAt && item.updatedAt !== item.createdAt && (
-                                                <span>
-                                                    Updated {new Date(item.updatedAt).toLocaleDateString()}
-                                                </span>
-                                            )}
                                         </div>
                                         <div className="mt-4 space-y-3">
                                             <p className="text-xs uppercase text-gray-500 tracking-wide">
@@ -434,7 +430,7 @@ export default function TeacherHomework() {
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col items-stretch gap-2">
+                                    <div className="flex flex-col items-end gap-2">
                                         <button
                                             onClick={() => openCreateAssignmentModal(item.id)}
                                             className="inline-flex items-center justify-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors"
@@ -444,19 +440,21 @@ export default function TeacherHomework() {
                                         </button>
                                         <button
                                             onClick={() => openEditHomeworkModal(item)}
-                                            className="inline-flex items-center justify-center gap-2 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                                            className="inline-flex items-center justify-center gap-2 text-blue-600 px-4 py-2 rounded-lg hover:text-blue-700 transition-colors"
                                         >
                                             Edit
                                         </button>
-                                        <button
-                                            onClick={() => handleDeleteHomework(item)}
-                                            disabled={deletingHomeworkId === item.id}
-                                            className="inline-flex items-center justify-center gap-2 border border-transparent text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                            {deletingHomeworkId === item.id ? 'Deleting...' : 'Delete'}
-                                        </button>
                                     </div>
+                                </div>
+                                <div className="mt-4 flex justify-end border-t border-gray-100 pt-4">
+                                    <button
+                                        onClick={() => handleDeleteHomework(item)}
+                                        disabled={deletingHomeworkId === item.id}
+                                        className="inline-flex items-center justify-center gap-2 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        {deletingHomeworkId === item.id ? 'Deleting...' : 'Delete'}
+                                    </button>
                                 </div>
                             </div>
                         ))}
@@ -469,8 +467,8 @@ export default function TeacherHomework() {
                     </div>
                 </div>
 
-                <div className="w-full lg:w-96 space-y-4">
-                    <div className="flex items-center justify-between">
+                <div className="w-full lg:w-96 space-y-4 flex flex-col">
+                    <div className="flex items-center justify-between mb-2">
                         <h2 className="text-lg font-semibold text-gray-900">Scheduled Assignments</h2>
                         <button
                             onClick={() => openCreateAssignmentModal()}
@@ -481,7 +479,7 @@ export default function TeacherHomework() {
                         </button>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-4 overflow-y-auto flex-1 max-h-[calc(100vh-250px)] -mt-2">
                         {assignments.map((assignment) => {
                             const statusLabel = formatAssignmentStatus(assignment.status);
                             const homeworkInfo = homeworkById.get(assignment.homeworkId);
@@ -492,14 +490,49 @@ export default function TeacherHomework() {
                                 .map((studentId) => studentById.get(studentId))
                                 .filter(Boolean);
 
+                            const getStatusColors = (status: string) => {
+                                switch (status) {
+                                    case 'PENDING':
+                                        return {
+                                            bg: 'bg-blue-50',
+                                            border: 'border-blue-200',
+                                            text: 'text-blue-700',
+                                            badge: 'bg-blue-100 text-blue-700'
+                                        };
+                                    case 'COMPLETED':
+                                        return {
+                                            bg: 'bg-green-50',
+                                            border: 'border-green-200',
+                                            text: 'text-green-700',
+                                            badge: 'bg-green-100 text-green-700'
+                                        };
+                                    case 'OVERDUE':
+                                        return {
+                                            bg: 'bg-red-50',
+                                            border: 'border-red-200',
+                                            text: 'text-red-700',
+                                            badge: 'bg-red-100 text-red-700'
+                                        };
+                                    default:
+                                        return {
+                                            bg: 'bg-gray-50',
+                                            border: 'border-gray-200',
+                                            text: 'text-gray-700',
+                                            badge: 'bg-gray-100 text-gray-700'
+                                        };
+                                }
+                            };
+
+                            const colors = getStatusColors(assignment.status);
+
                             return (
                                 <div
                                     key={assignment.id}
-                                    className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm"
+                                    className={`${colors.bg} ${colors.border} border rounded-2xl p-5 shadow-sm`}
                                 >
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
-                                            <p className="text-xs text-gray-500 uppercase tracking-wide">
+                                            <p className={`text-xs ${colors.text} uppercase tracking-wide font-medium`}>
                                                 {statusLabel}
                                             </p>
                                             <h3 className="text-base font-semibold text-gray-900">
@@ -575,9 +608,14 @@ export default function TeacherHomework() {
                     isSaving={saving}
                     formState={homeworkForm}
                     exercises={exercises}
+                    exerciseTypes={exerciseTypes}
+                    teacherId={teacher?.id || ''}
                     onClose={closeHomeworkModal}
                     onSubmit={handleHomeworkSubmit}
                     onChange={setHomeworkForm}
+                    onExerciseCreated={(newExercise) => {
+                        setExercises((prev) => [newExercise, ...prev]);
+                    }}
                 />
             )}
 
@@ -603,9 +641,12 @@ interface HomeworkModalProps {
     isSaving: boolean;
     formState: HomeworkFormState;
     exercises: Exercise[];
+    exerciseTypes: ExerciseType[];
+    teacherId: string;
     onClose: () => void;
     onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
     onChange: React.Dispatch<React.SetStateAction<HomeworkFormState>>;
+    onExerciseCreated: (exercise: Exercise) => void;
 }
 
 function HomeworkModal({
@@ -613,10 +654,71 @@ function HomeworkModal({
     isSaving,
     formState,
     exercises,
+    exerciseTypes,
+    teacherId,
     onClose,
     onSubmit,
-    onChange
+    onChange,
+    onExerciseCreated
 }: HomeworkModalProps) {
+    const [activeTab, setActiveTab] = useState<'existing' | 'create'>('existing');
+    const [creatingExercise, setCreatingExercise] = useState(false);
+    const [createExerciseError, setCreateExerciseError] = useState<string | null>(null);
+
+    const formatExerciseParameters = (parameters: string): string => {
+        try {
+            const params = JSON.parse(parameters);
+            const parts: string[] = [];
+
+            if (params.exampleCount) {
+                parts.push(`${params.exampleCount} examples`);
+            }
+            if (params.cardCount) {
+                parts.push(`${params.cardCount} cards`);
+            }
+            if (params.digitType) {
+                const digitTypeLabels: Record<string, string> = {
+                    'single-digit': 'Single-digit',
+                    'two-digit': 'Two-digit',
+                    'three-digit': 'Three-digit',
+                    'four-digit': 'Four-digit'
+                };
+                parts.push(digitTypeLabels[params.digitType] || params.digitType);
+            }
+            if (params.dividendDigits) {
+                parts.push(`Dividend: ${params.dividendDigits[0]}-${params.dividendDigits[1]} digits`);
+            }
+            if (params.divisorDigits) {
+                parts.push(`Divisor: ${params.divisorDigits[0]}-${params.divisorDigits[1]} digits`);
+            }
+            if (params.firstMultiplierDigits) {
+                parts.push(`Multiplier: ${params.firstMultiplierDigits[0]}-${params.firstMultiplierDigits[1]} digits`);
+            }
+            if (params.minValue !== undefined && params.maxValue !== undefined) {
+                parts.push(`Range: ${params.minValue}-${params.maxValue}`);
+            }
+            if (params.timePerQuestion) {
+                const minutes = Math.floor(params.timePerQuestion / 60);
+                const seconds = params.timePerQuestion % 60;
+                if (minutes > 0) {
+                    parts.push(`Time: ${minutes}m ${seconds > 0 ? seconds + 's' : ''}`);
+                } else {
+                    parts.push(`Time: ${seconds}s`);
+                }
+            }
+            if (params.displaySpeed) {
+                parts.push(`Speed: ${params.displaySpeed}s`);
+            }
+            if (params.theme) {
+                parts.push(`Theme: ${params.theme}`);
+            }
+
+            return parts.length > 0 ? parts.join(' • ') : 'No parameters';
+        } catch {
+            return 'Invalid parameters';
+        }
+    };
+
     const toggleExercise = (exerciseId: string) => {
         onChange((prev) => {
             const alreadySelected = prev.selectedExerciseIds.includes(exerciseId);
@@ -679,46 +781,106 @@ function HomeworkModal({
                     </section>
 
                     <section className="space-y-3">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mb-3">
                             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                                Select Exercises
+                                Exercises
                             </h3>
                             <span className="text-xs text-gray-500">
                                 {formState.selectedExerciseIds.length} selected
                             </span>
                         </div>
-                        <div className="max-h-80 overflow-y-auto border border-gray-100 rounded-xl divide-y divide-gray-100">
-                            {exercises.map((exercise) => {
-                                const checked = formState.selectedExerciseIds.includes(exercise.id);
-                                return (
-                                    <label
-                                        key={exercise.id}
-                                        className="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-gray-50 cursor-pointer"
-                                    >
-                                        <div>
-                                            <p className="font-medium text-gray-900">
-                                                {exercise.exerciseTypeName}
-                                            </p>
-                                            <p className="text-xs text-gray-500">
-                                                Difficulty: {exercise.difficulty ?? 'N/A'}
-                                            </p>
-                                        </div>
-                                        <input
-                                            type="checkbox"
-                                            checked={checked}
-                                            onChange={() => toggleExercise(exercise.id)}
-                                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                        />
-                                    </label>
-                                );
-                            })}
 
-                            {exercises.length === 0 && (
-                                <div className="px-4 py-6 text-center text-gray-400 text-sm">
-                                    No exercises available yet. Create exercises first to build homework sets.
-                                </div>
-                            )}
+                        {/* Tabs */}
+                        <div className="flex gap-2 border-b border-gray-200 mb-4">
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('existing')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                                    activeTab === 'existing'
+                                        ? 'text-blue-600 border-b-2 border-blue-600'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                }`}
+                            >
+                                Select Existing
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('create')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                                    activeTab === 'create'
+                                        ? 'text-blue-600 border-b-2 border-blue-600'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                }`}
+                            >
+                                Create New
+                            </button>
                         </div>
+
+                        {/* Existing Exercises Tab */}
+                        {activeTab === 'existing' && (
+                            <div className="space-y-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('create')}
+                                    className="w-full px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Create New Exercise
+                                </button>
+                                <div className="max-h-80 overflow-y-auto border border-gray-100 rounded-xl divide-y divide-gray-100">
+                                    {exercises.map((exercise) => {
+                                        const checked = formState.selectedExerciseIds.includes(exercise.id);
+                                        return (
+                                            <label
+                                                key={exercise.id}
+                                                className="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-gray-50 cursor-pointer"
+                                            >
+                                                <div>
+                                                    <p className="font-medium text-gray-900">
+                                                        {exercise.exerciseTypeName}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {formatExerciseParameters(exercise.parameters)}
+                                                    </p>
+                                                </div>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={checked}
+                                                    onChange={() => toggleExercise(exercise.id)}
+                                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                />
+                                            </label>
+                                        );
+                                    })}
+
+                                    {exercises.length === 0 && (
+                                        <div className="px-4 py-6 text-center text-gray-400 text-sm">
+                                            No exercises available yet. Create exercises first to build homework sets.
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Create New Exercise Tab */}
+                        {activeTab === 'create' && (
+                            <CreateExerciseForm
+                                exerciseTypes={exerciseTypes}
+                                teacherId={teacherId}
+                                creating={creatingExercise}
+                                error={createExerciseError}
+                                onCreatingChange={setCreatingExercise}
+                                onErrorChange={setCreateExerciseError}
+                                onExerciseCreated={(exercise) => {
+                                    onExerciseCreated(exercise);
+                                    onChange((prev) => ({
+                                        ...prev,
+                                        selectedExerciseIds: [...prev.selectedExerciseIds, exercise.id]
+                                    }));
+                                    setActiveTab('existing');
+                                }}
+                            />
+                        )}
                     </section>
 
                     <div className="lg:col-span-2 flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
@@ -855,8 +1017,7 @@ function AssignmentModal({
                                     }
                                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 >
-                                    <option value="ASSIGNED">Assigned</option>
-                                    <option value="IN_PROGRESS">In Progress</option>
+                                    <option value="PENDING">Pending</option>
                                     <option value="COMPLETED">Completed</option>
                                     <option value="OVERDUE">Overdue</option>
                                 </select>
@@ -971,17 +1132,673 @@ function AssignmentModal({
 
 function formatAssignmentStatus(status: HomeworkStatus): string {
     switch (status) {
-        case 'ASSIGNED':
-            return 'Assigned';
-        case 'IN_PROGRESS':
-            return 'In Progress';
+        case 'PENDING':
+            return 'Pending';
         case 'COMPLETED':
             return 'Completed';
         case 'OVERDUE':
             return 'Overdue';
-        default:
-            return status;
     }
+}
+
+interface CreateExerciseFormProps {
+    exerciseTypes: ExerciseType[];
+    teacherId: string;
+    creating: boolean;
+    error: string | null;
+    onCreatingChange: (creating: boolean) => void;
+    onErrorChange: (error: string | null) => void;
+    onExerciseCreated: (exercise: Exercise) => void;
+}
+
+const digitTypeOptions: { value: DigitType; label: string }[] = [
+    { value: 'single-digit', label: 'Single-digit' },
+    { value: 'two-digit', label: 'Two-digit' },
+    { value: 'three-digit', label: 'Three-digit' },
+    { value: 'four-digit', label: 'Four-digit' }
+];
+
+const themeLabels: Record<string, string> = {
+    'simple': 'Simple',
+    'friend': 'Friend',
+    'brother': 'Brother',
+    'transition': 'Transition',
+    'friend+brother': 'Friend + Brother',
+    'friend+brat': 'Friend + Brat',
+    '0-20': 'From 0 to 20',
+    '0-9': 'From 0 to 9',
+    '10-90': 'Tens (10-90)',
+    '10-19': 'Two-digit (10-19)',
+    '10-99': 'Two-digit (10-99)',
+    '100-900': 'Hundreds (100-900)',
+    '100-999': 'Three-digit (100-999)',
+    'From 0 to 20': 'From 0 to 20',
+    'From 0 to 9': 'From 0 to 9',
+    'Tens (10-90)': 'Tens (10-90)',
+    'Two-digit (10-19)': 'Two-digit (10-19)',
+    'Two-digit (10-99)': 'Two-digit (10-99)',
+    'Hundreds (100-900)': 'Hundreds (100-900)',
+    'Three-digit (100-999)': 'Three-digit (100-999)'
+};
+
+function CreateExerciseForm({
+    exerciseTypes,
+    teacherId,
+    creating,
+    error,
+    onCreatingChange,
+    onErrorChange,
+    onExerciseCreated
+}: CreateExerciseFormProps) {
+    const [selectedExerciseTypeId, setSelectedExerciseTypeId] = useState<string>('');
+    const [exerciseType, setExerciseType] = useState<ExerciseType | null>(null);
+
+    const ranges = exerciseType?.parameterRanges || {};
+
+    const [exampleCount, setExampleCount] = useState(() => {
+        const range = ranges.exampleCount || [1, 30];
+        return Math.round((range[0] + range[1]) / 2);
+    });
+
+    const [timePerQuestion, setTimePerQuestion] = useState(() => {
+        const range = ranges.timePerQuestion || [2, 30];
+        return Math.round((range[0] + range[1]) / 2);
+    });
+
+    const [displaySpeed, setDisplaySpeed] = useState(() => {
+        const range = ranges.displaySpeed || [0.5, 10];
+        return Number(((range[0] + range[1]) / 2).toFixed(1));
+    });
+
+    const [cardCount, setCardCount] = useState(() => {
+        const range = ranges.cardCount || [2, 15];
+        return Math.round((range[0] + range[1]) / 2);
+    });
+
+    const [digitType, setDigitType] = useState<DigitType>('single-digit');
+    const [dividendDigits, setDividendDigits] = useState<[number, number]>(() => {
+        const range = ranges.dividendDigits || [2, 4];
+        return range as [number, number];
+    });
+
+    const [divisorDigits, setDivisorDigits] = useState<[number, number]>(() => {
+        const range = ranges.divisorDigits || [1, 3];
+        return range as [number, number];
+    });
+
+    const [firstMultiplierDigits, setFirstMultiplierDigits] = useState<[number, number]>(() => {
+        const range = ranges.firstMultiplierDigits || [1, 4];
+        return range as [number, number];
+    });
+
+    const [minValue, setMinValue] = useState(() => ranges.minValue || 1);
+    const [maxValue, setMaxValue] = useState(() => ranges.maxValue || 9);
+    const [selectedTheme, setSelectedTheme] = useState<string>(() => {
+        const availableThemes = ranges.themes || [];
+        return availableThemes[0] || '';
+    });
+
+    useEffect(() => {
+        if (!selectedExerciseTypeId) {
+            setExerciseType(null);
+            return;
+        }
+
+        const foundType = exerciseTypes.find(et => et.id === selectedExerciseTypeId);
+        if (foundType) {
+            setExerciseType(foundType);
+            const ranges = foundType.parameterRanges || {};
+            
+            // Reset values based on new exercise type
+            if (ranges.exampleCount) {
+                setExampleCount(Math.round((ranges.exampleCount[0] + ranges.exampleCount[1]) / 2));
+            }
+            if (ranges.timePerQuestion) {
+                setTimePerQuestion(Math.round((ranges.timePerQuestion[0] + ranges.timePerQuestion[1]) / 2));
+            }
+            if (ranges.displaySpeed) {
+                setDisplaySpeed(Number(((ranges.displaySpeed[0] + ranges.displaySpeed[1]) / 2).toFixed(1)));
+            }
+            if (ranges.cardCount) {
+                setCardCount(Math.round((ranges.cardCount[0] + ranges.cardCount[1]) / 2));
+            }
+            if (ranges.dividendDigits) {
+                setDividendDigits(ranges.dividendDigits as [number, number]);
+            }
+            if (ranges.divisorDigits) {
+                setDivisorDigits(ranges.divisorDigits as [number, number]);
+            }
+            if (ranges.firstMultiplierDigits) {
+                setFirstMultiplierDigits(ranges.firstMultiplierDigits as [number, number]);
+            }
+            if (ranges.minValue !== undefined) {
+                setMinValue(ranges.minValue);
+            }
+            if (ranges.maxValue !== undefined) {
+                setMaxValue(ranges.maxValue);
+            }
+            if (ranges.themes && ranges.themes.length > 0) {
+                setSelectedTheme(ranges.themes[0]);
+            }
+        }
+    }, [selectedExerciseTypeId, exerciseTypes]);
+
+    const exerciseTypeName = exerciseType?.name?.toLowerCase() || '';
+    const isDivision = exerciseTypeName.includes('division');
+    const isMultiplication = exerciseTypeName.includes('multiplication');
+    const isAdditionSubtraction = exerciseTypeName.includes('addition') || exerciseTypeName.includes('subtraction');
+    const isFlashCards = exerciseTypeName.includes('flash cards') && !exerciseTypeName.includes('active');
+    const isFlashCardsActive = exerciseTypeName.includes('flash cards active');
+    const isThemeTraining = exerciseTypeName.includes('theme training');
+
+    const calculateDifficulty = (): number => {
+        if (!exerciseType) return 1;
+        
+        let difficulty = exerciseType.difficulty === 'beginner' ? 1 : exerciseType.difficulty === 'intermediate' ? 5 : 10;
+
+        if (isDivision || isMultiplication) {
+            const avgDigits = isDivision 
+                ? (dividendDigits[0] + dividendDigits[1] + divisorDigits[0] + divisorDigits[1]) / 4
+                : (firstMultiplierDigits[0] + firstMultiplierDigits[1]) / 2;
+            difficulty = Math.min(10, Math.max(1, Math.round(difficulty + avgDigits * 1.5)));
+        }
+
+        if (isAdditionSubtraction || isThemeTraining) {
+            const digitMap: Record<DigitType, number> = {
+                'single-digit': 1,
+                'two-digit': 2,
+                'three-digit': 3,
+                'four-digit': 4
+            };
+            const digitLength = digitMap[digitType] || 1;
+            difficulty = Math.min(10, Math.max(1, Math.round(difficulty + digitLength * 1.2)));
+        }
+
+        return Math.min(10, Math.max(1, difficulty));
+    };
+
+    const calculatePoints = (): number => {
+        const baseDifficulty = calculateDifficulty();
+        return baseDifficulty * 10;
+    };
+
+    const handleSubmit = async (event?: React.MouseEvent<HTMLButtonElement>) => {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation(); 
+        }
+        
+        if (!exerciseType) {
+            onErrorChange('Please select an exercise type');
+            return;
+        }
+
+        onErrorChange(null);
+        onCreatingChange(true);
+
+        try {
+            const parameters: any = {
+                exerciseTypeId: exerciseType.id,
+                exerciseTypeName: exerciseType.name
+            };
+
+            if (isDivision) {
+                parameters.exampleCount = exampleCount;
+                parameters.dividendDigits = dividendDigits;
+                parameters.divisorDigits = divisorDigits;
+                parameters.timePerQuestion = timePerQuestion;
+            }
+
+            if (isMultiplication) {
+                parameters.exampleCount = exampleCount;
+                parameters.firstMultiplierDigits = firstMultiplierDigits;
+                parameters.minValue = minValue;
+                parameters.maxValue = maxValue;
+                parameters.timePerQuestion = timePerQuestion;
+            }
+
+            if (isAdditionSubtraction) {
+                parameters.timePerQuestion = timePerQuestion;
+                parameters.cardCount = cardCount;
+                parameters.digitType = digitType;
+                parameters.theme = selectedTheme;
+                parameters.displaySpeed = displaySpeed;
+                const digitTypeMap: Record<DigitType, DigitLength> = {
+                    'single-digit': 1,
+                    'two-digit': 2,
+                    'three-digit': 3,
+                    'four-digit': 4
+                };
+                parameters.digitLength = digitTypeMap[digitType];
+            }
+
+            if (isFlashCards || isFlashCardsActive) {
+                parameters.theme = selectedTheme;
+                parameters.displaySpeed = displaySpeed;
+            }
+
+            if (isThemeTraining) {
+                parameters.displaySpeed = displaySpeed;
+                parameters.timePerQuestion = timePerQuestion;
+                parameters.cardCount = cardCount;
+                parameters.digitType = digitType;
+                parameters.theme = selectedTheme;
+                const digitTypeMap: Record<DigitType, DigitLength> = {
+                    'single-digit': 1,
+                    'two-digit': 2,
+                    'three-digit': 3,
+                    'four-digit': 4
+                };
+                parameters.digitLength = digitTypeMap[digitType];
+            }
+
+            console.log('[CreateExerciseForm] Creating exercise with payload:', {
+                exerciseTypeId: exerciseType.id,
+                parameters: JSON.stringify(parameters),
+                difficulty: calculateDifficulty(),
+                points: calculatePoints(),
+                createdById: teacherId
+            });
+
+            const newExercise = await exerciseService.createExercise({
+                exerciseTypeId: exerciseType.id,
+                parameters: JSON.stringify(parameters),
+                difficulty: calculateDifficulty(),
+                points: calculatePoints(),
+                createdById: teacherId
+            });
+
+            console.log('[CreateExerciseForm] Exercise created successfully:', newExercise);
+
+            onExerciseCreated(newExercise);
+
+            setSelectedExerciseTypeId('');
+            setExerciseType(null);
+        } catch (err: any) {
+            console.error('[CreateExerciseForm] Failed to create exercise', err);
+            let errorMessage = 'Failed to create exercise. Please try again.';
+            
+            if (err?.response?.data) {
+                if (err.response.data.fieldErrors) {
+                    const fieldErrors = err.response.data.fieldErrors;
+                    errorMessage = Object.entries(fieldErrors)
+                        .map(([field, message]) => `${field}: ${message}`)
+                        .join(', ');
+                } else if (err.response.data.message) {
+                    errorMessage = err.response.data.message;
+                } else if (err.response.data.error) {
+                    errorMessage = err.response.data.error;
+                }
+            } else if (err?.message) {
+                errorMessage = err.message;
+            }
+            
+            console.error('[CreateExerciseForm] Error details:', {
+                message: errorMessage,
+                response: err?.response?.data,
+                status: err?.response?.status,
+                fullError: err
+            });
+            onErrorChange(errorMessage);
+        } finally {
+            onCreatingChange(false);
+        }
+    };
+
+    const formatTime = (seconds: number): string => {
+        if (seconds >= 60) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
+        }
+        return `${seconds}s`;
+    };
+
+    return (
+        <div className="max-h-96 overflow-y-auto border border-gray-100 rounded-xl p-4 bg-gray-50">
+            {error && (
+                <div className="mb-4 p-3 bg-red-50 border-2 border-red-300 text-red-700 rounded-lg text-sm font-medium animate-pulse">
+                    ⚠️ {error}
+                </div>
+            )}
+
+            {creating && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-sm flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Creating exercise...
+                </div>
+            )}
+
+            <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
+                <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-2">
+                        Exercise Type
+                    </label>
+                    <select
+                        value={selectedExerciseTypeId}
+                        onChange={(e) => setSelectedExerciseTypeId(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    >
+                        <option value="">Select exercise type...</option>
+                        {exerciseTypes.map((type) => (
+                            <option key={type.id} value={type.id}>
+                                {type.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {exerciseType && (
+                    <div className="space-y-4 border-t border-gray-200 pt-4">
+                        {/* Division Settings */}
+                        {isDivision && (
+                            <>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                        Number of Examples: {exampleCount}
+                                    </label>
+                                    <input
+                                        type="range"
+                                        min={ranges.exampleCount?.[0] || 1}
+                                        max={ranges.exampleCount?.[1] || 30}
+                                        value={exampleCount}
+                                        onChange={(e) => setExampleCount(Number(e.target.value))}
+                                        className="w-full accent-blue-500"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                            Dividend: {dividendDigits[0]}-{dividendDigits[1]} digits
+                                        </label>
+                                        <div className="space-y-2">
+                                            <input
+                                                type="range"
+                                                min={ranges.dividendDigits?.[0] || 2}
+                                                max={ranges.dividendDigits?.[1] || 4}
+                                                value={dividendDigits[0]}
+                                                onChange={(e) => setDividendDigits([Number(e.target.value), dividendDigits[1]])}
+                                                className="w-full accent-green-500"
+                                            />
+                                            <input
+                                                type="range"
+                                                min={dividendDigits[0]}
+                                                max={ranges.dividendDigits?.[1] || 4}
+                                                value={dividendDigits[1]}
+                                                onChange={(e) => setDividendDigits([dividendDigits[0], Number(e.target.value)])}
+                                                className="w-full accent-green-500"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                            Divisor: {divisorDigits[0]}-{divisorDigits[1]} digits
+                                        </label>
+                                        <div className="space-y-2">
+                                            <input
+                                                type="range"
+                                                min={ranges.divisorDigits?.[0] || 1}
+                                                max={ranges.divisorDigits?.[1] || 3}
+                                                value={divisorDigits[0]}
+                                                onChange={(e) => setDivisorDigits([Number(e.target.value), divisorDigits[1]])}
+                                                className="w-full accent-orange-500"
+                                            />
+                                            <input
+                                                type="range"
+                                                min={divisorDigits[0]}
+                                                max={ranges.divisorDigits?.[1] || 3}
+                                                value={divisorDigits[1]}
+                                                onChange={(e) => setDivisorDigits([divisorDigits[0], Number(e.target.value)])}
+                                                className="w-full accent-orange-500"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                        Time per Question: {formatTime(timePerQuestion)}
+                                    </label>
+                                    <input
+                                        type="range"
+                                        min={ranges.timePerQuestion?.[0] || 60}
+                                        max={ranges.timePerQuestion?.[1] || 600}
+                                        step={30}
+                                        value={timePerQuestion}
+                                        onChange={(e) => setTimePerQuestion(Number(e.target.value))}
+                                        className="w-full accent-pink-500"
+                                    />
+                                </div>
+                            </>
+                        )}
+
+                        {/* Multiplication Settings */}
+                        {isMultiplication && (
+                            <>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                        Number of Examples: {exampleCount}
+                                    </label>
+                                    <input
+                                        type="range"
+                                        min={ranges.exampleCount?.[0] || 1}
+                                        max={ranges.exampleCount?.[1] || 30}
+                                        value={exampleCount}
+                                        onChange={(e) => setExampleCount(Number(e.target.value))}
+                                        className="w-full accent-blue-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                        First Multiplier: {firstMultiplierDigits[0]}-{firstMultiplierDigits[1]} digits
+                                    </label>
+                                    <div className="space-y-2">
+                                        <input
+                                            type="range"
+                                            min={ranges.firstMultiplierDigits?.[0] || 1}
+                                            max={ranges.firstMultiplierDigits?.[1] || 4}
+                                            value={firstMultiplierDigits[0]}
+                                            onChange={(e) => setFirstMultiplierDigits([Number(e.target.value), firstMultiplierDigits[1]])}
+                                            className="w-full accent-green-500"
+                                        />
+                                        <input
+                                            type="range"
+                                            min={firstMultiplierDigits[0]}
+                                            max={ranges.firstMultiplierDigits?.[1] || 4}
+                                            value={firstMultiplierDigits[1]}
+                                            onChange={(e) => setFirstMultiplierDigits([firstMultiplierDigits[0], Number(e.target.value)])}
+                                            className="w-full accent-green-500"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                            Min Value: {minValue}
+                                        </label>
+                                        <input
+                                            type="range"
+                                            min={ranges.minValue || 1}
+                                            max={ranges.maxValue || 9}
+                                            value={minValue}
+                                            onChange={(e) => setMinValue(Number(e.target.value))}
+                                            className="w-full accent-yellow-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                            Max Value: {maxValue}
+                                        </label>
+                                        <input
+                                            type="range"
+                                            min={minValue}
+                                            max={ranges.maxValue || 9}
+                                            value={maxValue}
+                                            onChange={(e) => setMaxValue(Number(e.target.value))}
+                                            className="w-full accent-yellow-500"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                        Time per Question: {formatTime(timePerQuestion)}
+                                    </label>
+                                    <input
+                                        type="range"
+                                        min={ranges.timePerQuestion?.[0] || 60}
+                                        max={ranges.timePerQuestion?.[1] || 600}
+                                        step={30}
+                                        value={timePerQuestion}
+                                        onChange={(e) => setTimePerQuestion(Number(e.target.value))}
+                                        className="w-full accent-pink-500"
+                                    />
+                                </div>
+                            </>
+                        )}
+
+                        {/* Addition/Subtraction Settings */}
+                        {(isAdditionSubtraction || isThemeTraining) && (
+                            <>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                        Number of Cards: {cardCount}
+                                    </label>
+                                    <input
+                                        type="range"
+                                        min={ranges.cardCount?.[0] || 2}
+                                        max={ranges.cardCount?.[1] || 15}
+                                        value={cardCount}
+                                        onChange={(e) => setCardCount(Number(e.target.value))}
+                                        className="w-full accent-blue-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                        Digit Type
+                                    </label>
+                                    <select
+                                        value={digitType}
+                                        onChange={(e) => setDigitType(e.target.value as DigitType)}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                    >
+                                        {digitTypeOptions.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                {ranges.themes && ranges.themes.length > 0 && (
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                            Theme
+                                        </label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {ranges.themes.map((theme) => (
+                                                <button
+                                                    key={theme}
+                                                    type="button"
+                                                    onClick={() => setSelectedTheme(theme)}
+                                                    className={`px-3 py-1 rounded-lg text-sm border transition-colors ${
+                                                        selectedTheme === theme
+                                                            ? 'bg-blue-500 text-white border-blue-500'
+                                                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    {themeLabels[theme] || theme}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                        Display Speed: {displaySpeed}s
+                                    </label>
+                                    <input
+                                        type="range"
+                                        min={ranges.displaySpeed?.[0] || 0.5}
+                                        max={ranges.displaySpeed?.[1] || 10}
+                                        step={0.1}
+                                        value={displaySpeed}
+                                        onChange={(e) => setDisplaySpeed(Number(e.target.value))}
+                                        className="w-full accent-purple-500"
+                                    />
+                                </div>
+                                {isThemeTraining && (
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                            Time per Question: {formatTime(timePerQuestion)}
+                                        </label>
+                                        <input
+                                            type="range"
+                                            min={ranges.timePerQuestion?.[0] || 2}
+                                            max={ranges.timePerQuestion?.[1] || 30}
+                                            value={timePerQuestion}
+                                            onChange={(e) => setTimePerQuestion(Number(e.target.value))}
+                                            className="w-full accent-pink-500"
+                                        />
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {/* Flash Cards Settings */}
+                        {(isFlashCards || isFlashCardsActive) && (
+                            <>
+                                {ranges.themes && ranges.themes.length > 0 && (
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                            Theme
+                                        </label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {ranges.themes.map((theme) => (
+                                                <button
+                                                    key={theme}
+                                                    type="button"
+                                                    onClick={() => setSelectedTheme(theme)}
+                                                    className={`px-3 py-1 rounded-lg text-sm border transition-colors ${
+                                                        selectedTheme === theme
+                                                            ? 'bg-blue-500 text-white border-blue-500'
+                                                            : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    {themeLabels[theme] || theme}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                        Display Speed: {displaySpeed}s
+                                    </label>
+                                    <input
+                                        type="range"
+                                        min={ranges.displaySpeed?.[0] || 0.5}
+                                        max={ranges.displaySpeed?.[1] || 10}
+                                        step={0.1}
+                                        value={displaySpeed}
+                                        onChange={(e) => setDisplaySpeed(Number(e.target.value))}
+                                        className="w-full accent-purple-500"
+                                    />
+                                </div>
+                            </>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={creating || !exerciseType}
+                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60 text-sm font-medium"
+                        >
+                            {creating ? 'Creating...' : 'Create Exercise'}
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 }
 
 

@@ -1,6 +1,6 @@
 import axiosInstance from './axios.config';
 
-export type HomeworkStatus = 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE';
+export type HomeworkStatus = 'PENDING' | 'COMPLETED' | 'OVERDUE';
 
 export interface HomeworkAssignment {
     id: string;
@@ -80,8 +80,7 @@ const mapApiStatusToUiStatus = (apiStatus: string): 'pending' | 'completed' | 'o
             return 'completed';
         case 'OVERDUE':
             return 'overdue';
-        case 'ASSIGNED':
-        case 'IN_PROGRESS':
+        case 'PENDING':
         default:
             return 'pending';
     }
