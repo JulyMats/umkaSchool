@@ -1,7 +1,6 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, RefreshCcw, Sparkles, Timer, X } from 'lucide-react';
-import Layout from '../components/Layout';
+import { ArrowLeft, RefreshCcw, Sparkles, Timer, X, Target, Eye, EyeOff, Info } from 'lucide-react';
 import { ExerciseSessionConfig } from '../types/exercise';
 import { useAuth } from '../contexts/AuthContext';
 import { exerciseService } from '../services/exercise.service';
@@ -25,13 +24,14 @@ export default function ExercisePlay() {
   const [countdown, setCountdown] = useState(config?.timePerQuestion ?? 0);
   const [userAnswer, setUserAnswer] = useState('');
   const [feedback, setFeedback] = useState<Feedback>(null);
+  const [showNumbers, setShowNumbers] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
   
   // Session management
   const [currentAttempt, setCurrentAttempt] = useState<ExerciseAttempt | null>(null);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [totalAttempts, setTotalAttempts] = useState(0);
   const [totalCorrect, setTotalCorrect] = useState(0);
-  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [exerciseId, setExerciseId] = useState<string | null>(null);
 
   const displayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -41,9 +41,10 @@ export default function ExercisePlay() {
   const isInitializingRef = useRef<boolean>(false);
   const sessionCompletedRef = useRef<boolean>(false);
 
-  const numbers = useMemo(() => (
-    config ? generateNumbers(config.cardCount, config.digitLength) : []
-  ), [config, sessionKey]);
+  const numbers = useMemo(() => {
+    if (!config) return [];
+    return generateNumbers(config.cardCount ?? 5, config.digitLength ?? 1, config.min, config.max);
+  }, [config, sessionKey]);
 
   // Calculate result based on exercise type
   const total = useMemo(() => {
@@ -68,6 +69,16 @@ export default function ExercisePlay() {
       return numbers.reduce((sum, value) => sum + value, 0);
     }
   }, [numbers, config?.exerciseTypeName]);
+
+  const exerciseTypeNameForSigns = config?.exerciseTypeName?.toLowerCase() || '';
+  const isSubtraction = exerciseTypeNameForSigns.includes('subtraction') || exerciseTypeNameForSigns.includes('subtract');
+
+  const formatNumberWithSign = (number: number, index: number): string => {
+    if (index === 0) {
+      return isSubtraction ? `-${number}` : `+${number}`;
+    }
+    return isSubtraction ? `-${number}` : `+${number}`;
+  };
 
   // Initialize session and create ExerciseAttempt
   useEffect(() => {
@@ -103,7 +114,7 @@ export default function ExercisePlay() {
         const exerciseParamsJson = JSON.stringify(exerciseParams);
 
         // Calculate difficulty based on digit length and card count
-        const difficulty = Math.min(10, Math.max(1, config.digitLength + Math.floor(config.cardCount / 3)));
+        const difficulty = Math.min(10, Math.max(1, (config.digitLength ?? 1) + Math.floor((config.cardCount ?? 5) / 3)));
 
         const exercise = await exerciseService.createExercise({
           exerciseTypeId: config.exerciseTypeId,
@@ -132,7 +143,6 @@ export default function ExercisePlay() {
 
         setCurrentAttempt(attempt);
         setSessionStarted(true);
-        setSessionStartTime(new Date());
         setTotalAttempts(0);
         setTotalCorrect(0);
         totalAttemptsRef.current = 0;
@@ -204,18 +214,20 @@ export default function ExercisePlay() {
 
     setDisplayIndex(0);
     setShowAnswerBox(false);
-    setCountdown(config.timePerQuestion);
+    setCountdown(config.timePerQuestion ?? 10);
     setUserAnswer('');
     setFeedback(null);
+    setShowNumbers(false);
 
+    const displaySpeed = config.displaySpeed ?? 1;
     const runSequence = (index: number) => {
       setDisplayIndex(index);
       if (index < numbers.length - 1) {
-        displayTimeoutRef.current = setTimeout(() => runSequence(index + 1), config.displaySpeed * 1000);
+        displayTimeoutRef.current = setTimeout(() => runSequence(index + 1), displaySpeed * 1000);
       } else {
         displayTimeoutRef.current = setTimeout(() => {
           setShowAnswerBox(true);
-        }, config.displaySpeed * 1000);
+        }, displaySpeed * 1000);
       }
     };
 
@@ -236,7 +248,7 @@ export default function ExercisePlay() {
       return undefined;
     }
 
-    setCountdown(config.timePerQuestion);
+    setCountdown(config.timePerQuestion ?? 10);
 
     if (answerIntervalRef.current) {
       clearInterval(answerIntervalRef.current);
@@ -259,6 +271,34 @@ export default function ExercisePlay() {
       }
     };
   }, [config, showAnswerBox, sessionStarted]);
+
+  const handleRetry = useCallback(() => {
+    if (answerIntervalRef.current) {
+      clearInterval(answerIntervalRef.current);
+    }
+    setFeedback(null);
+    setUserAnswer('');
+    setShowNumbers(false);
+    setSessionKey((prev) => prev + 1);
+  }, []);
+
+  useEffect(() => {
+    if (!sessionStarted || (!feedback && countdown !== 0)) {
+      return undefined;
+    }
+
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === 'Enter') {
+        handleRetry();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [feedback, countdown, sessionStarted, handleRetry]);
 
   const handleAnswer = async (isCorrect: boolean) => {
     if (!currentAttempt) return;
@@ -306,13 +346,6 @@ export default function ExercisePlay() {
     await handleAnswer(isCorrect);
   };
 
-  const handleRetry = () => {
-    if (answerIntervalRef.current) {
-      clearInterval(answerIntervalRef.current);
-    }
-    setSessionKey((prev) => prev + 1);
-  };
-
   const handleExit = async () => {
     if (currentAttempt && sessionStarted) {
       await completeSession();
@@ -322,202 +355,274 @@ export default function ExercisePlay() {
 
   if (!config || !student) {
     return (
-      <Layout title="Error" subtitle="Missing configuration or student data">
-        <div className="bg-red-50 border border-red-100 text-red-600 rounded-2xl p-6">
-          <p>Unable to start exercise session. Please go back and try again.</p>
-          <button
-            onClick={() => navigate('/exercises')}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-          >
-            Back to Exercises
-          </button>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-yellow-50 via-pink-50 to-purple-50 relative overflow-hidden">
+        <div className="absolute top-10 left-10 text-6xl animate-bounce" style={{ animationDuration: '3s' }}>🐼</div>
+        <div className="absolute top-20 right-20 text-5xl animate-bounce" style={{ animationDuration: '2.5s', animationDelay: '0.5s' }}>🦁</div>
+        <div className="absolute bottom-20 left-20 text-5xl animate-bounce" style={{ animationDuration: '2.8s', animationDelay: '1s' }}>🐨</div>
+        <div className="absolute bottom-10 right-10 text-6xl animate-bounce" style={{ animationDuration: '3.2s', animationDelay: '1.5s' }}>🐯</div>
+        <div className="relative z-10 bg-white rounded-3xl shadow-xl p-8 border-4 border-red-300 max-w-md mx-4">
+          <div className="text-center">
+            <div className="text-6xl mb-4">😕</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Oops!</h2>
+            <p className="text-gray-600 mb-6">Unable to start exercise session. Please go back and try again.</p>
+            <button
+              onClick={() => navigate('/exercises')}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl font-bold hover:from-pink-600 hover:to-purple-600 transition-all transform hover:scale-105"
+            >
+              <ArrowLeft className="w-5 h-5" /> Back to Exercises
+            </button>
+          </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   if (!sessionStarted || !currentAttempt) {
     return (
-      <Layout title="Loading..." subtitle="Preparing your session...">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-yellow-50 via-pink-50 to-purple-50 relative overflow-hidden">
+        <div className="absolute top-10 left-10 text-6xl animate-bounce" style={{ animationDuration: '3s' }}>🐼</div>
+        <div className="absolute top-20 right-20 text-5xl animate-bounce" style={{ animationDuration: '2.5s', animationDelay: '0.5s' }}>🦁</div>
+        <div className="absolute bottom-20 left-20 text-5xl animate-bounce" style={{ animationDuration: '2.8s', animationDelay: '1s' }}>🐨</div>
+        <div className="absolute bottom-10 right-10 text-6xl animate-bounce" style={{ animationDuration: '3.2s', animationDelay: '1.5s' }}>🐯</div>
+        <div className="relative z-10 flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-pink-400 border-t-transparent"></div>
+          <p className="text-xl font-bold bg-gradient-to-r from-yellow-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">
+            Preparing your adventure... 🚀
+          </p>
         </div>
-      </Layout>
+      </div>
     );
   }
 
-  const numbersShown = numbers.slice(0, displayIndex + 1);
+  const accuracy = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
 
   return (
-    <Layout
-      title={`Playing: ${config.exerciseTypeName}`}
-      subtitle="Focus on the numbers, keep your rhythm, and trust your brain!"
-    >
-      <div className="flex items-center justify-between mb-6">
-        <button
-          onClick={handleExit}
-          className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
-        >
-          <ArrowLeft className="w-4 h-4" /> Exit session
-        </button>
-        <div className="text-sm text-gray-600">
-          <span className="font-semibold">{totalCorrect}</span> / <span>{totalAttempts}</span> correct
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-pink-50 to-purple-50 relative overflow-hidden py-8 px-4 sm:px-6 lg:px-8">
+      {/* Decorative animals */}
+      <div className="absolute top-10 left-10 text-6xl animate-bounce" style={{ animationDuration: '3s' }}>🐼</div>
+      <div className="absolute top-20 right-20 text-5xl animate-bounce" style={{ animationDuration: '2.5s', animationDelay: '0.5s' }}>🦁</div>
+      <div className="absolute bottom-20 left-20 text-5xl animate-bounce" style={{ animationDuration: '2.8s', animationDelay: '1s' }}>🐨</div>
+      <div className="absolute bottom-10 right-10 text-6xl animate-bounce" style={{ animationDuration: '3.2s', animationDelay: '1.5s' }}>🐯</div>
+
+      <div className="max-w-5xl mx-auto relative z-10">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={handleExit}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg text-pink-600 hover:text-pink-700 hover:bg-white transition-all transform hover:scale-105 font-semibold"
+          >
+            <ArrowLeft className="w-4 h-4" /> Exit
+          </button>
+          <div className="flex items-center gap-4">
+            <div className="bg-white/80 backdrop-blur-sm rounded-full px-6 py-2 shadow-lg">
+              <span className="text-lg font-bold text-pink-600">{totalCorrect}</span>
+              <span className="text-gray-500 mx-2">/</span>
+              <span className="text-lg font-semibold text-gray-700">{totalAttempts}</span>
+              <span className="ml-2 text-green-500">✅</span>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <section className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-          <header className="flex items-center justify-between mb-6">
-            <div>
-              <p className="text-sm uppercase text-gray-500 tracking-wide">Number flow</p>
-              <h2 className="text-xl font-semibold text-gray-900">Watch the cards carefully</h2>
-            </div>
-            <div className="text-sm text-gray-500">
-              Card {Math.min(displayIndex + 1, numbers.length)} / {numbers.length}
-            </div>
-          </header>
+        {/* Title */}
+        <div className="text-center mb-3">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-yellow-500 via-pink-500 to-purple-500 bg-clip-text text-transparent mb-2">
+            {config.exerciseTypeName} 🎮
+          </h1>
+          <p className="text-lg text-gray-700">Watch the cards carefully! 👀</p>
+        </div>
 
-          <div className="flex flex-col items-center justify-center h-64 bg-gray-50 border border-gray-100 rounded-3xl relative overflow-hidden">
+        {/* Main game area */}
+        <section className="bg-white rounded-3xl shadow-2xl border-4 border-pink-300 p-6 md:p-8">
+          <div className="flex flex-col items-center justify-center h-96 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 border-4 border-blue-200 rounded-3xl relative overflow-hidden">
             {!showAnswerBox ? (
-              <span className="text-6xl font-bold text-blue-600 drop-shadow-sm">
-                {numbers[displayIndex] ?? 'Ready'}
-              </span>
+              <div className="text-center">
+                <span className="text-8xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent drop-shadow-lg animate-pulse">
+                  {numbers[displayIndex] ?? 'Ready'}
+                </span>
+              </div>
             ) : (
               <div className="w-full max-w-md px-6">
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    {config.exerciseTypeName.includes('Addition') && 'Type the sum of the numbers you saw'}
-                    {config.exerciseTypeName.includes('Subtraction') && 'Type the result of subtracting the numbers'}
-                    {config.exerciseTypeName.includes('Multiplication') && 'Type the product of the numbers you saw'}
-                    {config.exerciseTypeName.includes('Division') && 'Type the result of dividing the numbers'}
-                    {!config.exerciseTypeName.includes('Addition') && 
-                     !config.exerciseTypeName.includes('Subtraction') && 
-                     !config.exerciseTypeName.includes('Multiplication') && 
-                     !config.exerciseTypeName.includes('Division') && 
-                     'Type the result'}
-                  </label>
-                  <input
-                    type="number"
-                    value={userAnswer}
-                    onChange={(e) => setUserAnswer(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg text-center"
-                    placeholder="Your answer"
-                    disabled={feedback !== null}
-                    autoFocus
-                  />
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <span className="inline-flex items-center gap-2">
-                      <Timer className="w-4 h-4" />
-                      {feedback === null ? `${countdown}s left` : 'Time stopped'}
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <span className="inline-flex items-center gap-2 bg-yellow-100 px-4 py-2 rounded-full font-bold text-yellow-700">
+                      <Timer className="w-5 h-5" />
+                      {feedback === null ? `${countdown}s left ⏱️` : 'Time stopped ⏸️'}
                     </span>
-                    <span className="text-gray-400">
-                      {config.exerciseTypeName.includes('Addition') && 'Add every number in your head ✨'}
-                      {config.exerciseTypeName.includes('Subtraction') && 'Subtract the numbers in your head ✨'}
-                      {config.exerciseTypeName.includes('Multiplication') && 'Multiply every number in your head ✨'}
-                      {config.exerciseTypeName.includes('Division') && 'Divide the numbers in your head ✨'}
+                    <span className="text-gray-600 font-semibold text-center">
+                      {config.exerciseTypeName.includes('Addition') && 'Add in your head! 🧠✨'}
+                      {config.exerciseTypeName.includes('Subtraction') && 'Subtract in your head! 🧠✨'}
+                      {config.exerciseTypeName.includes('Multiplication') && 'Multiply in your head! 🧠✨'}
+                      {config.exerciseTypeName.includes('Division') && 'Divide in your head! 🧠✨'}
                       {!config.exerciseTypeName.includes('Addition') && 
                        !config.exerciseTypeName.includes('Subtraction') && 
                        !config.exerciseTypeName.includes('Multiplication') && 
                        !config.exerciseTypeName.includes('Division') && 
-                       'Calculate in your head ✨'}
+                       'Calculate in your head! 🧠✨'}
                     </span>
                   </div>
-                  <button
-                    type="submit"
-                    className="w-full px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60"
-                    disabled={feedback !== null}
-                  >
-                    Check answer
-                  </button>
+                  <label className="block text-center text-sm font-semibold text-gray-700 mb-2">Your answer</label>
+                  <input
+                    type="number"
+                    value={userAnswer}
+                    onChange={(e) => setUserAnswer(e.target.value)}
+                    className="w-full px-6 py-4 border-4 border-pink-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-400 focus:border-pink-500 text-2xl text-center font-bold transition-all"
+                    placeholder=""
+                    disabled={feedback !== null || countdown === 0}
+                    autoFocus
+                  />
+                  <div className="mt-6">
+                    <button
+                      type="submit"
+                      className="w-full px-6 py-4 rounded-2xl bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 text-white font-bold text-lg hover:from-yellow-500 hover:via-pink-600 hover:to-purple-600 transition-all transform hover:scale-105 shadow-lg disabled:opacity-60 disabled:transform-none"
+                      disabled={feedback !== null || countdown === 0}
+                    >
+                      Check Answer! ✅
+                    </button>
+                  </div>
                 </form>
               </div>
             )}
           </div>
 
           {feedback && (
-            <div className={`mt-6 rounded-2xl px-4 py-3 ${
+            <div className={`mt-6 rounded-2xl px-6 py-4 border-4 ${
               feedback === 'correct'
-                ? 'bg-green-50 border border-green-100 text-green-700'
-                : 'bg-red-50 border border-red-100 text-red-700'
+                ? 'bg-gradient-to-r from-green-100 to-emerald-100 border-green-300 text-green-800'
+                : 'bg-gradient-to-r from-red-100 to-rose-100 border-red-300 text-red-800'
             }`}>
-              {feedback === 'correct' && <p>Fantastic! You nailed it. 🎉</p>}
-              {feedback === 'incorrect' && (
-                <p>Almost! The correct answer was <strong>{total}</strong>. Keep going!</p>
-              )}
-              {feedback === 'timeout' && (
-                <p>Time&apos;s up! The right answer was <strong>{total}</strong>. Try once more!</p>
-              )}
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">
+                  {feedback === 'correct' ? '🎉' : feedback === 'timeout' ? '⏰' : '😔'}
+                </span>
+                <div>
+                  {feedback === 'correct' && (
+                    <p className="text-lg font-bold">Fantastic! You nailed it! 🎊</p>
+                  )}
+                  {feedback === 'incorrect' && (
+                    <p className="text-lg font-bold">
+                      Almost! The correct answer was <strong className="text-2xl">{total}</strong>. Keep going! 💪
+                    </p>
+                  )}
+                  {feedback === 'timeout' && (
+                    <p className="text-lg font-bold">
+                      Time's up! The right answer was <strong className="text-2xl">{total}</strong>. Try once more! 🔄
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="mt-6 flex flex-wrap items-center gap-3 justify-center">
             <button
               onClick={handleRetry}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-blue-400 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all transform hover:scale-105 font-bold shadow-lg"
             >
-              <RefreshCcw className="w-4 h-4" /> Next round
+              <RefreshCcw className="w-5 h-5" /> Next round 🎯
             </button>
             <button
               onClick={handleExit}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-white"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-gray-300 bg-gray-50 text-gray-700 hover:bg-gray-100 transition-all transform hover:scale-105 font-bold shadow-lg"
             >
-              <X className="w-4 h-4" /> End session
+              <X className="w-5 h-5" /> End session
             </button>
+            {(feedback || countdown === 0) && (
+              <button
+                onClick={() => setShowNumbers(!showNumbers)}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border-2 border-purple-400 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-all transform hover:scale-105 font-bold shadow-lg"
+              >
+                {showNumbers ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                {showNumbers ? 'Hide' : 'Show'} Numbers 🔢
+              </button>
+            )}
           </div>
         </section>
 
-        <section className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 space-y-6">
-          <div className="bg-blue-50 text-blue-700 rounded-2xl px-4 py-3 text-sm">
-            <p className="font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4" /> Session summary</p>
-            <p>You chose {numbers.length} cards with {digitLabel(config.digitLength)} numbers.</p>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Problems solved:</span>
-              <span className="font-semibold">{totalAttempts}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Correct answers:</span>
-              <span className="font-semibold text-green-600">{totalCorrect}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Accuracy:</span>
-              <span className="font-semibold">
-                {totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0}%
-              </span>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-2">
-              Numbers shown
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {numbersShown.map((number, index) => (
-                <span
-                  key={`${number}-${index}`}
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    index === displayIndex && !showAnswerBox ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
-                  }`}
+        {/* Numbers overlay - centered modal */}
+        {showNumbers && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowNumbers(false)}>
+            <div className="bg-white rounded-3xl shadow-2xl border-4 border-purple-300 p-8 max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                  <Target className="w-6 h-6 text-purple-600" /> Numbers Shown 🔢
+                </h3>
+                <button
+                  onClick={() => setShowNumbers(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 >
-                  {number}
-                </span>
-              ))}
-              {showAnswerBox && numbersShown.length < numbers.length && (
-                <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-400 text-sm">...</span>
-              )}
+                  <X className="w-6 h-6 text-gray-600" />
+                </button>
+              </div>
+              <div className="text-center space-y-4">
+                {numbers.map((number, index) => (
+                  <div key={`${number}-${index}`} className="text-6xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    {formatNumberWithSign(number, index)}
+                  </div>
+                ))}
+                <div className="mt-6 pt-6 border-t-2 border-gray-200">
+                  <p className="text-3xl font-bold text-gray-800">= {total}</p>
+                </div>
+              </div>
             </div>
           </div>
+        )}
 
-          <div className="space-y-2 text-sm text-gray-600">
-            <p><strong>Cards:</strong> {numbers.length}</p>
-            <p><strong>Speed:</strong> {config.displaySpeed.toFixed(1)} seconds per card</p>
-            <p><strong>Answer time:</strong> {config.timePerQuestion} seconds</p>
+        {/* Session summary - bottom icon with hover */}
+        <div className="fixed bottom-10 right-40 z-40">
+          <div className="relative">
+            <button
+              onMouseEnter={() => setShowSummary(true)}
+              onMouseLeave={() => setShowSummary(false)}
+              className="p-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-full shadow-2xl hover:from-pink-600 hover:to-purple-600 transition-all transform hover:scale-110"
+            >
+              <Info className="w-6 h-6" />
+            </button>
+            
+            {showSummary && (
+              <div className="absolute bottom-full right-0 mb-4 bg-white rounded-2xl shadow-2xl border-4 border-purple-300 p-6 min-w-[300px] max-w-md">
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-r from-pink-100 via-purple-100 to-blue-100 rounded-xl px-4 py-3 border-2 border-pink-300">
+                    <p className="font-bold flex items-center gap-2 text-purple-700 text-lg mb-2">
+                      <Sparkles className="w-5 h-5" /> Session Summary 📊
+                    </p>
+                    <p className="text-gray-700 font-medium text-sm">
+                      You chose <strong className="text-pink-600">{numbers.length}</strong> cards with <strong className="text-purple-600">{digitLabel(config.digitLength ?? 1)}</strong> numbers.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-3 border-2 border-green-200">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-bold text-gray-700">Problems solved: 📝</span>
+                        <span className="text-xl font-bold text-green-600">{totalAttempts}</span>
+                      </div>
+                    </div>
+                    <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-3 border-2 border-blue-200">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-bold text-gray-700">Correct answers: ✅</span>
+                        <span className="text-xl font-bold text-blue-600">{totalCorrect}</span>
+                      </div>
+                    </div>
+                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-3 border-2 border-yellow-200">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-bold text-gray-700">Accuracy: 🎯</span>
+                        <span className="text-xl font-bold text-yellow-600">{accuracy}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 text-sm bg-gradient-to-br from-pink-50 to-rose-50 rounded-xl p-3 border-2 border-pink-200">
+                    <p className="font-bold text-gray-800"><span className="text-lg">🎴</span> Cards: <strong className="text-pink-600">{numbers.length}</strong></p>
+                    <p className="font-bold text-gray-800"><span className="text-lg">⚡</span> Speed: <strong className="text-yellow-600">{(config.displaySpeed ?? 1).toFixed(1)}s</strong> per card</p>
+                    <p className="font-bold text-gray-800"><span className="text-lg">⏱️</span> Answer time: <strong className="text-blue-600">{config.timePerQuestion ?? 10}s</strong></p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </section>
+        </div>
       </div>
-    </Layout>
+    </div>
   );
 }
 
