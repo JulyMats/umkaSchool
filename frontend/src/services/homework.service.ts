@@ -216,6 +216,11 @@ export const homeworkService = {
         return (response.data || []).map(mapHomeworkResponse);
     },
 
+    getHomeworkById: async (homeworkId: string): Promise<HomeworkDetail> => {
+        const response = await axiosInstance.get(`/api/homework/${homeworkId}`);
+        return mapHomeworkResponse(response.data);
+    },
+
     createHomework: async (payload: CreateHomeworkPayload): Promise<HomeworkDetail> => {
         const response = await axiosInstance.post('/api/homework', payload);
         return mapHomeworkResponse(response.data);
