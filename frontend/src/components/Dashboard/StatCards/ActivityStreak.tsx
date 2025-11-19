@@ -37,7 +37,7 @@ export default function ActivityStreak() {
   if (loading) {
     return (
       <StatCard
-        icon={<Clock3 size={16} />}
+        icon={<Clock3 size={22} />}
         title="Activity Streak"
         value="..."
         progress={0}
@@ -49,7 +49,7 @@ export default function ActivityStreak() {
 
   return (
     <StatCard
-      icon={<Clock3 size={16} />}
+      icon={<Clock3 size={22} />}
       title="Activity Streak"
       value={`${currentStreak} ${currentStreak === 1 ? 'day' : 'days'}`}
       progress={progress}

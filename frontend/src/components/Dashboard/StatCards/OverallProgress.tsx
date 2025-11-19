@@ -34,7 +34,7 @@ export default function OverallProgress() {
   if (loading) {
     return (
       <StatCard
-        icon={<Target size={16} />}
+        icon={<Target size={22} />}
         title="Accuracy"
         value="..."
         progress={0}
@@ -53,7 +53,7 @@ export default function OverallProgress() {
 
   return (
     <StatCard
-      icon={<Target size={16} />}
+      icon={<Target size={22} />}
       title="Accuracy"
       value={`${accuracyRate}%`}
       progress={accuracyRate}
