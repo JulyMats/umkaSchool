@@ -44,6 +44,11 @@ export const exerciseService = {
         return response.data;
     },
 
+    getExerciseById: async (exerciseId: string): Promise<Exercise> => {
+        const response = await axiosInstance.get(`/api/exercises/${exerciseId}`);
+        return response.data;
+    },
+
     createExercise: async (payload: CreateExercisePayload): Promise<Exercise> => {
         const response = await axiosInstance.post('/api/exercises', payload);
         return response.data;
