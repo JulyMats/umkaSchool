@@ -53,8 +53,6 @@ function AppContent() {
     return (
       <>
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/exercises/:exerciseTypeId/setup" element={<ExerciseSetup />} />
-        <Route path="/exercises/play" element={<ExercisePlay />} />
         <Route path="/exercises" element={<Exercises />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/homework" element={<Homework />} />
@@ -80,14 +78,26 @@ function AppContent() {
           path="/*"
           element={
             <PrivateRoute>
-              <div className="flex h-screen overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 bg-gray-50 overflow-y-auto ml-64">
-                  <Routes>
-                    {renderProtectedRoutes()}
-                  </Routes>
-                </main>
-              </div>
+              <Routes>
+                {/* Routes without sidebar */}
+                <Route path="/exercises/:exerciseTypeId/setup" element={<ExerciseSetup />} />
+                <Route path="/exercises/play" element={<ExercisePlay />} />
+                
+                {/* Routes with sidebar */}
+                <Route
+                  path="*"
+                  element={
+                    <div className="flex h-screen overflow-hidden">
+                      <Sidebar />
+                      <main className="flex-1 bg-gray-50 overflow-y-auto ml-64">
+                        <Routes>
+                          {renderProtectedRoutes()}
+                        </Routes>
+                      </main>
+                    </div>
+                  }
+                />
+              </Routes>
             </PrivateRoute>
           }
         />
