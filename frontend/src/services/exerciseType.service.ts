@@ -14,10 +14,20 @@ interface APIExerciseType {
 }
 
 export interface ParameterRanges {
-    cardCount?: [number, number]; // [min, max]
-    displaySpeed?: [number, number]; // [min, max]
-    timePerQuestion?: [number, number]; // [min, max]
-    digitTypes?: string[]; // ["single-digit", "two-digit", "three-digit", "four-digit"]
+    cardCount?: [number, number];
+    displaySpeed?: [number, number]; 
+    timePerQuestion?: [number, number]; 
+    
+    exampleCount?: [number, number]; 
+    dividendDigits?: [number, number]; 
+    divisorDigits?: [number, number]; 
+    
+    firstMultiplierDigits?: [number, number]; 
+    minValue?: number; 
+    maxValue?: number; 
+    
+    digitTypes?: string[]; 
+    themes?: string[]; 
 }
 
 export interface ExerciseType {
