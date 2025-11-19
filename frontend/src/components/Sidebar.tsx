@@ -69,7 +69,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="flex flex-col justify-between w-64 min-h-screen border-r border-gray-200 p-6">
+    <div className="flex flex-col justify-between w-64 h-screen border-r border-gray-200 p-6 bg-white fixed left-0 top-0 overflow-y-auto z-10">
       <div>
         <div className="mb-6 text-left">
           <h1 className="text-2xl font-bold">UmkaSchool</h1>

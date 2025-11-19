@@ -80,9 +80,9 @@ function AppContent() {
           path="/*"
           element={
             <PrivateRoute>
-              <div className="flex min-h-screen">
+              <div className="flex h-screen overflow-hidden">
                 <Sidebar />
-                <main className="flex-1 bg-gray-50">
+                <main className="flex-1 bg-gray-50 overflow-y-auto ml-64">
                   <Routes>
                     {renderProtectedRoutes()}
                   </Routes>
