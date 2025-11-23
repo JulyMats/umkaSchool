@@ -5,7 +5,7 @@ interface UserResponse {
     firstName: string;
     lastName: string;
     email: string;
-    userRole: string; // Backend returns 'userRole' not 'role'
+    userRole: string; 
     appLanguage: string;
     avatarUrl: string | null;
     appTheme: string;
@@ -46,6 +46,15 @@ const mapUserResponse = (response: UserResponse): User => {
     };
 };
 
+export interface UpdateUserPayload {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    appLanguage?: string;
+    avatarUrl?: string;
+    appTheme?: 'LIGHT' | 'DARK';
+}
+
 export const userService = {
     getUserByEmail: async (email: string): Promise<User> => {
         console.log('[userService] Getting user by email:', email);
@@ -58,6 +67,11 @@ export const userService = {
 
     getUserById: async (userId: string): Promise<User> => {
         const response = await axiosInstance.get<UserResponse>(`/api/users/${userId}`);
+        return mapUserResponse(response.data);
+    },
+
+    updateUser: async (userId: string, payload: UpdateUserPayload): Promise<User> => {
+        const response = await axiosInstance.put<UserResponse>(`/api/users/${userId}`, payload);
         return mapUserResponse(response.data);
     }
 };

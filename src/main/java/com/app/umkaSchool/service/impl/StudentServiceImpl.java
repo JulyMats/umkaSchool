@@ -298,6 +298,7 @@ public class StudentServiceImpl implements StudentService {
                 .groupName(student.getGroup() != null ? student.getGroup().getName() : null)
                 .groupCode(student.getGroup() != null ? student.getGroup().getCode() : null)
                 .guardian(guardianInfo)
+                .avatarUrl(user.getAvatarUrl())
                 .build();
     }
 }

@@ -23,7 +23,7 @@ export interface Student {
     groupId: string | null;
     groupName: string | null;
     groupCode: string | null;
-    avatarUrl?: string; // Optional avatar URL for student
+    avatarUrl: string; 
     guardian: GuardianInfo | null;
 }
 
