@@ -178,6 +178,7 @@ public class TeacherServiceImpl implements TeacherService {
                 .totalStudents(totalStudents)
                 .totalGroups(totalGroups)
                 .createdAt(user.getCreatedAt())
+                .avatarUrl(user.getAvatarUrl())
                 .build();
     }
 }

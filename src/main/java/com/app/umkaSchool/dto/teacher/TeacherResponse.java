@@ -23,5 +23,6 @@ public class TeacherResponse {
     private int totalStudents;
     private int totalGroups;
     private ZonedDateTime createdAt;
+    private String avatarUrl;
 }
 

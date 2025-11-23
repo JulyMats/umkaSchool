@@ -35,6 +35,9 @@ public class StudentResponse {
     // Guardian info
     private GuardianInfo guardian;
 
+    // Avatar URL from user
+    private String avatarUrl;
+
     @Data
     @Builder
     @NoArgsConstructor

@@ -11,6 +11,7 @@ export interface Teacher {
     totalStudents: number;
     totalGroups: number;
     createdAt: string;
+    avatarUrl: string; 
 }
 
 export interface CreateTeacherPayload {
