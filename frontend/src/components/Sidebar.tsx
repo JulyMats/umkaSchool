@@ -49,8 +49,7 @@ export default function Sidebar() {
   const lastName = teacher?.lastName || student?.lastName || user?.lastName || '';
   const fullName = `${firstName} ${lastName}`.trim() || 'User';
 
-  // Get avatar - prefer student avatar, then user avatar, then default
-  const avatarUrl = student?.avatarUrl || user?.avatarUrl || avatar;
+  const avatarUrl = student?.avatarUrl || teacher?.avatarUrl || user?.avatarUrl || avatar;
 
   // Get role display name
   const getRoleDisplayName = () => {
@@ -115,8 +114,16 @@ export default function Sidebar() {
           </div>
         </div>
         <ul>
-          <li className="flex items-center gap-2 py-2 cursor-pointer hover:bg-gray-50 px-3 rounded-lg">
-            <User size={18} /> Profile
+          <li>
+            <Link
+              to="/profile"
+              className={`flex items-center gap-2 py-2 px-3 rounded-lg cursor-pointer mb-1 ${
+                location.pathname === '/profile' ? "bg-gray-100 font-semibold" : "hover:bg-gray-50"
+              }`}
+            >
+              <User size={18} className={location.pathname === '/profile' ? "text-blue-500" : ""} />
+              <span className={location.pathname === '/profile' ? "text-blue-500" : ""}>Profile</span>
+            </Link>
           </li>
           <li 
             onClick={handleLogout}
