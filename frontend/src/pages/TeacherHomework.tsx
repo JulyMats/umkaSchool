@@ -48,7 +48,7 @@ const assignmentInitialState: AssignmentFormState = {
     dueDate: '',
     selectedGroupIds: [],
     selectedStudentIds: [],
-    status: 'PENDING'
+    status: 'ASSIGNED'
 };
 
 export default function TeacherHomework() {
@@ -492,7 +492,8 @@ export default function TeacherHomework() {
 
                             const getStatusColors = (status: string) => {
                                 switch (status) {
-                                    case 'PENDING':
+                                    case 'ASSIGNED':
+                                    case 'IN_PROGRESS':
                                         return {
                                             bg: 'bg-blue-50',
                                             border: 'border-blue-200',
@@ -1017,7 +1018,8 @@ function AssignmentModal({
                                     }
                                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 >
-                                    <option value="PENDING">Pending</option>
+                                    <option value="ASSIGNED">Assigned</option>
+                                    <option value="IN_PROGRESS">In Progress</option>
                                     <option value="COMPLETED">Completed</option>
                                     <option value="OVERDUE">Overdue</option>
                                 </select>
@@ -1132,12 +1134,16 @@ function AssignmentModal({
 
 function formatAssignmentStatus(status: HomeworkStatus): string {
     switch (status) {
-        case 'PENDING':
-            return 'Pending';
+        case 'ASSIGNED':
+            return 'Assigned';
+        case 'IN_PROGRESS':
+            return 'In Progress';
         case 'COMPLETED':
             return 'Completed';
         case 'OVERDUE':
             return 'Overdue';
+        default:
+            return status;
     }
 }
 

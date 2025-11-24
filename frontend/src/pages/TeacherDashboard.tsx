@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarCheck, Clock, GraduationCap, Layers, Users } from 'lucide-react';
+import { CalendarCheck, Clock, GraduationCap, Layers, Trophy, Users } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
 import { studentService, Student } from '../services/student.service';
@@ -8,11 +8,17 @@ import {
     homeworkService,
     HomeworkAssignmentDetail
 } from '../services/homework.service';
+import { achievementService, StudentAchievement } from '../services/achievement.service';
 
 interface DashboardData {
     students: Student[];
     groups: Group[];
     assignments: HomeworkAssignmentDetail[];
+}
+
+interface RecentStudentAchievement extends StudentAchievement {
+    studentId: string;
+    studentName: string;
 }
 
 export default function TeacherDashboard() {
@@ -22,6 +28,7 @@ export default function TeacherDashboard() {
         groups: [],
         assignments: []
     });
+    const [recentAchievements, setRecentAchievements] = useState<RecentStudentAchievement[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -41,6 +48,39 @@ export default function TeacherDashboard() {
                     homeworkService.getAssignmentsByTeacher(teacher.id)
                 ]);
                 setData({ students, groups, assignments });
+
+                // Fetch recent achievements for all students
+                const allAchievements: RecentStudentAchievement[] = [];
+                for (const student of students) {
+                    try {
+                        // Get all student achievements and filter recent ones
+                        const allStudentAchievements = await achievementService.getStudentAchievements(student.id);
+                        // Get achievements from last 30 days
+                        const thirtyDaysAgo = new Date();
+                        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                        
+                        const recentAchievements = allStudentAchievements.filter(achievement => {
+                            const earnedDate = new Date(achievement.earnedAt);
+                            return earnedDate >= thirtyDaysAgo;
+                        });
+                        
+                        const achievementsWithStudentInfo = recentAchievements.map(achievement => ({
+                            ...achievement,
+                            studentId: student.id,
+                            studentName: `${student.firstName} ${student.lastName}`
+                        }));
+                        allAchievements.push(...achievementsWithStudentInfo);
+                    } catch (err) {
+                        console.error(`Failed to load achievements for student ${student.id}:`, err);
+                    }
+                }
+                
+                // Sort by earned date (most recent first) and take top 4
+                const sortedAchievements = allAchievements
+                    .sort((a, b) => new Date(b.earnedAt).getTime() - new Date(a.earnedAt).getTime())
+                    .slice(0, 4);
+                
+                setRecentAchievements(sortedAchievements);
             } catch (err: any) {
                 console.error('[TeacherDashboard] Failed to load dashboard data', err);
                 setError(err?.message || 'Failed to load dashboard data. Please try again later.');
@@ -63,7 +103,7 @@ export default function TeacherDashboard() {
                 (a, b) =>
                     new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
             )
-            .slice(0, 4);
+            .slice(0, 5);
 
         const recentStudents = [...data.students]
             .filter((student) => student.lastActivityAt)
@@ -186,37 +226,48 @@ export default function TeacherDashboard() {
                 </SectionCard>
 
                 <SectionCard
-                    title="Recent Student Activity"
-                    icon={<GraduationCap className="w-5 h-5 text-blue-500" />}
-                    emptyMessage="No recent student activity recorded."
+                    title="Recent Student Achievements"
+                    icon={<Trophy className="w-5 h-5 text-yellow-500" />}
+                    emptyMessage="No recent student achievements."
                 >
                     <div className="space-y-3">
-                        {metrics.recentStudents.map((student) => (
+                        {recentAchievements.map((achievement) => (
                             <div
-                                key={student.id}
-                                className="flex items-center justify-between bg-white border border-gray-100 rounded-xl px-4 py-3 shadow-sm"
+                                key={`${achievement.studentId}-${achievement.achievementId}-${achievement.earnedAt}`}
+                                className="flex items-start gap-4 bg-white border border-gray-100 rounded-xl px-4 py-3 shadow-sm hover:shadow-md transition-shadow"
                             >
-                                <div>
-                                    <p className="font-semibold text-gray-900">
-                                        {student.firstName} {student.lastName}
-                                    </p>
-                                    <p className="text-sm text-gray-500">
-                                        Last active: {student.lastActivityAt
-                                            ? new Date(student.lastActivityAt).toLocaleString()
-                                            : 'No activity yet'}
-                                    </p>
-                                </div>
-                                <div className="text-sm text-gray-500 text-right">
-                                    {student.groupName ? (
-                                        <>
-                                            <p className="font-medium text-gray-700">
-                                                {student.groupName}
-                                            </p>
-                                            <p>Group code: {student.groupCode || '—'}</p>
-                                        </>
+                                <div className="flex-shrink-0">
+                                    {achievement.iconUrl ? (
+                                        <img
+                                            src={achievement.iconUrl}
+                                            alt={achievement.name}
+                                            className="w-14 h-14 object-contain"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                            }}
+                                        />
                                     ) : (
-                                        <p className="italic">No group assigned</p>
+                                        <div className="w-14 h-14 rounded-full bg-yellow-100 flex items-center justify-center">
+                                            <Trophy className="w-8 h-8 text-yellow-600" />
+                                        </div>
                                     )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-semibold text-gray-900">
+                                        {achievement.studentName}
+                                    </p>
+                                    <p className="text-sm font-medium text-gray-700 mt-1">
+                                        {achievement.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Achieved: {new Date(achievement.earnedAt).toLocaleDateString('en-US', {
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}
+                                    </p>
                                 </div>
                             </div>
                         ))}
