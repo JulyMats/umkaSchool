@@ -4,6 +4,7 @@ import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
 import { studentService, Student } from '../services/student.service';
 import { groupService, Group } from '../services/group.service';
+import { achievementService, StudentAchievement } from '../services/achievement.service';
 
 interface AssignFormState {
     studentId: string;
@@ -20,6 +21,7 @@ export default function TeacherStudents() {
     const [students, setStudents] = useState<Student[]>([]);
     const [groups, setGroups] = useState<Group[]>([]);
     const [unassignedStudents, setUnassignedStudents] = useState<Student[]>([]);
+    const [studentLastAchievements, setStudentLastAchievements] = useState<Record<string, StudentAchievement | null>>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -48,6 +50,27 @@ export default function TeacherStudents() {
                 setStudents(assignedStudents);
                 setGroups(teacherGroups);
                 setUnassignedStudents(allStudents.filter((student) => !student.teacherId));
+
+                // Load last achievements for all assigned students
+                const achievementsMap: Record<string, StudentAchievement | null> = {};
+                for (const student of assignedStudents) {
+                    try {
+                        const allAchievements = await achievementService.getStudentAchievements(student.id);
+                        if (allAchievements.length > 0) {
+                            // Sort by earned date and get the most recent one
+                            const sortedAchievements = allAchievements.sort(
+                                (a, b) => new Date(b.earnedAt).getTime() - new Date(a.earnedAt).getTime()
+                            );
+                            achievementsMap[student.id] = sortedAchievements[0];
+                        } else {
+                            achievementsMap[student.id] = null;
+                        }
+                    } catch (err) {
+                        console.error(`Failed to load achievements for student ${student.id}:`, err);
+                        achievementsMap[student.id] = null;
+                    }
+                }
+                setStudentLastAchievements(achievementsMap);
             } catch (err: any) {
                 console.error('[TeacherStudents] Failed to load data', err);
                 setError(err?.message || 'Failed to load students. Please try again later.');
@@ -223,7 +246,8 @@ export default function TeacherStudents() {
                             <th className="px-6 py-3">Student</th>
                             <th className="px-6 py-3">Guardian</th>
                             <th className="px-6 py-3">Group</th>
-                            <th className="px-6 py-3">Last Activity</th>
+                            <th className="px-6 py-3">Last Achievement</th>
+                            <th className="px-6 py-3">Enrollment Date</th>
                             <th className="px-6 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
@@ -265,14 +289,29 @@ export default function TeacherStudents() {
                                     )}
                                 </td>
                                 <td className="px-6 py-4">
+                                    {studentLastAchievements[student.id] ? (
+                                        <div>
+                                            <p className="text-gray-900 font-medium">
+                                                {studentLastAchievements[student.id]?.name}
+                                            </p>
+                                            <p className="text-gray-500 text-xs">
+                                                {new Date(studentLastAchievements[student.id]!.earnedAt).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-gray-400 italic text-sm">
+                                            No achievement
+                                        </p>
+                                    )}
+                                </td>
+                                <td className="px-6 py-4">
                                     <p className="text-gray-900 font-medium">
-                                        {student.lastActivityAt
-                                            ? new Date(student.lastActivityAt).toLocaleDateString()
-                                            : 'No activity'}
-                                    </p>
-                                    <p className="text-gray-500 text-xs">
-                                        Enrolled {student.enrollmentDate
-                                            ? new Date(student.enrollmentDate).toLocaleDateString()
+                                        {student.enrollmentDate
+                                            ? new Date(student.enrollmentDate).toLocaleDateString('en-US', {
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric'
+                                            })
                                             : '—'}
                                     </p>
                                 </td>
@@ -291,7 +330,7 @@ export default function TeacherStudents() {
 
                         {filteredStudents.length === 0 && (
                             <tr>
-                                <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                                     <div className="flex flex-col items-center gap-3">
                                         <Users className="w-8 h-8 text-gray-300" />
                                         <p className="text-sm">
@@ -313,6 +352,7 @@ export default function TeacherStudents() {
                     formState={assignForm}
                     unassignedStudents={unassignedStudents}
                     groups={groups}
+                    studentLastAchievements={studentLastAchievements}
                     onClose={() => setAssignModalOpen(false)}
                     onSubmit={handleAssignSubmit}
                     onChange={setAssignForm}
@@ -324,6 +364,8 @@ export default function TeacherStudents() {
                     isSaving={saving}
                     formState={manageForm}
                     groups={groups}
+                    students={students}
+                    studentLastAchievements={studentLastAchievements}
                     onClose={() => setManageModalOpen(false)}
                     onSubmit={handleManageSubmit}
                     onChange={setManageForm}
@@ -338,6 +380,7 @@ interface AssignStudentModalProps {
     formState: AssignFormState;
     unassignedStudents: Student[];
     groups: Group[];
+    studentLastAchievements: Record<string, StudentAchievement | null>;
     onClose: () => void;
     onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
     onChange: React.Dispatch<React.SetStateAction<AssignFormState>>;
@@ -348,6 +391,7 @@ function AssignStudentModal({
     formState,
     unassignedStudents,
     groups,
+    studentLastAchievements,
     onClose,
     onSubmit,
     onChange
@@ -495,11 +539,16 @@ function AssignStudentModal({
                                         Current status
                                     </p>
                                     <p>
-                                        Last activity:{' '}
-                                        {selectedStudent.lastActivityAt
-                                            ? new Date(selectedStudent.lastActivityAt).toLocaleString()
-                                            : 'No activity recorded'}
+                                        Last achievement:{' '}
+                                        {selectedStudent && studentLastAchievements[selectedStudent.id]
+                                            ? studentLastAchievements[selectedStudent.id]!.name
+                                            : 'No achievement'}
                                     </p>
+                                    {selectedStudent && studentLastAchievements[selectedStudent.id] && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Achieved: {new Date(studentLastAchievements[selectedStudent.id]!.earnedAt).toLocaleDateString()}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -531,6 +580,8 @@ interface ManageStudentModalProps {
     isSaving: boolean;
     formState: ManageFormState;
     groups: Group[];
+    students: Student[];
+    studentLastAchievements: Record<string, StudentAchievement | null>;
     onClose: () => void;
     onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
     onChange: React.Dispatch<React.SetStateAction<ManageFormState>>;
@@ -540,10 +591,13 @@ function ManageStudentModal({
     isSaving,
     formState,
     groups,
+    students,
+    studentLastAchievements,
     onClose,
     onSubmit,
     onChange
 }: ManageStudentModalProps) {
+    const selectedStudent = students.find((student) => student.id === formState.studentId);
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
             <div className="bg-white w-full max-w-xl rounded-2xl shadow-xl overflow-hidden">
