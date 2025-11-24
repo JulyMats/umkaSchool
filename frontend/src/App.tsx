@@ -18,6 +18,7 @@ import TeacherDashboard from "./pages/TeacherDashboard";
 import TeacherStudents from "./pages/TeacherStudents";
 import TeacherGroups from "./pages/TeacherGroups";
 import TeacherHomework from "./pages/TeacherHomework";
+import Profile from "./pages/Profile";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import "./App.css";
 
@@ -44,6 +45,7 @@ function AppContent() {
           <Route path="/students" element={<TeacherStudents />} />
           <Route path="/groups" element={<TeacherGroups />} />
           <Route path="/homework" element={<TeacherHomework />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </>
@@ -57,6 +59,7 @@ function AppContent() {
         <Route path="/progress" element={<Progress />} />
         <Route path="/homework" element={<Homework />} />
         <Route path="/challenges" element={<DailyChallenge />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </>

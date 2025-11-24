@@ -5,6 +5,8 @@ import { ExerciseSessionConfig } from '../types/exercise';
 import { useAuth } from '../contexts/AuthContext';
 import { exerciseService } from '../services/exercise.service';
 import { exerciseAttemptService, ExerciseAttempt } from '../services/exerciseAttempt.service';
+import { achievementService, StudentAchievement } from '../services/achievement.service';
+import AchievementModal from '../components/AchievementModal';
 
 interface LocationState {
   config?: ExerciseSessionConfig;
@@ -26,6 +28,7 @@ export default function ExercisePlay() {
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [showNumbers, setShowNumbers] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [sessionCompleted, setSessionCompleted] = useState(false);
   
   // Session management
   const [currentAttempt, setCurrentAttempt] = useState<ExerciseAttempt | null>(null);
@@ -33,6 +36,12 @@ export default function ExercisePlay() {
   const [totalAttempts, setTotalAttempts] = useState(0);
   const [totalCorrect, setTotalCorrect] = useState(0);
   const [exerciseId, setExerciseId] = useState<string | null>(null);
+
+  // Achievement management
+  const [newAchievements, setNewAchievements] = useState<StudentAchievement[]>([]);
+  const [currentAchievementIndex, setCurrentAchievementIndex] = useState(0);
+  const [showAchievementModal, setShowAchievementModal] = useState(false);
+  const previousAchievementsRef = useRef<Set<string>>(new Set());
 
   const displayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const answerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -148,6 +157,14 @@ export default function ExercisePlay() {
         totalAttemptsRef.current = 0;
         totalCorrectRef.current = 0;
         sessionCompletedRef.current = false; // Reset completion flag for new session
+        
+        try {
+          const initialAchievements = await achievementService.getStudentAchievements(student.id);
+          previousAchievementsRef.current = new Set(initialAchievements.map(a => a.achievementId));
+        } catch (error) {
+          console.error('Failed to fetch initial achievements:', error);
+          previousAchievementsRef.current = new Set();
+        }
       } catch (error: any) {
         console.error('Failed to initialize session:', error);
         const errorMessage = error?.response?.data?.message || 
@@ -188,7 +205,7 @@ export default function ExercisePlay() {
   }, [currentAttempt?.id, sessionStarted, exerciseId]);
 
   const completeSession = async () => {
-    if (!currentAttempt || !exerciseId || sessionCompletedRef.current) return;
+    if (!currentAttempt || !exerciseId || sessionCompletedRef.current || !student) return;
 
     try {
       sessionCompletedRef.current = true;
@@ -200,10 +217,46 @@ export default function ExercisePlay() {
         totalCorrect: totalCorrect,
         score: totalCorrect * 10 // Simple scoring
       });
+
+  
+      setTimeout(async () => {
+        try {
+          const allCurrentAchievements = await achievementService.getStudentAchievements(student.id);
+          const currentAchievementIds = new Set(allCurrentAchievements.map(a => a.achievementId));
+          
+          const newlyEarned = allCurrentAchievements.filter(
+            achievement => !previousAchievementsRef.current.has(achievement.achievementId)
+          );
+          
+          if (newlyEarned.length > 0) {
+            setNewAchievements(newlyEarned);
+            setCurrentAchievementIndex(0);
+            setShowAchievementModal(true);
+          } else {
+            navigate('/exercises');
+          }
+          
+          previousAchievementsRef.current = currentAchievementIds;
+        } catch (error) {
+          console.error('Failed to fetch achievements:', error);
+        }
+      }, 500); 
     } catch (error) {
       console.error('Failed to complete session:', error);
       // Reset flag on error so cleanup can try again
       sessionCompletedRef.current = false;
+    }
+  };
+
+  const handleAchievementModalClose = () => {
+    if (currentAchievementIndex < newAchievements.length - 1) {
+      setCurrentAchievementIndex(currentAchievementIndex + 1);
+    } else {
+      setShowAchievementModal(false);
+      setNewAchievements([]);
+      setCurrentAchievementIndex(0);
+      
+      navigate('/exercises');
     }
   };
 
@@ -347,10 +400,11 @@ export default function ExercisePlay() {
   };
 
   const handleExit = async () => {
-    if (currentAttempt && sessionStarted) {
+    if (currentAttempt && sessionStarted && !sessionCompletedRef.current) {
       await completeSession();
+    } else {
+      navigate('/exercises');
     }
-    navigate('/exercises');
   };
 
   if (!config || !student) {
@@ -622,6 +676,14 @@ export default function ExercisePlay() {
           </div>
         </div>
       </div>
+
+      {/* Achievement Modal */}
+      {showAchievementModal && newAchievements.length > 0 && (
+        <AchievementModal
+          achievement={newAchievements[currentAchievementIndex]}
+          onClose={handleAchievementModalClose}
+        />
+      )}
     </div>
   );
 }

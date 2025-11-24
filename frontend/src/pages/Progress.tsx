@@ -1,8 +1,9 @@
 import Layout from "../components/Layout";
-import { CalendarDays, Brain, Target, Clock } from 'lucide-react';
+import { CalendarDays, Brain, Target, Clock, Trophy } from 'lucide-react';
 import { ReactElement, useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { statsService, TimePeriod, StudentStats, SubjectProgress } from '../services/stats.service';
+import { achievementService, StudentAchievement, Achievement } from '../services/achievement.service';
 
 interface ProgressMetric {
   title: string;
@@ -31,6 +32,8 @@ export default function Progress() {
   const [stats, setStats] = useState<StudentStats | null>(null);
   const [previousStats, setPreviousStats] = useState<StudentStats | null>(null);
   const [subjectProgress, setSubjectProgress] = useState<SubjectProgress[]>([]);
+  const [studentAchievements, setStudentAchievements] = useState<StudentAchievement[]>([]);
+  const [allAchievements, setAllAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -58,6 +61,13 @@ export default function Progress() {
         // Fetch subject progress
         const subjects = await statsService.getSubjectProgress(student.id, selectedPeriod);
         setSubjectProgress(subjects);
+
+        const [earnedAchievements, allAchievementsList] = await Promise.all([
+          achievementService.getStudentAchievements(student.id),
+          achievementService.getAllAchievements()
+        ]);
+        setStudentAchievements(earnedAchievements);
+        setAllAchievements(allAchievementsList);
       } catch (error) {
         console.error('Error fetching progress:', error);
       } finally {
@@ -223,6 +233,77 @@ export default function Progress() {
             </div>
           );
         })}
+      </div>
+
+      {/* Achievements Section */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <Trophy className="w-6 h-6 text-yellow-500" />
+            Achievements
+          </h2>
+          <span className="text-sm text-gray-500">
+            {studentAchievements.length} / {allAchievements.length} unlocked
+          </span>
+        </div>
+
+        {studentAchievements.length === 0 ? (
+          <div className="text-center text-gray-500 py-8">
+            No achievements earned yet. Keep practicing to unlock achievements!
+          </div>
+        ) : (
+          <div className="overflow-x-auto pb-4">
+            <div className="flex gap-6 min-w-max">
+              {studentAchievements.map((achievement) => (
+                <div
+                  key={achievement.achievementId}
+                  className="relative rounded-xl p-4 border-2 bg-white border-gray-200 shadow-md hover:shadow-lg transition-all flex flex-col flex-shrink-0 w-[calc(16.666%-1rem)] min-w-[200px] max-w-[240px]"
+                >
+                  {/* Achievement Icon */}
+                  <div className="flex justify-center mb-4">
+                    {achievement.iconUrl ? (
+                      <img
+                        src={achievement.iconUrl}
+                        alt={achievement.name}
+                        className="w-56 h-56 object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-56 h-56 rounded-full bg-gray-100 flex items-center justify-center">
+                        <Trophy className="w-28 h-28 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Achievement Info */}
+                  <div className="text-center space-y-2 mt-auto flex flex-col h-full">
+                    <h3 className="font-semibold text-base text-gray-900 min-h-[2.5rem] flex items-center justify-center">
+                      {achievement.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 leading-relaxed flex-grow line-clamp-3">
+                      {achievement.description}
+                    </p>
+                    
+                    {/* Date Achieved */}
+                    <div className="pt-2 border-t border-gray-200 mt-auto">
+                      <p className="text-xs text-gray-500">
+                        Achieved: <span className="font-medium text-gray-700">
+                          {new Date(achievement.earnedAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Subject-wise Progress */}
