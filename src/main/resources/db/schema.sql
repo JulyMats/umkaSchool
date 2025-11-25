@@ -78,7 +78,7 @@ CREATE TABLE exercise_type (
     description text,
     base_difficulty int NOT NULL CHECK (base_difficulty BETWEEN 1 AND 10),
     avg_time_seconds int NOT NULL,
-    parameter_ranges jsonb, -- JSON with min/max ranges: {"cardCount": [2, 20], "displaySpeed": [0.5, 3.0], "timePerQuestion": [2, 20]}
+    parameter_ranges jsonb,
     created_by uuid REFERENCES teacher(teacher_id) ON DELETE SET NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now()
@@ -199,8 +199,7 @@ CREATE TABLE progress_snapshot (
        current_streak int NOT NULL DEFAULT 0,
        total_attempts bigint NOT NULL DEFAULT 0,
        total_correct bigint NOT NULL DEFAULT 0,
-       created_at timestamptz NOT NULL DEFAULT now(),
-       UNIQUE (student_id, snapshot_date)
+       created_at timestamptz NOT NULL DEFAULT now()
 );
 
 -- Table: user_token
