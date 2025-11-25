@@ -1,8 +1,9 @@
 import Layout from "../components/Layout";
-import { CalendarDays, Brain, Target, Clock } from 'lucide-react';
-import { ReactElement, useState } from 'react';
-
-type TimePeriod = 'day' | 'week' | 'month' | 'all';
+import { CalendarDays, Brain, Target, Clock, Trophy } from 'lucide-react';
+import { ReactElement, useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { statsService, TimePeriod, StudentStats, SubjectProgress } from '../services/stats.service';
+import { achievementService, StudentAchievement, Achievement } from '../services/achievement.service';
 
 interface ProgressMetric {
   title: string;
@@ -10,13 +11,7 @@ interface ProgressMetric {
   change: string;
   isPositive: boolean;
   icon: ReactElement;
-}
-
-interface ProgressChart {
-  subject: string;
-  accuracy: number;
-  totalProblems: number;
-  averageTime: string;
+  color?: 'blue' | 'purple' | 'pink' | 'green';
 }
 
 interface TimeOption {
@@ -32,70 +27,139 @@ const timeOptions: TimeOption[] = [
 ];
 
 export default function Progress() {
+  const { student } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('week');
-  const metrics: ProgressMetric[] = [
+  const [stats, setStats] = useState<StudentStats | null>(null);
+  const [previousStats, setPreviousStats] = useState<StudentStats | null>(null);
+  const [subjectProgress, setSubjectProgress] = useState<SubjectProgress[]>([]);
+  const [studentAchievements, setStudentAchievements] = useState<StudentAchievement[]>([]);
+  const [allAchievements, setAllAchievements] = useState<Achievement[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!student?.id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch current period stats
+        const currentStats = await statsService.getStudentStats(student.id, selectedPeriod);
+        setStats(currentStats);
+
+        // Fetch previous period for comparison
+        let previousPeriod: TimePeriod = 'all';
+        if (selectedPeriod === 'week') {
+          previousPeriod = 'month';
+        } else if (selectedPeriod === 'month') {
+          previousPeriod = 'all';
+        }
+        const prevStats = await statsService.getStudentStats(student.id, previousPeriod);
+        setPreviousStats(prevStats);
+
+        // Fetch subject progress
+        const subjects = await statsService.getSubjectProgress(student.id, selectedPeriod);
+        setSubjectProgress(subjects);
+
+        const [earnedAchievements, allAchievementsList] = await Promise.all([
+          achievementService.getStudentAchievements(student.id),
+          achievementService.getAllAchievements()
+        ]);
+        setStudentAchievements(earnedAchievements);
+        setAllAchievements(allAchievementsList);
+      } catch (error) {
+        console.error('Error fetching progress:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [student?.id, selectedPeriod]);
+
+  const getChangeText = (current: number, previous: number, label: string): string => {
+    const diff = current - previous;
+    if (diff > 0) {
+      return `+${diff} ${label}`;
+    } else if (diff < 0) {
+      return `${diff} ${label}`;
+    }
+    return `No change`;
+  };
+
+  const metrics: ProgressMetric[] = stats ? [
     {
       title: "Total Practice Time",
-      value: "24h 35m",
-      change: "+2.5h this week",
+      value: stats.totalPracticeTime,
+      change: previousStats ? getChangeText(
+        parseInt(stats.totalPracticeTime.split('h')[0]) || 0,
+        parseInt(previousStats.totalPracticeTime.split('h')[0]) || 0,
+        'h'
+      ) : 'No previous data',
       isPositive: true,
-      icon: <Clock className="w-5 h-5" />
+      icon: <Clock className="w-5 h-5" />,
+      color: 'blue'
     },
     {
       title: "Problems Solved",
-      value: "847",
-      change: "+124 this week",
+      value: stats.problemsSolved.toString(),
+      change: previousStats ? getChangeText(
+        stats.problemsSolved,
+        previousStats.problemsSolved,
+        'problems'
+      ) : 'No previous data',
       isPositive: true,
-      icon: <Brain className="w-5 h-5" />
+      icon: <Brain className="w-5 h-5" />,
+      color: 'purple'
     },
     {
       title: "Accuracy Rate",
-      value: "92%",
-      change: "+5% this week",
+      value: `${stats.accuracyRate}%`,
+      change: previousStats ? getChangeText(
+        stats.accuracyRate,
+        previousStats.accuracyRate,
+        '%'
+      ) : 'No previous data',
       isPositive: true,
-      icon: <Target className="w-5 h-5" />
+      icon: <Target className="w-5 h-5" />,
+      color: 'pink'
     },
     {
       title: "Current Streak",
-      value: "12 days",
-      change: "Best: 15 days",
+      value: `${stats.currentStreak} ${stats.currentStreak === 1 ? 'day' : 'days'}`,
+      change: `Best: ${stats.bestStreak} days`,
       isPositive: true,
-      icon: <CalendarDays className="w-5 h-5" />
+      icon: <CalendarDays className="w-5 h-5" />,
+      color: 'green'
     }
-  ];
+  ] : [];
 
-  const subjectProgress: ProgressChart[] = [
-    {
-      subject: "Addition",
-      accuracy: 95,
-      totalProblems: 250,
-      averageTime: "3.2s"
-    },
-    {
-      subject: "Subtraction",
-      accuracy: 88,
-      totalProblems: 180,
-      averageTime: "4.5s"
-    },
-    {
-      subject: "Multiplication",
-      accuracy: 85,
-      totalProblems: 220,
-      averageTime: "5.8s"
-    },
-    {
-      subject: "Division",
-      accuracy: 78,
-      totalProblems: 150,
-      averageTime: "7.2s"
-    },
-    {
-      subject: "Mixed Operations",
-      accuracy: 82,
-      totalProblems: 120,
-      averageTime: "6.5s"
-    }
-  ];
+  if (loading) {
+    return (
+      <Layout
+        title="Your Progress"
+        subtitle="Loading your progress..."
+      >
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!student) {
+    return (
+      <Layout
+        title="Your Progress"
+        subtitle="Please log in to view your progress"
+      >
+        <div className="text-center text-gray-500 p-8">
+          Student information not available. Please log in again.
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout
@@ -123,73 +187,167 @@ export default function Progress() {
 
       {/* Metrics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {metrics.map((metric) => (
-          <div key={metric.title} className="bg-white rounded-2xl p-6 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-gray-500 text-sm mb-1">{metric.title}</p>
-                <p className="text-2xl font-bold mb-2">{metric.value}</p>
-                <p className={`text-sm ${metric.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                  {metric.change}
-                </p>
-              </div>
-              <div className="bg-blue-50 p-3 rounded-xl">
-                {metric.icon}
+        {metrics.map((metric) => {
+          const colorClasses = {
+            blue: {
+              bg: 'bg-blue-50',
+              iconBg: 'bg-blue-100',
+              iconText: 'text-blue-600',
+              title: 'text-blue-600'
+            },
+            purple: {
+              bg: 'bg-purple-50',
+              iconBg: 'bg-purple-100',
+              iconText: 'text-purple-600',
+              title: 'text-purple-600'
+            },
+            pink: {
+              bg: 'bg-pink-50',
+              iconBg: 'bg-pink-100',
+              iconText: 'text-pink-600',
+              title: 'text-pink-600'
+            },
+            green: {
+              bg: 'bg-green-50',
+              iconBg: 'bg-green-100',
+              iconText: 'text-green-600',
+              title: 'text-green-600'
+            }
+          };
+          const colors = colorClasses[metric.color || 'blue'];
+          
+          return (
+            <div key={metric.title} className={`${colors.bg} rounded-2xl p-6 shadow-sm`}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className={`${colors.title} text-sm mb-1 font-medium`}>{metric.title}</p>
+                  <p className="text-2xl font-bold mb-2 text-gray-800">{metric.value}</p>
+                  <p className={`text-sm ${metric.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    {metric.change}
+                  </p>
+                </div>
+                <div className={`${colors.iconBg} ${colors.iconText} p-3 rounded-xl`}>
+                  {metric.icon}
+                </div>
               </div>
             </div>
+          );
+        })}
+      </div>
+
+      {/* Achievements Section */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <Trophy className="w-6 h-6 text-yellow-500" />
+            Achievements
+          </h2>
+          <span className="text-sm text-gray-500">
+            {studentAchievements.length} / {allAchievements.length} unlocked
+          </span>
+        </div>
+
+        {studentAchievements.length === 0 ? (
+          <div className="text-center text-gray-500 py-8">
+            No achievements earned yet. Keep practicing to unlock achievements!
           </div>
-        ))}
+        ) : (
+          <div className="overflow-x-auto pb-4">
+            <div className="flex gap-6 min-w-max">
+              {studentAchievements.map((achievement) => (
+                <div
+                  key={achievement.achievementId}
+                  className="relative rounded-xl p-4 border-2 bg-white border-gray-200 shadow-md hover:shadow-lg transition-all flex flex-col flex-shrink-0 w-[calc(16.666%-1rem)] min-w-[200px] max-w-[240px]"
+                >
+                  {/* Achievement Icon */}
+                  <div className="flex justify-center mb-4">
+                    {achievement.iconUrl ? (
+                      <img
+                        src={achievement.iconUrl}
+                        alt={achievement.name}
+                        className="w-56 h-56 object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-56 h-56 rounded-full bg-gray-100 flex items-center justify-center">
+                        <Trophy className="w-28 h-28 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Achievement Info */}
+                  <div className="text-center space-y-2 mt-auto flex flex-col h-full">
+                    <h3 className="font-semibold text-base text-gray-900 min-h-[2.5rem] flex items-center justify-center">
+                      {achievement.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 leading-relaxed flex-grow line-clamp-3">
+                      {achievement.description}
+                    </p>
+                    
+                    {/* Date Achieved */}
+                    <div className="pt-2 border-t border-gray-200 mt-auto">
+                      <p className="text-xs text-gray-500">
+                        Achieved: <span className="font-medium text-gray-700">
+                          {new Date(achievement.earnedAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Subject-wise Progress */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm">
+      <div className="bg-gradient-to-br from-white to-blue-50 rounded-2xl p-6 shadow-sm border border-blue-100">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">Subject-wise Progress</h2>
           <button className="text-blue-600 text-sm font-medium hover:text-blue-700">
             View Details
           </button>
         </div>
-        <div className="space-y-6">
-          {subjectProgress.map((subject) => (
-            <div key={subject.subject} className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="font-medium">{subject.subject}</span>
-                <span className="text-sm text-gray-500">
-                  {subject.totalProblems} problems
-                </span>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="flex-1 bg-gray-100 rounded-full h-2">
-                  <div
-                    className="bg-blue-500 h-2 rounded-full"
-                    style={{ width: `${subject.accuracy}%` }}
-                  />
+        {subjectProgress.length === 0 ? (
+          <div className="text-center text-gray-500 py-8">
+            No progress data available for the selected period.
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {subjectProgress.map((subject) => (
+              <div key={subject.subject} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">{subject.subject}</span>
+                  <span className="text-sm text-gray-500">
+                    {subject.totalProblems} problems
+                  </span>
                 </div>
-                <span className="text-sm font-medium w-16">
-                  {subject.accuracy}%
-                </span>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 bg-gray-200 rounded-full h-3">
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300"
+                      style={{ width: `${subject.accuracy}%` }}
+                    />
+                  </div>
+                  <span className="text-sm font-medium w-16 text-gray-700">
+                    {subject.accuracy}%
+                  </span>
+                </div>
+                <div className="flex justify-end">
+                  <span className="text-sm text-gray-500">
+                    Avg. time per problem: {subject.averageTime}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-end">
-                <span className="text-sm text-gray-500">
-                  Avg. time per problem: {subject.averageTime}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Recent Activity - Can be expanded later */}
-      <div className="mt-8 bg-white rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Recent Activity</h2>
-          <button className="text-blue-600 text-sm font-medium hover:text-blue-700">
-            View All
-          </button>
-        </div>
-        <div className="text-gray-500 text-center py-8">
-          Your recent activity will appear here
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </Layout>
   );
