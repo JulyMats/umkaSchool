@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -28,18 +29,21 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
     private final TeacherRepository teacherRepository;
     private final StudentRepository studentRepository;
     private final StudentGroupRepository studentGroupRepository;
+    private final ExerciseAttemptRepository exerciseAttemptRepository;
 
     @Autowired
     public HomeworkAssignmentServiceImpl(HomeworkAssignmentRepository homeworkAssignmentRepository,
                                          HomeworkRepository homeworkRepository,
                                          TeacherRepository teacherRepository,
                                          StudentRepository studentRepository,
-                                         StudentGroupRepository studentGroupRepository) {
+                                         StudentGroupRepository studentGroupRepository,
+                                         ExerciseAttemptRepository exerciseAttemptRepository) {
         this.homeworkAssignmentRepository = homeworkAssignmentRepository;
         this.homeworkRepository = homeworkRepository;
         this.teacherRepository = teacherRepository;
         this.studentRepository = studentRepository;
         this.studentGroupRepository = studentGroupRepository;
+        this.exerciseAttemptRepository = exerciseAttemptRepository;
     }
 
     @Override
@@ -304,15 +308,82 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
     public void updateOverdueAssignments() {
         logger.info("Updating overdue assignments");
 
+        ZonedDateTime now = ZonedDateTime.now();
+        
+        // Find assignments that are past due date and still PENDING (not COMPLETED)
         List<HomeworkAssignment> overdueAssignments = homeworkAssignmentRepository
-                .findByDueDateBeforeAndStatus(ZonedDateTime.now(), HomeworkStatus.PENDING);
+                .findByDueDateBeforeAndStatus(now, HomeworkStatus.PENDING);
 
+        int updatedCount = 0;
         for (HomeworkAssignment assignment : overdueAssignments) {
-            assignment.setStatus(HomeworkStatus.OVERDUE);
+            // Only update if status is still PENDING (not already COMPLETED)
+            if (assignment.getStatus() == HomeworkStatus.PENDING) {
+                assignment.setStatus(HomeworkStatus.OVERDUE);
+                updatedCount++;
+            }
         }
 
-        homeworkAssignmentRepository.saveAll(overdueAssignments);
-        logger.info("Updated {} overdue assignments", overdueAssignments.size());
+        if (updatedCount > 0) {
+            homeworkAssignmentRepository.saveAll(overdueAssignments);
+        }
+        
+        logger.info("Updated {} overdue assignments (out of {} checked)", updatedCount, overdueAssignments.size());
+    }
+
+    @Override
+    @Transactional
+    public void checkAndUpdateAssignmentStatus(UUID homeworkAssignmentId, UUID studentId) {
+        logger.info("Checking assignment status for assignment: {}, student: {}", homeworkAssignmentId, studentId);
+
+        HomeworkAssignment assignment = homeworkAssignmentRepository.findById(homeworkAssignmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Homework assignment not found"));
+
+        // Get all exercises from the homework
+        Homework homework = assignment.getHomework();
+        Set<HomeworkExercise> homeworkExercises = homework.getExercises();
+
+        if (homeworkExercises.isEmpty()) {
+            logger.warn("Homework has no exercises, cannot check completion");
+            return;
+        }
+
+        // Count how many exercises the student has completed using JOIN queries
+        Long completedCount = exerciseAttemptRepository.countCompletedExercises(homeworkAssignmentId, studentId);
+        int totalExercises = homeworkExercises.size();
+
+        logger.info("Student {} has completed {}/{} exercises in assignment {}",
+            studentId, completedCount, totalExercises, homeworkAssignmentId);
+
+        // If all exercises are completed and status is not already COMPLETED, update it
+        if (completedCount >= totalExercises && assignment.getStatus() != HomeworkStatus.COMPLETED) {
+            assignment.setStatus(HomeworkStatus.COMPLETED);
+            homeworkAssignmentRepository.save(assignment);
+            logger.info("Assignment {} marked as COMPLETED for student {}", homeworkAssignmentId, studentId);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void checkAndUpdateAssignmentStatusForExercise(UUID exerciseId, UUID studentId) {
+        logger.info("Checking assignment status for exercise: {}, student: {}", exerciseId, studentId);
+
+        // Find all homework assignments that contain this exercise and are assigned to this student
+        List<HomeworkAssignment> assignments = homeworkAssignmentRepository.findByExerciseIdAndStudentId(exerciseId, studentId);
+
+        if (assignments.isEmpty()) {
+            logger.debug("No homework assignments found for exercise: {}, student: {}", exerciseId, studentId);
+            return;
+        }
+
+        // Check each assignment
+        for (HomeworkAssignment assignment : assignments) {
+            try {
+                checkAndUpdateAssignmentStatus(assignment.getId(), studentId);
+            } catch (Exception e) {
+                logger.error("Error checking assignment {} for student {}: {}",
+                    assignment.getId(), studentId, e.getMessage());
+            }
+        }
     }
 
     private HomeworkAssignmentResponse mapToResponse(HomeworkAssignment assignment) {

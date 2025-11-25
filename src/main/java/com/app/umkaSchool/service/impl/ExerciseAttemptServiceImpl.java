@@ -10,6 +10,7 @@ import com.app.umkaSchool.repository.ExerciseAttemptRepository;
 import com.app.umkaSchool.repository.ExerciseRepository;
 import com.app.umkaSchool.repository.StudentRepository;
 import com.app.umkaSchool.service.AchievementService;
+import com.app.umkaSchool.service.HomeworkAssignmentService;
 import com.app.umkaSchool.service.ProgressSnapshotService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,18 +32,21 @@ public class ExerciseAttemptServiceImpl {
     private final ExerciseRepository exerciseRepository;
     private final ProgressSnapshotService progressSnapshotService;
     private final AchievementService achievementService;
+    private final HomeworkAssignmentService homeworkAssignmentService;
 
     @Autowired
     public ExerciseAttemptServiceImpl(ExerciseAttemptRepository exerciseAttemptRepository,
-                                      StudentRepository studentRepository,
-                                      ExerciseRepository exerciseRepository,
-                                      ProgressSnapshotService progressSnapshotService,
-                                      AchievementService achievementService) {
+                                     StudentRepository studentRepository,
+                                     ExerciseRepository exerciseRepository,
+                                     ProgressSnapshotService progressSnapshotService,
+                                     AchievementService achievementService,
+                                     HomeworkAssignmentService homeworkAssignmentService) {
         this.exerciseAttemptRepository = exerciseAttemptRepository;
         this.studentRepository = studentRepository;
         this.exerciseRepository = exerciseRepository;
         this.progressSnapshotService = progressSnapshotService;
         this.achievementService = achievementService;
+        this.homeworkAssignmentService = homeworkAssignmentService;
     }
 
     @Transactional
@@ -124,6 +128,22 @@ public class ExerciseAttemptServiceImpl {
         attempt = exerciseAttemptRepository.save(attempt);
         logger.info("Exercise attempt updated successfully: {} - totalAttempts: {}, totalCorrect: {}, completedAt: {}", 
             attemptId, attempt.getTotalAttempts(), attempt.getTotalCorrect(), attempt.getCompletedAt());
+
+        // If attempt is completed, check all homework assignments that contain this exercise
+        // and update their status if all exercises are done
+        if (shouldUpdateSnapshot && attempt.getCompletedAt() != null) {
+            try {
+                // Find all homework assignments that contain this exercise and are assigned to this student
+                homeworkAssignmentService.checkAndUpdateAssignmentStatusForExercise(
+                    attempt.getExercise().getId(),
+                    attempt.getStudent().getId()
+                );
+                logger.info("Checked homework assignment status for exercise: {}, student: {}",
+                    attempt.getExercise().getId(), attempt.getStudent().getId());
+            } catch (Exception e) {
+                logger.error("Error checking homework assignment status: {}", e.getMessage());
+            }
+        }
 
         if (shouldUpdateSnapshot) {
             try {

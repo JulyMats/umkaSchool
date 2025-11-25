@@ -39,5 +39,9 @@ public interface HomeworkAssignmentService {
     void removeGroupFromAssignment(UUID assignmentId, UUID groupId);
 
     void updateOverdueAssignments();
+
+    void checkAndUpdateAssignmentStatus(UUID homeworkAssignmentId, UUID studentId);
+
+    void checkAndUpdateAssignmentStatusForExercise(UUID exerciseId, UUID studentId);
 }
 
