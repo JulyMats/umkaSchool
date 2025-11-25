@@ -332,7 +332,7 @@ export default function Homework() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredHomework.map((item) => (
           <div
-            key={item.id}
+            key={item.assignmentId || item.id}
             className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full relative"
           >
             <button

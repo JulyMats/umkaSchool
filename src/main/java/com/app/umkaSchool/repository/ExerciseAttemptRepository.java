@@ -17,4 +17,19 @@ public interface ExerciseAttemptRepository extends JpaRepository<ExerciseAttempt
     List<ExerciseAttempt> findByExercise_IdOrderByCompletedAtDesc(UUID exerciseId);
     List<ExerciseAttempt> findByStudent_IdAndExercise_IdOrderByCompletedAtDesc(UUID studentId, UUID exerciseId);
     Long countByStudent_Id(UUID studentId);
+
+    // Count completed exercises for a student in a homework assignment using JOIN
+    // This joins exercise_attempt -> homework_exercise -> homework_assignment -> (homework_assignment_student OR homework_assignment_student_group)
+    @Query("SELECT COUNT(DISTINCT ea.exercise.id) FROM ExerciseAttempt ea " +
+           "JOIN HomeworkExercise he ON ea.exercise.id = he.exercise.id " +
+           "JOIN HomeworkAssignment ha ON he.homework.id = ha.homework.id " +
+           "LEFT JOIN HomeworkAssignmentStudent has ON ha.id = has.homeworkAssignment.id " +
+           "LEFT JOIN HomeworkAssignmentStudentGroup hasg ON ha.id = hasg.homeworkAssignment.id " +
+           "LEFT JOIN Student s ON s.id = :studentId " +
+           "WHERE ha.id = :homeworkAssignmentId " +
+           "AND ea.student.id = :studentId " +
+           "AND ea.completedAt IS NOT NULL " +
+           "AND (has.student.id = :studentId OR hasg.studentGroup.id = s.group.id)")
+    Long countCompletedExercises(@Param("homeworkAssignmentId") UUID homeworkAssignmentId,
+                                  @Param("studentId") UUID studentId);
 }

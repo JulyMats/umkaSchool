@@ -41,4 +41,20 @@ public interface HomeworkAssignmentRepository extends JpaRepository<HomeworkAssi
            "WHERE ast.student.id = :studentId " +
            "OR ag.studentGroup.id = s.group.id")
     List<HomeworkAssignment> findAllByStudentIdIncludingGroup(@Param("studentId") UUID studentId);
+
+    /**
+     * Find all homework assignments that contain a specific exercise and are assigned to a student
+     * JOIN: homework_assignment -> homework -> homework_exercise -> exercise
+     * AND: homework_assignment -> homework_assignment_student -> student
+     */
+    @Query("SELECT DISTINCT ha FROM HomeworkAssignment ha " +
+           "JOIN ha.homework h " +
+           "JOIN h.exercises he " +
+           "LEFT JOIN ha.assignedStudents ast " +
+           "LEFT JOIN ha.assignedGroups ag " +
+           "LEFT JOIN Student s ON s.id = :studentId " +
+           "WHERE he.exercise.id = :exerciseId " +
+           "AND (ast.student.id = :studentId OR ag.studentGroup.id = s.group.id)")
+    List<HomeworkAssignment> findByExerciseIdAndStudentId(@Param("exerciseId") UUID exerciseId,
+                                                            @Param("studentId") UUID studentId);
 }
