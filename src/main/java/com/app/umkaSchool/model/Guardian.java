@@ -13,8 +13,7 @@ import java.util.UUID;
 @Table(name = "guardian")
 public class Guardian {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "guardian_id", nullable = false)
+    @Column(name = "guardian_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
     @Column(name = "first_name", nullable = false)

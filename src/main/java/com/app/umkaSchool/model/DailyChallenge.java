@@ -19,8 +19,7 @@ import java.util.UUID;
 @Table(name = "daily_challenge")
 public class DailyChallenge {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "daily_challenge_id", nullable = false)
+    @Column(name = "daily_challenge_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
     @Column(name = "challenge_date", nullable = false, unique = true)

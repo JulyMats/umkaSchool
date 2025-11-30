@@ -23,8 +23,7 @@ import java.util.UUID;
 @Table(name = "app_user")
 public class AppUser implements UserDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "app_user_id", nullable = false)
+    @Column(name = "app_user_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
     @Enumerated(EnumType.STRING)
