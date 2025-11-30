@@ -29,4 +29,3 @@ public class HomeworkAssignmentStudentGroup {
     @JoinColumn(name = "student_group_id")
     private StudentGroup studentGroup;
 }
-

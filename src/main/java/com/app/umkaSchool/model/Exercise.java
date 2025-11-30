@@ -34,7 +34,6 @@ public class Exercise {
     @Column(nullable = false)
     private Integer difficulty;
 
-
     @Column(nullable = false)
     private Integer points;
 

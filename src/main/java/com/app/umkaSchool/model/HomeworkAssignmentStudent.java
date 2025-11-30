@@ -29,4 +29,3 @@ public class HomeworkAssignmentStudent {
     @JoinColumn(name = "student_id")
     private Student student;
 }
-

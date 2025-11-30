@@ -60,5 +60,4 @@ public class ExerciseAttempt {
         if (startedAt == null || completedAt == null) return 0L;
         return Duration.between(startedAt, completedAt).getSeconds();
     }
-
 }

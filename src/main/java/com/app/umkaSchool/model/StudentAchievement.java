@@ -35,6 +35,3 @@ public class StudentAchievement {
     @Column(name = "earned_at", nullable = false, updatable = false)
     private ZonedDateTime earnedAt;
 }
-
-
-

@@ -59,4 +59,3 @@ public class HomeworkAssignment {
     @OneToMany(mappedBy = "homeworkAssignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<HomeworkAssignmentStudent> assignedStudents = new HashSet<>();
 }
-

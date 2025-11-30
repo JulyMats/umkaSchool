@@ -31,4 +31,3 @@ public class DailyChallengeExercise {
     @Column(name = "order_index")
     private Integer orderIndex = 0;
 }
-

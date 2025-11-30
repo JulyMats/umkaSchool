@@ -47,4 +47,3 @@ public class Achievement {
     @OneToMany(mappedBy = "achievement", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<StudentAchievement> studentAchievements = new HashSet<>();
 }
-
