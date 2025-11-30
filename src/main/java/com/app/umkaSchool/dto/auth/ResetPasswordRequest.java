@@ -2,7 +2,13 @@ package com.app.umkaSchool.dto.auth;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ResetPasswordRequest {
     @NotBlank
     private String token;
@@ -10,11 +16,4 @@ public class ResetPasswordRequest {
     @NotBlank
     @Size(min = 6)
     private String newPassword;
-
-    public ResetPasswordRequest() {}
-
-    public String getToken() { return token; }
-    public void setToken(String token) { this.token = token; }
-    public String getNewPassword() { return newPassword; }
-    public void setNewPassword(String newPassword) { this.newPassword = newPassword; }
 }
