@@ -1,7 +1,10 @@
 package com.app.umkaSchool.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
@@ -16,6 +19,9 @@ public class ProgressSnapshot {
     @Column(name = "progress_snapshot_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
