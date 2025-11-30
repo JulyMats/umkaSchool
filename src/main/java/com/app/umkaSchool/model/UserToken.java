@@ -30,8 +30,8 @@ public class UserToken {
     @Column(name = "expires_at", nullable = false)
     private ZonedDateTime expiresAt;
 
-    @Column(name = "is_used")
-    private Boolean used;
+    @Column(name = "is_used", nullable = false)
+    private boolean used = false;
 
     public enum TokenType {
         EMAIL_VERIFICATION,
