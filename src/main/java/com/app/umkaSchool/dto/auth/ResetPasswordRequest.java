@@ -10,10 +10,10 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResetPasswordRequest {
-    @NotBlank
+    @NotBlank(message = "Token is required")
     private String token;
 
-    @NotBlank
-    @Size(min = 6)
+    @NotBlank(message = "New password is required")
+    @Size(min = 6, message = "Password must be at least 6 characters")
     private String newPassword;
 }

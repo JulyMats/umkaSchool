@@ -17,10 +17,10 @@ import java.util.UUID;
 public class UpdateExerciseAttemptRequest {
     private UUID studentId;
     private UUID exerciseId;
-    
+
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private ZonedDateTime startedAt;
-    
+
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private ZonedDateTime completedAt;
 
@@ -33,6 +33,5 @@ public class UpdateExerciseAttemptRequest {
     @Min(value = 0, message = "Total correct must be at least 0")
     private Long totalCorrect;
 
-    // JSON settings chosen by the student for this attempt
-    private String settings;
+    private String settings; // JSON settings chosen by the student for this attempt
 }

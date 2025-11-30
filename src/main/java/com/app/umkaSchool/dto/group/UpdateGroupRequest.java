@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @Data
 public class UpdateGroupRequest {
-    @Size(min = 2, max = 100)
+    @Size(min = 2, max = 200, message = "Group name must be between 2 and 200 characters")
     private String name;
 
     private String description;
@@ -17,4 +17,3 @@ public class UpdateGroupRequest {
 
     private List<UUID> studentIds;
 }
-

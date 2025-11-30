@@ -22,8 +22,8 @@ public class CreateExerciseRequest {
     private Integer difficulty;
 
     @NotNull(message = "Points are required")
-    @Min(value = 0, message = "Points must be at least 0")
+    @Min(value = 0, message = "Points must be greater than 0")
     private Integer points;
 
-    private UUID createdById; // Teacher ID
+    private UUID createdById;
 }
