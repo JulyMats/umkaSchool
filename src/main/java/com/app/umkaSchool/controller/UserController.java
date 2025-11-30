@@ -115,7 +115,7 @@ public class UserController {
                 .appLanguage(user.getAppLanguage())
                 .avatarUrl(user.getAvatarUrl())
                 .appTheme(user.getAppTheme().name())
-                .isActive(user.getActive())
+                .isActive(user.isActive())
                 .createdAt(user.getCreatedAt())
                 .lastLoginAt(user.getLastLoginAt())
                 .build();
