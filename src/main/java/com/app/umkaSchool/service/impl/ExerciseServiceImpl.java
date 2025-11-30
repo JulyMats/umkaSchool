@@ -3,6 +3,7 @@ package com.app.umkaSchool.service.impl;
 import com.app.umkaSchool.dto.exercise.CreateExerciseRequest;
 import com.app.umkaSchool.dto.exercise.ExerciseResponse;
 import com.app.umkaSchool.dto.exercise.UpdateExerciseRequest;
+import com.app.umkaSchool.exception.ResourceNotFoundException;
 import com.app.umkaSchool.model.Exercise;
 import com.app.umkaSchool.model.ExerciseType;
 import com.app.umkaSchool.model.Teacher;
@@ -43,7 +44,7 @@ public class ExerciseServiceImpl implements ExerciseService {
         logger.info("Creating new exercise for type: {}", request.getExerciseTypeId());
 
         ExerciseType exerciseType = exerciseTypeRepository.findById(request.getExerciseTypeId())
-                .orElseThrow(() -> new IllegalArgumentException("Exercise type not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise type not found"));
 
         Exercise exercise = new Exercise();
         exercise.setExerciseType(exerciseType);
@@ -53,7 +54,7 @@ public class ExerciseServiceImpl implements ExerciseService {
 
         if (request.getCreatedById() != null) {
             Teacher teacher = teacherRepository.findById(request.getCreatedById())
-                    .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
             exercise.setCreatedBy(teacher);
         }
 
@@ -69,11 +70,11 @@ public class ExerciseServiceImpl implements ExerciseService {
         logger.info("Updating exercise: {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findById(exerciseId)
-                .orElseThrow(() -> new IllegalArgumentException("Exercise not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
 
         if (request.getExerciseTypeId() != null) {
             ExerciseType exerciseType = exerciseTypeRepository.findById(request.getExerciseTypeId())
-                    .orElseThrow(() -> new IllegalArgumentException("Exercise type not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Exercise type not found"));
             exercise.setExerciseType(exerciseType);
         }
 
@@ -88,7 +89,7 @@ public class ExerciseServiceImpl implements ExerciseService {
         }
         if (request.getCreatedById() != null) {
             Teacher teacher = teacherRepository.findById(request.getCreatedById())
-                    .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
             exercise.setCreatedBy(teacher);
         }
 
@@ -101,7 +102,7 @@ public class ExerciseServiceImpl implements ExerciseService {
     @Override
     public ExerciseResponse getExerciseById(UUID exerciseId) {
         Exercise exercise = exerciseRepository.findById(exerciseId)
-                .orElseThrow(() -> new IllegalArgumentException("Exercise not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
         return mapToResponse(exercise);
     }
 
@@ -139,7 +140,7 @@ public class ExerciseServiceImpl implements ExerciseService {
         logger.info("Deleting exercise: {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findById(exerciseId)
-                .orElseThrow(() -> new IllegalArgumentException("Exercise not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
 
         exerciseRepository.delete(exercise);
         logger.info("Exercise deleted successfully: {}", exerciseId);
@@ -168,5 +169,3 @@ public class ExerciseServiceImpl implements ExerciseService {
                 .build();
     }
 }
-
-

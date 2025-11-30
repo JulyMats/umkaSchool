@@ -2,6 +2,7 @@ package com.app.umkaSchool.service.impl;
 
 import com.app.umkaSchool.model.Achievement;
 import com.app.umkaSchool.model.ExerciseAttempt;
+import com.app.umkaSchool.model.ProgressSnapshot;
 import com.app.umkaSchool.model.Student;
 import com.app.umkaSchool.model.StudentAchievement;
 import com.app.umkaSchool.model.StudentAchievementId;
@@ -9,32 +10,37 @@ import com.app.umkaSchool.repository.AchievementRepository;
 import com.app.umkaSchool.repository.StudentAchievementRepository;
 import com.app.umkaSchool.service.AchievementService;
 import com.app.umkaSchool.service.ProgressSnapshotService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class AchievementServiceImpl implements AchievementService {
     private static final Logger logger = LoggerFactory.getLogger(AchievementServiceImpl.class);
-    
+
     private final AchievementRepository achievementRepository;
     private final StudentAchievementRepository studentAchievementRepository;
     private final ProgressSnapshotService progressSnapshotService;
     private final ObjectMapper objectMapper;
 
+    @Autowired
     public AchievementServiceImpl(AchievementRepository achievementRepository,
                                   StudentAchievementRepository studentAchievementRepository,
-                                  ProgressSnapshotService progressSnapshotService) {
+                                  ProgressSnapshotService progressSnapshotService,
+                                  ObjectMapper objectMapper) {
         this.achievementRepository = achievementRepository;
         this.studentAchievementRepository = studentAchievementRepository;
         this.progressSnapshotService = progressSnapshotService;
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -46,8 +52,7 @@ public class AchievementServiceImpl implements AchievementService {
         List<Achievement> allAchievements = achievementRepository.findAll();
         
         // Get student's current progress snapshot for today
-        Optional<com.app.umkaSchool.model.ProgressSnapshot> snapshotOpt = 
-            progressSnapshotService.getSnapshotForDate(student, java.time.LocalDate.now());
+        Optional<ProgressSnapshot> snapshotOpt = progressSnapshotService.getSnapshotForDate(student, LocalDate.now());
         
         // Get aggregated stats from snapshot or calculate from attempts
         long totalAttempts = snapshotOpt.map(s -> s.getTotalAttempts() != null ? s.getTotalAttempts() : 0L)
@@ -112,7 +117,7 @@ public class AchievementServiceImpl implements AchievementService {
                 }
             }
             
-            // Check accuracy criteria (if specified)
+            // Check accuracy criteria 
             if (criteria.has("minAccuracy")) {
                 double minAccuracy = criteria.get("minAccuracy").asDouble();
                 if (totalAttempts == 0) {
@@ -125,9 +130,9 @@ public class AchievementServiceImpl implements AchievementService {
             }
             
             return true;
-        } catch (Exception e) {
-            logger.error("Error parsing achievement criteria for achievement {}: {}", 
-                achievement.getId(), e.getMessage(), e);
+        } catch (JsonProcessingException e) {
+            logger.error("Error parsing achievement criteria JSON for achievement {}: {}",
+                    achievement.getId(), e.getMessage(), e);
             return false;
         }
     }
@@ -144,5 +149,3 @@ public class AchievementServiceImpl implements AchievementService {
         studentAchievementRepository.save(studentAchievement);
     }
 }
-
-

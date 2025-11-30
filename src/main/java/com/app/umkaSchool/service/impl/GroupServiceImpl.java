@@ -3,6 +3,7 @@ package com.app.umkaSchool.service.impl;
 import com.app.umkaSchool.dto.group.CreateGroupRequest;
 import com.app.umkaSchool.dto.group.GroupResponse;
 import com.app.umkaSchool.dto.group.UpdateGroupRequest;
+import com.app.umkaSchool.exception.ResourceNotFoundException;
 import com.app.umkaSchool.model.Student;
 import com.app.umkaSchool.model.StudentGroup;
 import com.app.umkaSchool.model.Teacher;
@@ -51,10 +52,9 @@ public class GroupServiceImpl implements GroupService {
         }
 
         Teacher teacher = teacherRepository.findById(request.getTeacherId())
-                .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
 
         StudentGroup group = new StudentGroup();
-        group.setId(UUID.randomUUID());
         group.setName(request.getName());
         group.setCode(request.getCode().toUpperCase());
         group.setDescription(request.getDescription());
@@ -65,7 +65,7 @@ public class GroupServiceImpl implements GroupService {
         if (request.getStudentIds() != null && !request.getStudentIds().isEmpty()) {
             for (UUID studentId : request.getStudentIds()) {
                 Student student = studentRepository.findById(studentId)
-                        .orElseThrow(() -> new IllegalArgumentException("Student not found: " + studentId));
+                        .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + studentId));
                 student.setGroup(group);
                 studentRepository.save(student);
             }
@@ -81,7 +81,7 @@ public class GroupServiceImpl implements GroupService {
         logger.info("Updating group: {}", groupId);
 
         StudentGroup group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
         if (request.getName() != null) {
             if (!request.getName().equals(group.getName()) && groupRepository.existsByName(request.getName())) {
@@ -96,7 +96,7 @@ public class GroupServiceImpl implements GroupService {
 
         if (request.getTeacherId() != null) {
             Teacher teacher = teacherRepository.findById(request.getTeacherId())
-                    .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
             group.setTeacher(teacher);
         }
 
@@ -114,7 +114,7 @@ public class GroupServiceImpl implements GroupService {
             // Add new students to group
             for (UUID studentId : request.getStudentIds()) {
                 Student student = studentRepository.findById(studentId)
-                        .orElseThrow(() -> new IllegalArgumentException("Student not found: " + studentId));
+                        .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + studentId));
                 student.setGroup(group);
                 studentRepository.save(student);
             }
@@ -127,14 +127,14 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public GroupResponse getGroupById(UUID groupId) {
         StudentGroup group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
         return mapToResponse(group);
     }
 
     @Override
     public GroupResponse getGroupByCode(String code) {
         StudentGroup group = groupRepository.findByCode(code.toUpperCase())
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
         return mapToResponse(group);
     }
 
@@ -158,7 +158,7 @@ public class GroupServiceImpl implements GroupService {
         logger.info("Deleting group: {}", groupId);
 
         StudentGroup group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
         // Remove group from all students
         List<Student> students = studentRepository.findByGroup_Id(groupId);
@@ -175,7 +175,7 @@ public class GroupServiceImpl implements GroupService {
     @Transactional
     public void addStudentsToGroup(UUID groupId, List<UUID> studentIds) {
         StudentGroup group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
         for (UUID studentId : studentIds) {
             Student student = studentRepository.findById(studentId)
@@ -189,7 +189,7 @@ public class GroupServiceImpl implements GroupService {
     @Transactional
     public void removeStudentFromGroup(UUID studentId) {
         Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
         student.setGroup(null);
         studentRepository.save(student);
     }
@@ -197,7 +197,7 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public StudentGroup getGroupEntity(UUID groupId) {
         return groupRepository.findById(groupId)
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
     }
 
     private GroupResponse mapToResponse(StudentGroup group) {
