@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "homework", schema = "school")
+@Table(name = "homework")
 public class Homework {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

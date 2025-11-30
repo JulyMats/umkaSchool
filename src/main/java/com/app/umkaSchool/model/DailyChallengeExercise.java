@@ -8,7 +8,7 @@ import lombok.ToString;
 
 @Data
 @Entity
-@Table(name = "daily_challenge_exercise", schema = "school")
+@Table(name = "daily_challenge_exercise")
 public class DailyChallengeExercise {
     @EmbeddedId
     private DailyChallengeExerciseId id = new DailyChallengeExerciseId();

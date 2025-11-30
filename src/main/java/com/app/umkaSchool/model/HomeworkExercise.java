@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "homework_exercise", schema = "school")
+@Table(name = "homework_exercise")
 public class HomeworkExercise {
     @EmbeddedId
     private HomeworkExerciseId id = new HomeworkExerciseId();

@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "achievement", schema = "school")
+@Table(name = "achievement")
 public class Achievement {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
