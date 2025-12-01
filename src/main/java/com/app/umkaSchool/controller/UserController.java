@@ -2,6 +2,7 @@ package com.app.umkaSchool.controller;
 
 import com.app.umkaSchool.dto.user.UpdateUserRequest;
 import com.app.umkaSchool.dto.user.UserResponse;
+import com.app.umkaSchool.exception.ResourceNotFoundException;
 import com.app.umkaSchool.model.AppUser;
 import com.app.umkaSchool.repository.AppUserRepository;
 import jakarta.validation.Valid;
@@ -27,14 +28,14 @@ public class UserController {
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponse> getUserById(@PathVariable UUID userId) {
         AppUser user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return ResponseEntity.ok(mapToResponse(user));
     }
 
     @GetMapping("/email/{email}")
     public ResponseEntity<UserResponse> getUserByEmail(@PathVariable String email) {
         AppUser user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return ResponseEntity.ok(mapToResponse(user));
     }
 
@@ -51,7 +52,7 @@ public class UserController {
             @PathVariable UUID userId,
             @Valid @RequestBody UpdateUserRequest request) {
         AppUser user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (request.getFirstName() != null) {
             user.setFirstName(request.getFirstName());
@@ -82,7 +83,7 @@ public class UserController {
     @DeleteMapping("/{userId}")
     public ResponseEntity<Void> deleteUser(@PathVariable UUID userId) {
         AppUser user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         userRepository.delete(user);
         return ResponseEntity.noContent().build();
     }
@@ -90,7 +91,7 @@ public class UserController {
     @PutMapping("/{userId}/deactivate")
     public ResponseEntity<Void> deactivateUser(@PathVariable UUID userId) {
         AppUser user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         user.setActive(false);
         userRepository.save(user);
         return ResponseEntity.ok().build();
@@ -99,7 +100,7 @@ public class UserController {
     @PutMapping("/{userId}/activate")
     public ResponseEntity<Void> activateUser(@PathVariable UUID userId) {
         AppUser user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         user.setActive(true);
         userRepository.save(user);
         return ResponseEntity.ok().build();
