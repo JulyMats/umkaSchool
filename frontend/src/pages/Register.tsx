@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
-import { authService, type SignUpRequest } from '../services/auth.service';
+import { authService } from '../services/auth.service';
+import { SignUpRequest } from '../types/auth';
 
 export default function Register() {
   const navigate = useNavigate();

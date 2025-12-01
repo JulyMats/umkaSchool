@@ -2,8 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Calendar, CalendarPlus, ClipboardList, Loader2, Plus, Trash2 } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
+import { homeworkService } from '../services/homework.service';
+import { groupService } from '../services/group.service';
+import { studentService } from '../services/student.service';
+import { exerciseService } from '../services/exercise.service';
+import { exerciseTypeService } from '../services/exerciseType.service';
 import {
-    homeworkService,
     HomeworkDetail,
     HomeworkAssignmentDetail,
     HomeworkStatus,
@@ -11,11 +15,11 @@ import {
     UpdateHomeworkPayload,
     CreateHomeworkAssignmentPayload,
     UpdateHomeworkAssignmentPayload
-} from '../services/homework.service';
-import { groupService, Group } from '../services/group.service';
-import { studentService, Student } from '../services/student.service';
-import { exerciseService, Exercise } from '../services/exercise.service';
-import { exerciseTypeService, ExerciseType } from '../services/exerciseType.service';
+} from '../types/homework';
+import { Group } from '../types/group';
+import { Student } from '../types/student';
+import { Exercise } from '../types/exercise';
+import { ExerciseType } from '../types/exerciseType';
 import { DigitLength, DigitType } from '../types/exercise';
 
 type HomeworkModalMode = 'create' | 'edit';

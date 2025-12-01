@@ -1,32 +1,5 @@
 import axiosInstance from './axios.config';
-
-export interface Exercise {
-    id: string;
-    exerciseTypeId: string;
-    exerciseTypeName: string;
-    parameters: string;
-    difficulty: number;
-    points: number;
-    createdById: string;
-    createdByName: string;
-    createdAt: string;
-    updatedAt: string;
-}
-
-export interface CreateExercisePayload {
-    exerciseTypeId: string;
-    parameters: string;
-    difficulty: number;
-    points: number;
-    createdById?: string;
-}
-
-export interface UpdateExercisePayload {
-    exerciseTypeId?: string;
-    parameters?: string;
-    difficulty?: number;
-    points?: number;
-}
+import { Exercise, CreateExercisePayload, UpdateExercisePayload } from '../types/exercise';
 
 export const exerciseService = {
     getAllExercises: async (): Promise<Exercise[]> => {

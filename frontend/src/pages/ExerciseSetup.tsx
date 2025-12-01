@@ -1,7 +1,8 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Clock, ArrowLeft, Sparkles, Zap, Hash, Divide, X, Plus, Minus, BookOpen, Star, Trophy, Rocket } from 'lucide-react';
-import { exerciseTypeService, ExerciseType } from '../services/exerciseType.service';
+import { exerciseTypeService } from '../services/exerciseType.service';
+import { ExerciseType } from '../types/exerciseType';
 import { DigitLength, ExerciseSessionConfig, DigitType, SorobanTheme, FlashCardTheme } from '../types/exercise';
 
 interface LocationState {

@@ -2,7 +2,8 @@ import { BookOpen } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { homeworkService, Homework } from '../../services/homework.service';
+import { homeworkService } from '../../services/homework.service';
+import { Homework } from '../../types/homework';
 
 export default function HomeworkList() {
   const { student } = useAuth();

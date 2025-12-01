@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { CalendarCheck, Clock, GraduationCap, Layers, Trophy, Users } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
-import { studentService, Student } from '../services/student.service';
-import { groupService, Group } from '../services/group.service';
-import {
-    homeworkService,
-    HomeworkAssignmentDetail
-} from '../services/homework.service';
-import { achievementService, StudentAchievement } from '../services/achievement.service';
+import { studentService } from '../services/student.service';
+import { groupService } from '../services/group.service';
+import { homeworkService } from '../services/homework.service';
+import { achievementService } from '../services/achievement.service';
+import { Student } from '../types/student';
+import { Group } from '../types/group';
+import { HomeworkAssignmentDetail } from '../types/homework';
+import { StudentAchievement } from '../types/achievement';
 
 interface DashboardData {
     students: Student[];

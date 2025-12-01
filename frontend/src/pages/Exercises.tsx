@@ -2,7 +2,8 @@ import { Search } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { exerciseTypeService, ExerciseType } from '../services/exerciseType.service';
+import { exerciseTypeService } from '../services/exerciseType.service';
+import { ExerciseType } from '../types/exerciseType';
 import pandaImage from '../assets/panda.png';
 
 type ExerciseCard = ExerciseType;

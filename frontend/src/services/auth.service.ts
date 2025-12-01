@@ -1,26 +1,14 @@
 import axiosInstance from './axios.config';
-
-export interface SignUpRequest {
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-    role: 'TEACHER' | 'STUDENT';
-}
-
-export interface SignInRequest {
-    email: string;
-    password: string;
-}
+import { SignUpRequest, SignInRequest, LoginResponse, RegisterResponse } from '../types/auth';
 
 export const authService = {
     async login(credentials: SignInRequest): Promise<string> {
-        const response = await axiosInstance.post('/api/auth/signin', credentials);
-        return response.data;
+        const response = await axiosInstance.post<LoginResponse>('/api/auth/signin', credentials);
+        return response.data.jwtToken;
     },
 
-    async register(data: SignUpRequest): Promise<{ id: string; role: string }> {
-        const response = await axiosInstance.post('/api/auth/signup', data);
+    async register(data: SignUpRequest): Promise<RegisterResponse> {
+        const response = await axiosInstance.post<RegisterResponse>('/api/auth/signup', data);
         return response.data;
     },
 

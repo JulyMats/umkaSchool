@@ -1,8 +1,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authService, SignInRequest, SignUpRequest } from '../services/auth.service';
-import { userService, User } from '../services/user.service';
-import { studentService, Student } from '../services/student.service';
-import { teacherService, Teacher } from '../services/teacher.service';
+import { authService } from '../services/auth.service';
+import { userService } from '../services/user.service';
+import { studentService } from '../services/student.service';
+import { teacherService } from '../services/teacher.service';
+import { SignInRequest, SignUpRequest } from '../types/auth';
+import { User } from '../types/user';
+import { Student } from '../types/student';
+import { Teacher } from '../types/teacher';
 
 interface AuthContextType {
     user: User | null;
@@ -152,12 +156,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Fetch user data after login
             await fetchUserData(credentials.email);
             console.log('[AuthContext] Login complete, user data loaded');
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('[AuthContext] Login failed:', error);
+            const errorObj = error as { message?: string; response?: { data?: unknown; status?: number } };
             console.error('[AuthContext] Login error details:', {
-                message: error?.message,
-                response: error?.response?.data,
-                status: error?.response?.status
+                message: errorObj?.message,
+                response: errorObj?.response?.data,
+                status: errorObj?.response?.status
             });
             throw error;
         }

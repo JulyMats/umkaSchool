@@ -1,5 +1,5 @@
 import { Trophy, X } from 'lucide-react';
-import { StudentAchievement } from '../services/achievement.service';
+import { StudentAchievement } from '../types/achievement';
 
 interface AchievementModalProps {
     achievement: StudentAchievement;

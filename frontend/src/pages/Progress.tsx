@@ -2,8 +2,10 @@ import Layout from "../components/Layout";
 import { CalendarDays, Brain, Target, Clock, Trophy } from 'lucide-react';
 import { ReactElement, useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { statsService, TimePeriod, StudentStats, SubjectProgress } from '../services/stats.service';
-import { achievementService, StudentAchievement, Achievement } from '../services/achievement.service';
+import { statsService } from '../services/stats.service';
+import { achievementService } from '../services/achievement.service';
+import { TimePeriod, StudentStats, SubjectProgress } from '../types/stats';
+import { StudentAchievement, Achievement } from '../types/achievement';
 
 interface ProgressMetric {
   title: string;

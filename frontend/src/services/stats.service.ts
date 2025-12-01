@@ -1,23 +1,7 @@
 import axiosInstance from './axios.config';
-import { exerciseAttemptService, ExerciseAttempt } from './exerciseAttempt.service';
-import { progressSnapshotService, ProgressSnapshot } from './progressSnapshot.service';
-
-export type TimePeriod = 'day' | 'week' | 'month' | 'all';
-
-export interface StudentStats {
-    totalPracticeTime: string; // Format: "Xh Ym"
-    problemsSolved: number;
-    accuracyRate: number; // Percentage
-    currentStreak: number; // Days
-    bestStreak: number; // Days
-}
-
-export interface SubjectProgress {
-    subject: string;
-    accuracy: number;
-    totalProblems: number;
-    averageTime: string; // Format: "X.Xs"
-}
+import { exerciseAttemptService } from './exerciseAttempt.service';
+import { TimePeriod, StudentStats, SubjectProgress } from '../types/stats';
+import { ExerciseAttempt } from '../types/exerciseAttempt';
 
 const formatTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
@@ -55,10 +39,6 @@ const getDateRange = (period: TimePeriod): { start: Date; end: Date } => {
     }
 
     return { start, end };
-};
-
-const formatDate = (date: Date): string => {
-    return date.toISOString().split('T')[0];
 };
 
 const calculateStreak = (attempts: ExerciseAttempt[]): { current: number; best: number } => {

@@ -1,7 +1,8 @@
 import { Timer, TrendingUp, Play, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { exerciseTypeService, ExerciseType } from '../../services/exerciseType.service';
+import { exerciseTypeService } from '../../services/exerciseType.service';
+import { ExerciseType } from '../../types/exerciseType';
 
 export default function DailyChallenge() {
   const navigate = useNavigate();

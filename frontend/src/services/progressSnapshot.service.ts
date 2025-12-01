@@ -1,16 +1,5 @@
 import axiosInstance from './axios.config';
-
-export interface ProgressSnapshot {
-    id: string;
-    studentId: string;
-    studentName: string;
-    snapshotDate: string;
-    totalAttempts: number;
-    totalCorrect: number;
-    totalPracticeSeconds: number;
-    currentStreak: number;
-    createdAt: string;
-}
+import { ProgressSnapshot } from '../types/progress';
 
 export const progressSnapshotService = {
     getLatestSnapshot: async (studentId: string): Promise<ProgressSnapshot | null> => {

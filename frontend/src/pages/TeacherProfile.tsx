@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Loader2, Save, User, Mail, Phone, Edit2, X, FileText, Image } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
-import { teacherService, UpdateTeacherPayload } from '../services/teacher.service';
+import { teacherService } from '../services/teacher.service';
+import { UpdateTeacherPayload } from '../types/teacher';
 import { userService } from '../services/user.service';
 import avatar from '../assets/avatar.png';
 

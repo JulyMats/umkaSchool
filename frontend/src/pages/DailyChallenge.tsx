@@ -2,7 +2,8 @@ import Layout from "../components/Layout";
 import { Star, Trophy, Clock, Zap, Target, Flame, Brain, TrendingUp } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { exerciseTypeService, ExerciseType } from '../services/exerciseType.service';
+import { exerciseTypeService } from '../services/exerciseType.service';
+import { ExerciseType } from '../types/exerciseType';
 import { useAuth } from '../contexts/AuthContext';
 import { exerciseAttemptService } from '../services/exerciseAttempt.service';
 

@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from "../components/Layout";
 import { Clock, CheckCircle, XCircle, Book, Info } from 'lucide-react';
-import { homeworkService, Homework as HomeworkItem, HomeworkDetail } from '../services/homework.service';
-import { exerciseService, Exercise } from '../services/exercise.service';
+import { homeworkService } from '../services/homework.service';
+import { exerciseService } from '../services/exercise.service';
+import { Homework as HomeworkItem, HomeworkDetail } from '../types/homework';
+import { Exercise } from '../types/exercise';
 import { useAuth } from '../contexts/AuthContext';
 import { ExerciseSessionConfig } from '../types/exercise';
 

@@ -4,8 +4,10 @@ import { ArrowLeft, RefreshCcw, Sparkles, Timer, X, Target, Eye, EyeOff, Info } 
 import { ExerciseSessionConfig } from '../types/exercise';
 import { useAuth } from '../contexts/AuthContext';
 import { exerciseService } from '../services/exercise.service';
-import { exerciseAttemptService, ExerciseAttempt } from '../services/exerciseAttempt.service';
-import { achievementService, StudentAchievement } from '../services/achievement.service';
+import { exerciseAttemptService } from '../services/exerciseAttempt.service';
+import { achievementService } from '../services/achievement.service';
+import { ExerciseAttempt } from '../types/exerciseAttempt';
+import { StudentAchievement } from '../types/achievement';
 import AchievementModal from '../components/AchievementModal';
 
 interface LocationState {

@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Loader2, Plus, Users } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
-import { groupService, Group, CreateGroupPayload, UpdateGroupPayload } from '../services/group.service';
-import { studentService, Student } from '../services/student.service';
+import { groupService } from '../services/group.service';
+import { studentService } from '../services/student.service';
+import { Group, CreateGroupPayload, UpdateGroupPayload } from '../types/group';
+import { Student } from '../types/student';
 
 type Mode = 'create' | 'edit';
 

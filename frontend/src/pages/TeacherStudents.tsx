@@ -2,9 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Loader2, Plus, Search, Users } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useAuth } from '../contexts/AuthContext';
-import { studentService, Student } from '../services/student.service';
-import { groupService, Group } from '../services/group.service';
-import { achievementService, StudentAchievement } from '../services/achievement.service';
+import { studentService } from '../services/student.service';
+import { groupService } from '../services/group.service';
+import { achievementService } from '../services/achievement.service';
+import { Student } from '../types/student';
+import { Group } from '../types/group';
+import { StudentAchievement } from '../types/achievement';
 
 interface AssignFormState {
     studentId: string;
