@@ -103,7 +103,7 @@ public class HomeworkAssignmentController {
     @PostMapping("/{assignmentId}/students")
     public ResponseEntity<Void> addStudentsToAssignment(
             @PathVariable UUID assignmentId,
-            @RequestBody List<UUID> studentIds) {
+            @Valid @RequestBody List<UUID> studentIds) {
         homeworkAssignmentService.addStudentsToAssignment(assignmentId, studentIds);
         return ResponseEntity.ok().build();
     }
@@ -111,7 +111,7 @@ public class HomeworkAssignmentController {
     @PostMapping("/{assignmentId}/groups")
     public ResponseEntity<Void> addGroupsToAssignment(
             @PathVariable UUID assignmentId,
-            @RequestBody List<UUID> groupIds) {
+            @Valid @RequestBody List<UUID> groupIds) {
         homeworkAssignmentService.addGroupsToAssignment(assignmentId, groupIds);
         return ResponseEntity.ok().build();
     }

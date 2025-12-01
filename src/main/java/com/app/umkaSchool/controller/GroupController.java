@@ -71,7 +71,7 @@ public class GroupController {
     @PostMapping("/{groupId}/students")
     public ResponseEntity<Void> addStudentsToGroup(
             @PathVariable UUID groupId,
-            @RequestBody List<UUID> studentIds) {
+            @Valid @RequestBody List<UUID> studentIds) {
         groupService.addStudentsToGroup(groupId, studentIds);
         return ResponseEntity.ok().build();
     }
