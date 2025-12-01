@@ -1,9 +1,5 @@
-import Layout from "../components/Layout";
-import ProblemSolved from "../components/Dashboard/StatCards/ProblemsSolved";
-import ActivityStreak from "../components/Dashboard/StatCards/ActivityStreak";
-import OverallProgress from "../components/Dashboard/StatCards/OverallProgress";
-import HomeworkList from "../components/Dashboard/HomeworkList";
-import DailyChallenge from "../components/Dashboard/DailyChallenge";
+import Layout from "../components/layout";
+import { ProblemsSolved, ActivityStreak, OverallProgress, HomeworkList, DailyChallenge } from "../components/features/dashboard";
 import { useAuth } from "../contexts/AuthContext";
 import bearAvatar from "../assets/avatar.png";
 
@@ -25,7 +21,7 @@ export default function Dashboard() {
           />
         </div>
         <div className="grid grid-cols-2 gap-6 flex-1">
-          <ProblemSolved />
+          <ProblemsSolved />
           <ActivityStreak />
           <div className="col-start-2">
             <OverallProgress />

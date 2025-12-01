@@ -1,4 +1,4 @@
-import Layout from "../components/Layout";
+import Layout from "../components/layout";
 import { Bell, Globe, Moon, Volume2, Shield, HelpCircle } from "lucide-react";
 import { JSX, useState } from "react";
 

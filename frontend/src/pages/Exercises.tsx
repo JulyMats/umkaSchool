@@ -1,10 +1,11 @@
 import { Search } from 'lucide-react';
-import Layout from '../components/Layout';
+import Layout from '../components/layout';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { exerciseTypeService } from '../services/exerciseType.service';
 import { ExerciseType } from '../types/exerciseType';
 import pandaImage from '../assets/panda.png';
+import { LoadingState, ErrorState } from '../components/common';
 
 type ExerciseCard = ExerciseType;
 
@@ -35,9 +36,7 @@ export default function Exercises() {
   if (loading) {
     return (
       <Layout title="Exercises" subtitle="Loading exercises...">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        </div>
+        <LoadingState message="Loading exercises..." />
       </Layout>
     );
   }
@@ -45,7 +44,7 @@ export default function Exercises() {
   if (error) {
     return (
       <Layout title="Exercises" subtitle="Error loading exercises">
-        <div className="text-red-500 text-center p-4">{error}</div>
+        <ErrorState message={error} />
       </Layout>
     );
   }

@@ -2,7 +2,7 @@ import { useAuth } from '../contexts/AuthContext';
 import StudentProfile from './StudentProfile';
 import TeacherProfile from './TeacherProfile';
 import { Loader2 } from 'lucide-react';
-import Layout from '../components/Layout';
+import Layout from '../components/layout';
 
 export default function Profile() {
     const { user, student, teacher, isLoading } = useAuth();

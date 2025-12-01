@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Loader2, Plus, Users } from 'lucide-react';
-import Layout from '../components/Layout';
+import Layout from '../components/layout';
 import { useAuth } from '../contexts/AuthContext';
 import { groupService } from '../services/group.service';
 import { studentService } from '../services/student.service';

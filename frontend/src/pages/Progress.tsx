@@ -1,4 +1,4 @@
-import Layout from "../components/Layout";
+import Layout from "../components/layout";
 import { CalendarDays, Brain, Target, Clock, Trophy } from 'lucide-react';
 import { ReactElement, useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';

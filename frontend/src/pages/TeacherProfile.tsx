@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Loader2, Save, User, Mail, Phone, Edit2, X, FileText, Image } from 'lucide-react';
-import Layout from '../components/Layout';
+import Layout from '../components/layout';
 import { useAuth } from '../contexts/AuthContext';
 import { teacherService } from '../services/teacher.service';
 import { UpdateTeacherPayload } from '../types/teacher';

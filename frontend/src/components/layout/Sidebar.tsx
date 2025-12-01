@@ -13,8 +13,8 @@ import {
   ClipboardList
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import avatar from "../assets/avatar.png";
+import { useAuth } from "../../contexts/AuthContext";
+import avatar from "../../assets/avatar.png";
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -136,3 +136,4 @@ export default function Sidebar() {
     </div>
   );
 }
+
