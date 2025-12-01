@@ -60,7 +60,6 @@ public class ProgressSnapshotController {
         return studentRepository.findById(studentId)
                 .map(student -> progressSnapshotService.getSnapshotForDate(student, date)
                         .map(snapshot -> {
-                            // Convert to response directly
                             Student studentEntity = snapshot.getStudent();
                             String studentName = studentEntity.getUser().getFirstName() + " " + studentEntity.getUser().getLastName();
                             
@@ -90,7 +89,6 @@ public class ProgressSnapshotController {
         Student student = studentRepository.findById(studentId)
             .orElseThrow(() -> new IllegalArgumentException("Student not found"));
 
-        // Validate period parameter
         if (!isValidPeriod(period)) {
             return ResponseEntity.badRequest().build();
         }
