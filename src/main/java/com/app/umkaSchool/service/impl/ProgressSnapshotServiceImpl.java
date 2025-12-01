@@ -1,6 +1,7 @@
 package com.app.umkaSchool.service.impl;
 
 import com.app.umkaSchool.dto.progresssnapshot.ProgressSnapshotResponse;
+import com.app.umkaSchool.dto.stats.StatsResponse
 import com.app.umkaSchool.model.ExerciseAttempt;
 import com.app.umkaSchool.model.ProgressSnapshot;
 import com.app.umkaSchool.model.Student;
@@ -11,6 +12,7 @@ import com.app.umkaSchool.service.ProgressSnapshotService;
 import com.app.umkaSchool.service.StudentActivityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,7 @@ public class ProgressSnapshotServiceImpl implements ProgressSnapshotService {
     private final StudentRepository studentRepository;
     private final ExerciseAttemptRepository exerciseAttemptRepository;
 
+    @Autowired
     public ProgressSnapshotServiceImpl(ProgressSnapshotRepository repository, 
                                        StudentActivityService studentActivityService,
                                        StudentRepository studentRepository,
@@ -49,13 +52,12 @@ public class ProgressSnapshotServiceImpl implements ProgressSnapshotService {
             completedAttempt.getTotalAttempts(), completedAttempt.getTotalCorrect(), 
             completedAttempt.getStartedAt(), completedAttempt.getCompletedAt());
         
-        // Always create a NEW snapshot for today (never update existing)
+        // Always create a NEW snapshot for today 
         ProgressSnapshot snapshot = new ProgressSnapshot();
         snapshot.setStudent(student);
         snapshot.setSnapshotDate(today);
         
         // Get the latest snapshot (from any date, including today if exists) to get baseline cumulative data
-        // This will be the most recent snapshot before this new one
         Optional<ProgressSnapshot> latestSnapshot = getLatestSnapshot(student);
         
         // Initialize with baseline data from latest snapshot if exists
@@ -69,7 +71,7 @@ public class ProgressSnapshotServiceImpl implements ProgressSnapshotService {
             snapshot.setCurrentStreak(baseline.getCurrentStreak());
         } else {
             logger.info("No baseline snapshot found, starting from zero");
-            // No previous snapshot, start from zero
+            // No previous snapshot ->  start from zero
             snapshot.setTotalAttempts(0L);
             snapshot.setTotalCorrect(0L);
             snapshot.setTotalPracticeSeconds(0L);
@@ -125,7 +127,6 @@ public class ProgressSnapshotServiceImpl implements ProgressSnapshotService {
             try {
                 return repository.save(snap);
             } catch (DataIntegrityViolationException e) {
-                // Concurrent insert: another thread created snapshot for same student/date
                 ProgressSnapshot existingSnap = getLatestSnapshotForDate(student, today)
                         .orElseThrow(() -> e);
                 updateSnapshotFromActivity(existingSnap, student, today);
@@ -274,10 +275,7 @@ public class ProgressSnapshotServiceImpl implements ProgressSnapshotService {
         return getLatestSnapshotForDate(student, date);
     }
     
-    /**
-     * Helper method to get the latest snapshot for a student and date.
-     * Handles multiple snapshots per day by returning the most recent one.
-     */
+    
     private Optional<ProgressSnapshot> getLatestSnapshotForDate(Student student, LocalDate date) {
         // Get list of snapshots for the date, ordered by created_at DESC
         List<ProgressSnapshot> snapshots = repository.findAllByStudentIdAndSnapshotDateOrderByCreatedAtDesc(student.getId(), date);
@@ -286,7 +284,6 @@ public class ProgressSnapshotServiceImpl implements ProgressSnapshotService {
 
     @Override
     public List<ProgressSnapshotResponse> getSnapshotsByStudentId(UUID studentId) {
-        // Use query with JOIN FETCH to avoid lazy loading issues
         List<ProgressSnapshot> snapshots = repository.findByStudent_IdOrderBySnapshotDateDesc(studentId);
         return snapshots.stream()
                 .map(this::mapToResponse)
@@ -310,7 +307,6 @@ public class ProgressSnapshotServiceImpl implements ProgressSnapshotService {
     }
 
     private void updateSnapshotFromActivity(ProgressSnapshot snapshot, Student student, LocalDate date) {
-        // Use aggregated counters from StudentActivityService
         Long attempts = studentActivityService.totalAttempts(student, date);
         Long correct = studentActivityService.totalCorrect(student, date);
         Long practiceSeconds = studentActivityService.totalPracticeSeconds(student, date);
@@ -330,7 +326,7 @@ public class ProgressSnapshotServiceImpl implements ProgressSnapshotService {
     }
 
     @Override
-    public com.app.umkaSchool.dto.stats.StatsResponse getStudentStats(Student student, String period) {
+    public StatsResponse getStudentStats(Student student, String period) {
         logger.info("Getting stats for student: {}, period: {}", student.getId(), period);
         
         LocalDate today = LocalDate.now();

@@ -15,14 +15,18 @@ import org.springframework.stereotype.Service;
 public class EmailServiceImpl implements EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailServiceImpl.class);
 
+    private final JavaMailSender mailSender;
+    private final String fromEmail;
+    private final String appName;
+
     @Autowired
-    private JavaMailSender mailSender;
-
-    @Value("${spring.mail.username}")
-    private String fromEmail;
-
-    @Value("${app.name:UmkaSchool}")
-    private String appName;
+    public EmailServiceImpl(JavaMailSender mailSender,
+                            @Value("${spring.mail.username}") String fromEmail,
+                            @Value("${app.name:UmkaSchool}") String appName) {
+        this.mailSender = mailSender;
+        this.fromEmail = fromEmail;
+        this.appName = appName;
+    }
 
     @Override
     public void sendPasswordReset(String toEmail, String resetLink) {
@@ -41,23 +45,24 @@ public class EmailServiceImpl implements EmailService {
             String htmlContent = buildPasswordResetEmail(resetLink);
             helper.setText(htmlContent, true);
 
-            logger.info("📤 Sending email to SMTP server...");
+            logger.info("Sending email to SMTP server...");
             mailSender.send(message);
-            logger.info("✅ Password reset email sent successfully to: {}", toEmail);
-            logger.info("🔍 If you don't see the email, check:");
+            logger.info("Password reset email sent successfully to: {}", toEmail);
+            logger.info("If you don't see the email, check:");
             logger.info("   1. Spam/Junk folder");
             logger.info("   2. Promotions tab (Gmail)");
             logger.info("   3. Verify email address is correct: {}", toEmail);
             logger.info("   4. Check sender email is configured: {}", fromEmail);
         } catch (MessagingException e) {
-            logger.error("❌ MessagingException - Failed to send password reset email to: {}", toEmail, e);
+            logger.error("MessagingException - Failed to send password reset email to: {}", toEmail, e);
+            // TODO: DON'T FORGET TO REMOVE 
             // For development: print token to console as fallback
             logger.warn("=================================================");
             logger.warn("EMAIL SEND FAILED! Reset link: {}", resetLink);
             logger.warn("Error message: {}", e.getMessage());
             logger.warn("=================================================");
         } catch (Exception e) {
-            logger.error("❌ Unexpected error sending password reset email to: {}", toEmail, e);
+            logger.error("Unexpected error sending password reset email to: {}", toEmail, e);
             logger.warn("=================================================");
             logger.warn("EMAIL SEND FAILED! Reset link: {}", resetLink);
             logger.warn("Error: {}", e.getMessage());
