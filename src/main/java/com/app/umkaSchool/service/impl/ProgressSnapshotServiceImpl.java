@@ -1,7 +1,7 @@
 package com.app.umkaSchool.service.impl;
 
 import com.app.umkaSchool.dto.progresssnapshot.ProgressSnapshotResponse;
-import com.app.umkaSchool.dto.stats.StatsResponse
+import com.app.umkaSchool.dto.stats.StatsResponse;
 import com.app.umkaSchool.model.ExerciseAttempt;
 import com.app.umkaSchool.model.ProgressSnapshot;
 import com.app.umkaSchool.model.Student;
