@@ -1,6 +1,7 @@
 package com.app.umkaSchool.service.impl;
 
 import com.app.umkaSchool.dto.auth.LoginRequest;
+import com.app.umkaSchool.dto.auth.LoginResponse;
 import com.app.umkaSchool.dto.auth.RegisterRequest;
 import com.app.umkaSchool.dto.auth.SignupResponse;
 import com.app.umkaSchool.model.AppUser;
@@ -71,7 +72,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String signin(LoginRequest request) {
+    public LoginResponse signin(LoginRequest request) {
         if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
             throw new IllegalArgumentException("Email required");
         }
@@ -96,7 +97,7 @@ public class AuthServiceImpl implements AuthService {
         token.setExpiresAt(ZonedDateTime.now().plusDays(30));
         token.setUsed(false);
         userTokenRepository.save(token);
-        return rawToken;
+        return LoginResponse.builder().token(rawToken).build();
     }
 
     @Override
