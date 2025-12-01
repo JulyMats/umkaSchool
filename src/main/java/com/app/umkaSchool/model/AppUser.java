@@ -23,6 +23,7 @@ import java.util.UUID;
 @Table(name = "app_user")
 public class AppUser implements UserDetails {
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "app_user_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 

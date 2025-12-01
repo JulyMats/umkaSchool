@@ -13,6 +13,7 @@ import java.util.UUID;
 @Table(name = "guardian")
 public class Guardian {
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "guardian_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 

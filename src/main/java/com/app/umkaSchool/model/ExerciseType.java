@@ -18,6 +18,7 @@ import java.util.UUID;
 @Table(name = "exercise_type")
 public class ExerciseType {
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "exercise_type_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 

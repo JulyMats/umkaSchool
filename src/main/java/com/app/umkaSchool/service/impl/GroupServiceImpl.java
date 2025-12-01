@@ -43,7 +43,11 @@ public class GroupServiceImpl implements GroupService {
     public GroupResponse createGroup(CreateGroupRequest request) {
         logger.info("Creating new group: {}", request.getName());
 
-        if (groupRepository.existsByCode(request.getCode())) {
+        // Convert code to uppercase for consistency
+        String codeUpper = request.getCode() != null ? request.getCode().toUpperCase() : null;
+        
+        // Check code existence with uppercase version
+        if (codeUpper != null && groupRepository.existsByCode(codeUpper)) {
             throw new IllegalArgumentException("Group code already exists");
         }
 
@@ -51,14 +55,18 @@ public class GroupServiceImpl implements GroupService {
             throw new IllegalArgumentException("Group name already exists");
         }
 
-        Teacher teacher = teacherRepository.findById(request.getTeacherId())
-                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
-
         StudentGroup group = new StudentGroup();
         group.setName(request.getName());
-        group.setCode(request.getCode().toUpperCase());
+        group.setCode(codeUpper);
         group.setDescription(request.getDescription());
-        group.setTeacher(teacher);
+        
+        // Teacher is optional (nullable in model)
+        if (request.getTeacherId() != null) {
+            Teacher teacher = teacherRepository.findById(request.getTeacherId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
+            group.setTeacher(teacher);
+        }
+        
         group = groupRepository.save(group);
 
         // Add students to group if provided

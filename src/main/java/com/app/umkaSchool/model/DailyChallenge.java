@@ -19,6 +19,7 @@ import java.util.UUID;
 @Table(name = "daily_challenge")
 public class DailyChallenge {
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "daily_challenge_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
