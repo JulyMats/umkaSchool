@@ -10,7 +10,9 @@ import java.util.UUID;
 @Table(name = "user_token")
 public class UserToken {
     @Id
-    @Column(name = "token_id", insertable = false, updatable = false, nullable = false)
+    //@Column(name = "token_id", insertable = false, updatable = false, nullable = false)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "token_id", nullable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
