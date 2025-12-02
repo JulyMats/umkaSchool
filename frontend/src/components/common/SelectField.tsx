@@ -36,11 +36,11 @@ const SelectField: React.FC<SelectFieldProps> = ({
   const fieldId = `select-${name}`;
 
   return (
-    <div className={`w-full ${className}`}>
+    <div className="w-full">
       {label && (
         <label
           htmlFor={fieldId}
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="block text-sm font-medium text-gray-700 mb-2"
         >
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
@@ -54,10 +54,11 @@ const SelectField: React.FC<SelectFieldProps> = ({
         disabled={disabled}
         required={required}
         className={`
-          w-full px-4 py-2 border rounded-lg
+          w-full px-4 py-3 border rounded-lg
           focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent
           disabled:bg-gray-100 disabled:cursor-not-allowed
           ${error ? 'border-red-500' : 'border-gray-300'}
+          ${className}
         `}
       >
         {placeholder && (
