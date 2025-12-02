@@ -2,7 +2,11 @@ package com.app.umkaSchool.service;
 
 import com.app.umkaSchool.dto.exercise.CreateExerciseRequest;
 import com.app.umkaSchool.dto.exercise.ExerciseResponse;
+import com.app.umkaSchool.dto.exercise.GenerateExerciseNumbersRequest;
+import com.app.umkaSchool.dto.exercise.GenerateExerciseNumbersResponse;
 import com.app.umkaSchool.dto.exercise.UpdateExerciseRequest;
+import com.app.umkaSchool.dto.exercise.ValidateAnswerRequest;
+import com.app.umkaSchool.dto.exercise.ValidateAnswerResponse;
 import com.app.umkaSchool.model.Exercise;
 
 import java.util.List;
@@ -26,4 +30,10 @@ public interface ExerciseService {
     void deleteExercise(UUID exerciseId);
 
     Exercise getExerciseEntity(UUID exerciseId);
+
+    GenerateExerciseNumbersResponse generateExerciseNumbers(GenerateExerciseNumbersRequest request);
+
+    ValidateAnswerResponse validateAnswer(ValidateAnswerRequest request);
+
+    Integer calculateDifficulty(UUID exerciseTypeId, String parametersJson);
 }

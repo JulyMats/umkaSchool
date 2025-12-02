@@ -16,13 +16,11 @@ public class CreateExerciseRequest {
     @NotBlank(message = "Parameters are required")
     private String parameters; // JSON string
 
-    @NotNull(message = "Difficulty is required")
     @Min(value = 1, message = "Difficulty must be between 1 and 10")
     @Max(value = 10, message = "Difficulty must be between 1 and 10")
     private Integer difficulty;
 
-    @NotNull(message = "Points are required")
-    @Min(value = 0, message = "Points must be greater than 0")
+    @Min(value = 0, message = "Points must be greater than or equal to 0")
     private Integer points;
 
     private UUID createdById;
