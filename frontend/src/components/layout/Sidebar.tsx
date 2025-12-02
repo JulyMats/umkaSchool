@@ -14,7 +14,8 @@ import {
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import avatar from "../../assets/avatar.png";
+import avatar from "../../../public/avatars/avatar.png";
+import NavMenuItem from "./NavMenuItem";
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -77,22 +78,14 @@ export default function Sidebar() {
         <hr className="border-t border-gray-200 -mx-6 mb-4" />
         <p className="text-sm text-left text-gray-500 mb-2">MENU</p>
         <ul>
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <li key={item.label}>
-                <Link
-                  to={item.path}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer mb-1 ${
-                    isActive ? "bg-gray-100 font-semibold" : "hover:bg-gray-50"
-                  }`}
-                >
-                  <item.icon size={18} className={isActive ? "text-blue-500" : ""} />
-                  <span className={isActive ? "text-blue-500" : ""}>{item.label}</span>
-                </Link>
-              </li>
-            );
-          })}
+          {menuItems.map((item) => (
+            <NavMenuItem
+              key={item.label}
+              icon={item.icon}
+              label={item.label}
+              path={item.path}
+            />
+          ))}
         </ul>
       </div>
 
