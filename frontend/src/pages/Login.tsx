@@ -1,54 +1,91 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useForm } from '../hooks/useForm';
+import { validateEmail, validateLoginPassword } from '../utils/validation.utils';
+import { extractErrorMessage } from '../utils/error.utils';
+import { PasswordField, Input, Button } from '../components/ui';
+import { AnimatedBackground } from '../components/common';
+import { SignInRequest } from '../types/auth';
+
+interface LoginFormValues {
+  email: string;
+  password: string;
+  rememberMe: boolean;
+}
+
+const INITIAL_VALUES: LoginFormValues = {
+  email: '',
+  password: '',
+  rememberMe: false
+};
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    rememberMe: false
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-    setError(''); // Clear error when user types
-  };
+  const handleLogin = async (values: LoginFormValues) => {
+    if (form.errors.email && 
+        form.errors.email !== 'Email is required' && 
+        form.errors.email !== 'Please enter a valid email address') {
+      form.setError('email', '');
+    }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    // Client-side validation using existing utilities
+    const emailError = validateEmail(values.email);
+    const passwordError = validateLoginPassword(values.password);
+
+    // Set validation errors if any
+    if (emailError) {
+      form.setError('email', emailError);
+    }
+    if (passwordError) {
+      form.setError('password', passwordError);
+    }
+
+    // Return early if there are validation errors
+    if (emailError || passwordError) {
+      return;
+    }
+
     try {
-      await login({
-        email: formData.email,
-        password: formData.password
-      });
+      const credentials: SignInRequest = {
+        email: values.email.trim(),
+        password: values.password
+      };
+
+      await login(credentials);
+
+      //"Remember Me" functionality
+      if (values.rememberMe) {  
+        localStorage.setItem('rememberMe', 'true');
+      } else {
+        localStorage.removeItem('rememberMe');
+      }
+
       navigate('/dashboard');
-    } catch (error: any) {
-      setError(error.response?.data?.message || 'Invalid email or password');
+    } catch (error: unknown) {
+      const errorMessage = extractErrorMessage(error, 'Invalid email or password');
+      form.setError('email', `API_ERROR:${errorMessage}`);
+      throw error; 
     }
   };
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Decorative animals */}
-      <div className="absolute top-10 left-10 text-6xl animate-bounce" style={{ animationDuration: '3s' }}>🐻</div>
-      <div className="absolute top-20 right-20 text-5xl animate-bounce" style={{ animationDuration: '2.5s', animationDelay: '0.5s' }}>🦊</div>
-      <div className="absolute bottom-20 left-20 text-5xl animate-bounce" style={{ animationDuration: '2.8s', animationDelay: '1s' }}>🐰</div>
-      <div className="absolute bottom-10 right-10 text-6xl animate-bounce" style={{ animationDuration: '3.2s', animationDelay: '1.5s' }}>🐱</div>
+  const form = useForm(INITIAL_VALUES, handleLogin);
 
+  // Restore "Remember Me" state from localStorage
+  const rememberMeFromStorage = localStorage.getItem('rememberMe') === 'true';
+  if (rememberMeFromStorage && !form.values.rememberMe) {
+    form.setValue('rememberMe', true);
+  }
+
+  return (
+    <AnimatedBackground>
       <div className="w-full max-w-md relative z-10">
         {/* Logo and Title */}
         <div className="text-center mb-8">
           <div className="inline-block mb-4">
-            <span className="text-6xl">🎓</span>
+            <span className="text-6xl" role="img" aria-label="Graduation cap">🎓</span>
           </div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
             UmkaSchool
@@ -59,67 +96,53 @@ export default function Login() {
         {/* Login Form */}
         <div className="bg-white rounded-3xl shadow-xl p-8 border-4 border-pink-200">
           <div className="text-center mb-6">
-            <span className="text-4xl mb-2 block">👋</span>
+            <span className="text-4xl mb-2 block" role="img" aria-label="Waving hand">👋</span>
             <h2 className="text-3xl font-bold text-gray-800">Welcome back!</h2>
             <p className="text-gray-600 mt-2">We're so happy to see you again! 🎉</p>
           </div>
           
-          {error && (
+          {/* Show general error message (for API errors, not validation errors) */}
+          {form.errors.email && form.errors.email.startsWith('API_ERROR:') && (
             <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl mb-6 border-2 border-red-200 flex items-center gap-2">
-              <span className="text-xl">😕</span>
-              <span>{error}</span>
+              <span className="text-xl" role="img" aria-label="Sad face">😕</span>
+              <span>{form.errors.email.replace('API_ERROR:', '')}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={form.handleSubmit} className="space-y-6" noValidate>
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <span>📧</span>
-                <span>Email address</span>
-              </label>
-              <input
+              <Input
                 id="email"
                 name="email"
                 type="email"
+                label="Email address"
                 autoComplete="email"
                 required
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-pink-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all"
+                value={form.values.email}
+                onChange={form.handleChange}
+                error={form.errors.email && !form.errors.email.startsWith('API_ERROR:') ? form.errors.email : undefined}
                 placeholder="your.email@example.com"
+                className="border-2 border-pink-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all"
+                disabled={form.isSubmitting}
               />
             </div>
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <span>🔒</span>
-                <span>Password</span>
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-pink-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all pr-12"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-purple-600 transition-colors"
-                >
-                  {showPassword ? 
-                    <EyeOff className="w-5 h-5" /> : 
-                    <Eye className="w-5 h-5" />
-                  }
-                </button>
-              </div>
+              <PasswordField
+                id="password"
+                name="password"
+                label="Password"
+                autoComplete="current-password"
+                required
+                value={form.values.password}
+                onChange={form.handleChange}
+                error={form.errors.password}
+                placeholder="••••••••"
+                className="border-2 border-pink-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all"
+                disabled={form.isSubmitting}
+              />
             </div>
 
             {/* Remember Me and Forgot Password */}
@@ -129,31 +152,41 @@ export default function Login() {
                   id="remember-me" 
                   name="rememberMe"
                   type="checkbox"
-                  checked={formData.rememberMe}
-                  onChange={handleChange}
-                  className="h-5 w-5 text-purple-600 rounded border-2 border-pink-300 focus:ring-purple-400"
+                  checked={form.values.rememberMe}
+                  onChange={(e) => {
+                    const { name, checked } = e.target;
+                    form.setValue(name as keyof LoginFormValues, checked);
+                  }}
+                  className="h-5 w-5 text-purple-600 rounded border-2 border-pink-300 focus:ring-purple-400 focus:ring-2"
+                  disabled={form.isSubmitting}
                 />
-                <label htmlFor="remember-me" className="ml-2 text-sm text-gray-700 font-medium">
+                <label htmlFor="remember-me" className="ml-2 text-sm text-gray-700 font-medium cursor-pointer">
                   Remember me
                 </label>
               </div>
               <Link
                 to="/forgot-password"
-                className="text-sm text-purple-600 hover:text-purple-800 font-medium transition-colors"
+                className="text-sm text-purple-600 hover:text-purple-800 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 rounded"
+                tabIndex={form.isSubmitting ? -1 : 0}
               >
                 Forgot password?
               </Link>
             </div>
 
             {/* Submit Button */}
-            <button
+            <Button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white py-3 rounded-xl hover:from-pink-600 hover:via-purple-600 hover:to-blue-600 transition-all transform hover:scale-105 shadow-lg font-bold text-lg"
+              variant="gradient-pink"
+              size="lg"
+              fullWidth
+              isLoading={form.isSubmitting}
+              loadingText="Signing in..."
+              className="rounded-xl font-bold"
             >
               <LogIn className="w-5 h-5" />
               <span>Sign in</span>
-              <span>🚀</span>
-            </button>
+              <span role="img" aria-label="Rocket">🚀</span>
+            </Button>
           </form>
 
           {/* Sign Up Link */}
@@ -162,7 +195,8 @@ export default function Login() {
               Don't have an account?{' '}
               <Link
                 to="/register"
-                className="text-purple-600 hover:text-purple-800 font-bold transition-colors"
+                className="text-purple-600 hover:text-purple-800 font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 rounded"
+                tabIndex={form.isSubmitting ? -1 : 0}
               >
                 Sign up now! ✨
               </Link>
@@ -170,6 +204,6 @@ export default function Login() {
           </div>
         </div>
       </div>
-    </div>
+    </AnimatedBackground>
   );
 }
