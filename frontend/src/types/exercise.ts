@@ -44,8 +44,8 @@ export interface Exercise {
 export interface CreateExercisePayload {
     exerciseTypeId: string;
     parameters: string;
-    difficulty: number;
-    points: number;
+    difficulty?: number; // Optional 
+    points?: number; // Optional 
     createdById?: string;
 }
 

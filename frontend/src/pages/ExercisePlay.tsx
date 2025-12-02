@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, RefreshCcw, Sparkles, Timer, X, Target, Eye, EyeOff, Info } from 'lucide-react';
 import { ExerciseSessionConfig } from '../types/exercise';
@@ -8,7 +8,7 @@ import { exerciseAttemptService } from '../services/exerciseAttempt.service';
 import { achievementService } from '../services/achievement.service';
 import { ExerciseAttempt } from '../types/exerciseAttempt';
 import { StudentAchievement } from '../types/achievement';
-import AchievementModal from '../components/AchievementModal';
+import { AchievementModal } from '../components/features/achievement';
 
 interface LocationState {
   config?: ExerciseSessionConfig;
@@ -22,7 +22,6 @@ export default function ExercisePlay() {
   const { config } = (location.state as LocationState) ?? {};
   const { student } = useAuth();
 
-  const [sessionKey, setSessionKey] = useState(0);
   const [displayIndex, setDisplayIndex] = useState(0);
   const [showAnswerBox, setShowAnswerBox] = useState(false);
   const [countdown, setCountdown] = useState(config?.timePerQuestion ?? 0);
@@ -30,7 +29,6 @@ export default function ExercisePlay() {
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [showNumbers, setShowNumbers] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
-  const [sessionCompleted, setSessionCompleted] = useState(false);
   
   // Session management
   const [currentAttempt, setCurrentAttempt] = useState<ExerciseAttempt | null>(null);
@@ -52,34 +50,10 @@ export default function ExercisePlay() {
   const isInitializingRef = useRef<boolean>(false);
   const sessionCompletedRef = useRef<boolean>(false);
 
-  const numbers = useMemo(() => {
-    if (!config) return [];
-    return generateNumbers(config.cardCount ?? 5, config.digitLength ?? 1, config.min, config.max);
-  }, [config, sessionKey]);
-
-  // Calculate result based on exercise type
-  const total = useMemo(() => {
-    if (numbers.length === 0) return 0;
-    
-    const exerciseTypeName = config?.exerciseTypeName?.toLowerCase() || '';
-    
-    if (exerciseTypeName.includes('addition') || exerciseTypeName.includes('add')) {
-      // Addition: sum all numbers
-      return numbers.reduce((sum, value) => sum + value, 0);
-    } else if (exerciseTypeName.includes('subtraction') || exerciseTypeName.includes('subtract')) {
-      // Subtraction: subtract all numbers from the first
-      return numbers.slice(1).reduce((result, value) => result - value, numbers[0]);
-    } else if (exerciseTypeName.includes('multiplication') || exerciseTypeName.includes('multiply')) {
-      // Multiplication: multiply all numbers
-      return numbers.reduce((product, value) => product * value, 1);
-    } else if (exerciseTypeName.includes('division') || exerciseTypeName.includes('divide')) {
-      // Division: divide first number by all others
-      return numbers.slice(1).reduce((result, value) => result / value, numbers[0]);
-    } else {
-      // Default to addition
-      return numbers.reduce((sum, value) => sum + value, 0);
-    }
-  }, [numbers, config?.exerciseTypeName]);
+  // Numbers and expected answer from backend
+  const [numbers, setNumbers] = useState<number[]>([]);
+  const [expectedAnswer, setExpectedAnswer] = useState<number | null>(null);
+  const [loadingNumbers, setLoadingNumbers] = useState(false);
 
   const exerciseTypeNameForSigns = config?.exerciseTypeName?.toLowerCase() || '';
   const isSubtraction = exerciseTypeNameForSigns.includes('subtraction') || exerciseTypeNameForSigns.includes('subtract');
@@ -124,15 +98,12 @@ export default function ExercisePlay() {
         
         const exerciseParamsJson = JSON.stringify(exerciseParams);
 
-        // Calculate difficulty based on digit length and card count
-        const difficulty = Math.min(10, Math.max(1, (config.digitLength ?? 1) + Math.floor((config.cardCount ?? 5) / 3)));
-
+        // Backend will calculate difficulty and points automatically if not provided
         const exercise = await exerciseService.createExercise({
           exerciseTypeId: config.exerciseTypeId,
-          parameters: exerciseParamsJson,
-          difficulty: difficulty,
-          points: difficulty * 10,
-          createdById: undefined // Not required for student-created exercises
+          parameters: exerciseParamsJson
+          // difficulty and points are optional - backend will calculate them
+          // createdById is optional - not required for student-created exercises
         });
 
         setExerciseId(exercise.id);
@@ -159,6 +130,9 @@ export default function ExercisePlay() {
         totalAttemptsRef.current = 0;
         totalCorrectRef.current = 0;
         sessionCompletedRef.current = false; // Reset completion flag for new session
+        
+        // Generate numbers from backend
+        await generateNewNumbers(exercise.id);
         
         try {
           const initialAchievements = await achievementService.getStudentAchievements(student.id);
@@ -213,11 +187,12 @@ export default function ExercisePlay() {
       sessionCompletedRef.current = true;
       const endTime = new Date();
 
+      // Backend will calculate score automatically based on totalAttempts and totalCorrect
       await exerciseAttemptService.updateAttempt(currentAttempt.id, {
         completedAt: endTime.toISOString(),
         totalAttempts: totalAttempts,
-        totalCorrect: totalCorrect,
-        score: totalCorrect * 10 // Simple scoring
+        totalCorrect: totalCorrect
+        // Score will be calculated by backend
       });
 
   
@@ -263,7 +238,7 @@ export default function ExercisePlay() {
   };
 
   useEffect(() => {
-    if (!config || numbers.length === 0 || !sessionStarted) {
+    if (!config || numbers.length === 0 || !sessionStarted || loadingNumbers) {
       return undefined;
     }
 
@@ -296,7 +271,7 @@ export default function ExercisePlay() {
         clearInterval(answerIntervalRef.current);
       }
     };
-  }, [config, numbers, sessionKey, sessionStarted]);
+  }, [config, numbers, sessionStarted, loadingNumbers]);
 
   useEffect(() => {
     if (!config || !showAnswerBox || !sessionStarted) {
@@ -313,7 +288,7 @@ export default function ExercisePlay() {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(answerIntervalRef.current!);
-          handleAnswer(false); // Timeout = incorrect
+          handleAnswer(false);
           return 0;
         }
         return prev - 1;
@@ -327,15 +302,42 @@ export default function ExercisePlay() {
     };
   }, [config, showAnswerBox, sessionStarted]);
 
-  const handleRetry = useCallback(() => {
+  const generateNewNumbers = useCallback(async (exerciseId: string) => {
+    if (!config) return;
+    
+    setLoadingNumbers(true);
+    try {
+      const response = await exerciseService.generateExerciseNumbers({
+        exerciseId: exerciseId,
+        cardCount: config.cardCount,
+        digitLength: config.digitLength,
+        min: config.min,
+        max: config.max
+      });
+      
+      setNumbers(response.numbers);
+      setExpectedAnswer(response.expectedAnswer);
+    } catch (error) {
+      console.error('Failed to generate numbers:', error);
+      alert('Failed to generate exercise numbers. Please try again.');
+    } finally {
+      setLoadingNumbers(false);
+    }
+  }, [config]);
+
+  const handleRetry = useCallback(async () => {
     if (answerIntervalRef.current) {
       clearInterval(answerIntervalRef.current);
     }
     setFeedback(null);
     setUserAnswer('');
     setShowNumbers(false);
-    setSessionKey((prev) => prev + 1);
-  }, []);
+    
+    // Generate new numbers from backend
+    if (exerciseId) {
+      await generateNewNumbers(exerciseId);
+    }
+  }, [exerciseId, generateNewNumbers]);
 
   useEffect(() => {
     if (!sessionStarted || (!feedback && countdown !== 0)) {
@@ -381,7 +383,7 @@ export default function ExercisePlay() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!config || !currentAttempt) {
+    if (!config || !currentAttempt || !exerciseId || numbers.length === 0) {
       return;
     }
 
@@ -396,9 +398,29 @@ export default function ExercisePlay() {
       return;
     }
 
-    const isCorrect = parsedAnswer === total;
-    setFeedback(isCorrect ? 'correct' : 'incorrect');
-    await handleAnswer(isCorrect);
+    // Validate answer using backend
+    try {
+      const validation = await exerciseService.validateAnswer({
+        exerciseId: exerciseId,
+        numbers: numbers,
+        studentAnswer: parsedAnswer
+      });
+      
+      const isCorrect = validation.isCorrect;
+      setFeedback(isCorrect ? 'correct' : 'incorrect');
+      await handleAnswer(isCorrect);
+      
+      // Update expected answer if we don't have it yet (shouldn't happen, but safety check)
+      if (expectedAnswer === null && validation.expectedAnswer !== null) {
+        setExpectedAnswer(validation.expectedAnswer);
+      }
+    } catch (error) {
+      console.error('Failed to validate answer:', error);
+      // Fallback: compare with expected answer if we have it
+      const isCorrect = expectedAnswer !== null && Math.abs(parsedAnswer - expectedAnswer) < 0.0001;
+      setFeedback(isCorrect ? 'correct' : 'incorrect');
+      await handleAnswer(isCorrect);
+    }
   };
 
   const handleExit = async () => {
@@ -556,12 +578,12 @@ export default function ExercisePlay() {
                   )}
                   {feedback === 'incorrect' && (
                     <p className="text-lg font-bold">
-                      Almost! The correct answer was <strong className="text-2xl">{total}</strong>. Keep going! 💪
+                      Almost! The correct answer was <strong className="text-2xl">{expectedAnswer ?? 'N/A'}</strong>. Keep going! 💪
                     </p>
                   )}
                   {feedback === 'timeout' && (
                     <p className="text-lg font-bold">
-                      Time's up! The right answer was <strong className="text-2xl">{total}</strong>. Try once more! 🔄
+                      Time's up! The right answer was <strong className="text-2xl">{expectedAnswer ?? 'N/A'}</strong>. Try once more! 🔄
                     </p>
                   )}
                 </div>
@@ -616,7 +638,7 @@ export default function ExercisePlay() {
                   </div>
                 ))}
                 <div className="mt-6 pt-6 border-t-2 border-gray-200">
-                  <p className="text-3xl font-bold text-gray-800">= {total}</p>
+                  <p className="text-3xl font-bold text-gray-800">= {expectedAnswer ?? 'N/A'}</p>
                 </div>
               </div>
             </div>
@@ -688,31 +710,6 @@ export default function ExercisePlay() {
       )}
     </div>
   );
-}
-
-function generateNumbers(count: number, digitLength: number, min?: number, max?: number): number[] {
-  const numbers: number[] = [];
-  for (let i = 0; i < count; i += 1) {
-    numbers.push(generateNumber(digitLength, min, max));
-  }
-  return numbers;
-}
-
-function generateNumber(digitLength: number, min?: number, max?: number): number {
-  // Use provided min/max if available, otherwise calculate from digitLength
-  let calculatedMin: number;
-  let calculatedMax: number;
-  
-  if (min !== undefined && max !== undefined) {
-    calculatedMin = min;
-    calculatedMax = max;
-  } else {
-    // Default calculation based on digitLength
-    calculatedMin = digitLength === 1 ? 1 : Math.pow(10, digitLength - 1);
-    calculatedMax = Math.pow(10, digitLength) - 1;
-  }
-  
-  return Math.floor(Math.random() * (calculatedMax - calculatedMin + 1)) + calculatedMin;
 }
 
 function digitLabel(length: number): string {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Layout from "../components/Layout";
+import Layout from "../components/layout";
 import { Clock, CheckCircle, XCircle, Book, Info } from 'lucide-react';
 import { homeworkService } from '../services/homework.service';
 import { exerciseService } from '../services/exercise.service';
@@ -8,6 +8,10 @@ import { Homework as HomeworkItem, HomeworkDetail } from '../types/homework';
 import { Exercise } from '../types/exercise';
 import { useAuth } from '../contexts/AuthContext';
 import { ExerciseSessionConfig } from '../types/exercise';
+import { LoadingState, ErrorState, DateDisplay } from '../components/common';
+import { ExerciseCard } from '../components/features/exercise';
+import { useModal } from '../hooks';
+import Modal from '../components/ui/Modal';
 
 export default function Homework() {
   const { student, user, isAuthenticated } = useAuth();
@@ -18,8 +22,8 @@ export default function Homework() {
   const [error, setError] = useState<string | null>(null);
   const [selectedHomework, setSelectedHomework] = useState<HomeworkDetail | null>(null);
   const [selectedHomeworkExercises, setSelectedHomeworkExercises] = useState<Exercise[]>([]);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showExerciseSelectionModal, setShowExerciseSelectionModal] = useState(false);
+  const { isOpen: showDetailsModal, open: openDetailsModal, close: closeDetailsModal } = useModal();
+  const { isOpen: showExerciseSelectionModal, open: openExerciseSelectionModal, close: closeExerciseSelectionModal } = useModal();
   const [loadingExercise, setLoadingExercise] = useState(false);
 
   useEffect(() => {
@@ -86,9 +90,7 @@ export default function Homework() {
   if (loading) {
     return (
       <Layout title="Homework" subtitle="Loading homework...">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        </div>
+        <LoadingState message="Loading homework..." />
       </Layout>
     );
   }
@@ -96,7 +98,7 @@ export default function Homework() {
   if (error) {
     return (
       <Layout title="Homework" subtitle="Error loading homework">
-        <div className="text-red-500 text-center p-4">{error}</div>
+        <ErrorState message={error} />
       </Layout>
     );
   }
@@ -132,59 +134,6 @@ export default function Homework() {
     }
   };
 
-  const formatExerciseParameters = (parameters: string): string => {
-    try {
-      const params = JSON.parse(parameters);
-      const parts: string[] = [];
-
-      if (params.exampleCount) {
-        parts.push(`${params.exampleCount} examples`);
-      }
-      if (params.cardCount) {
-        parts.push(`${params.cardCount} cards`);
-      }
-      if (params.digitType) {
-        const digitTypeLabels: Record<string, string> = {
-          'single-digit': 'Single-digit',
-          'two-digit': 'Two-digit',
-          'three-digit': 'Three-digit',
-          'four-digit': 'Four-digit'
-        };
-        parts.push(digitTypeLabels[params.digitType] || params.digitType);
-      }
-      if (params.dividendDigits) {
-        parts.push(`Dividend: ${params.dividendDigits[0]}-${params.dividendDigits[1]} digits`);
-      }
-      if (params.divisorDigits) {
-        parts.push(`Divisor: ${params.divisorDigits[0]}-${params.divisorDigits[1]} digits`);
-      }
-      if (params.firstMultiplierDigits) {
-        parts.push(`Multiplier: ${params.firstMultiplierDigits[0]}-${params.firstMultiplierDigits[1]} digits`);
-      }
-      if (params.minValue !== undefined && params.maxValue !== undefined) {
-        parts.push(`Range: ${params.minValue}-${params.maxValue}`);
-      }
-      if (params.timePerQuestion) {
-        const minutes = Math.floor(params.timePerQuestion / 60);
-        const seconds = params.timePerQuestion % 60;
-        if (minutes > 0) {
-          parts.push(`Time: ${minutes}m ${seconds > 0 ? seconds + 's' : ''}`);
-        } else {
-          parts.push(`Time: ${seconds}s`);
-        }
-      }
-      if (params.displaySpeed) {
-        parts.push(`Speed: ${params.displaySpeed}s`);
-      }
-      if (params.theme) {
-        parts.push(`Theme: ${params.theme}`);
-      }
-
-      return parts.length > 0 ? parts.join(' • ') : 'No parameters';
-    } catch {
-      return 'Invalid parameters';
-    }
-  };
 
   const handleSeeDetails = async (homeworkId: string) => {
     try {
@@ -198,7 +147,7 @@ export default function Homework() {
       const exercises = await Promise.all(exercisePromises);
       setSelectedHomeworkExercises(exercises);
       
-      setShowDetailsModal(true);
+      openDetailsModal();
     } catch (err: any) {
       console.error('[Homework] Failed to load homework details:', err);
       setError(err?.message || 'Failed to load homework details');
@@ -260,7 +209,7 @@ export default function Homework() {
         const exercises = await Promise.all(exercisePromises);
         setSelectedHomeworkExercises(exercises);
         
-        setShowExerciseSelectionModal(true);
+        openExerciseSelectionModal();
       }
     } catch (err: any) {
       console.error('[Homework] Failed to start homework:', err);
@@ -275,7 +224,7 @@ export default function Homework() {
       setLoadingExercise(true);
       const exercise = await exerciseService.getExerciseById(exerciseId);
       const config = convertExerciseToConfig(exercise);
-      setShowExerciseSelectionModal(false);
+      closeExerciseSelectionModal();
       navigate('/exercises/play', { state: { config } });
     } catch (err: any) {
       console.error('[Homework] Failed to load exercise:', err);
@@ -367,7 +316,7 @@ export default function Homework() {
                   {item.timeEstimate}
                 </span>
                 <span className="flex items-center gap-1">
-                  Due: {new Date(item.dueDate).toLocaleDateString()}
+                  Due: <DateDisplay date={item.dueDate} format="short" />
                 </span>
               </div>
               
@@ -405,55 +354,47 @@ export default function Homework() {
       </div>
 
       {/* Details Modal */}
-      {showDetailsModal && selectedHomework && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setShowDetailsModal(false)}>
-          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">{selectedHomework.title}</h2>
-                <p className="text-sm text-gray-500">by {selectedHomework.teacherName}</p>
-              </div>
-              <button
-                onClick={() => setShowDetailsModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <XCircle className="w-6 h-6" />
-              </button>
+      <Modal
+        isOpen={showDetailsModal}
+        onClose={closeDetailsModal}
+        title={selectedHomework?.title}
+        size="lg"
+      >
+        {selectedHomework && (
+          <>
+            <div className="mb-4">
+              <p className="text-sm text-gray-500">by {selectedHomework.teacherName}</p>
             </div>
-            <div className="px-6 py-4 space-y-4">
-              {selectedHomework.description && (
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Description</h3>
-                  <p className="text-gray-600">{selectedHomework.description}</p>
-                </div>
-              )}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">Exercises ({selectedHomework.exercises.length})</h3>
-                <div className="space-y-2">
-                  {selectedHomework.exercises.map((exercise, index) => {
-                    const fullExercise = selectedHomeworkExercises.find(ex => ex.id === exercise.exerciseId);
-                    return (
-                      <div key={exercise.exerciseId} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-gray-900">{index + 1}. {exercise.exerciseTypeName}</p>
-                            {fullExercise && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                {formatExerciseParameters(fullExercise.parameters)}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+            {selectedHomework.description && (
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Description</h3>
+                <p className="text-gray-600">{selectedHomework.description}</p>
+              </div>
+            )}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Exercises ({selectedHomework.exercises.length})</h3>
+              <div className="space-y-2">
+                {selectedHomework.exercises.map((exercise, index) => {
+                  const fullExercise = selectedHomeworkExercises.find(ex => ex.id === exercise.exerciseId);
+                  return fullExercise ? (
+                    <ExerciseCard
+                      key={exercise.exerciseId}
+                      exercise={fullExercise}
+                      showDetails={true}
+                      variant="default"
+                    />
+                  ) : (
+                    <div key={exercise.exerciseId} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                      <p className="font-medium text-gray-900">{index + 1}. {exercise.exerciseTypeName}</p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-            <div className="px-6 py-4 border-t border-gray-100 flex justify-end">
+            <div className="mt-6 flex justify-end">
               <button
                 onClick={() => {
-                  setShowDetailsModal(false);
+                  closeDetailsModal();
                   handleStartHomework(selectedHomework.id);
                 }}
                 disabled={loadingExercise}
@@ -462,54 +403,37 @@ export default function Homework() {
                 {loadingExercise ? 'Loading...' : 'Start Now'}
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
 
       {/* Exercise Selection Modal */}
-      {showExerciseSelectionModal && selectedHomework && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => setShowExerciseSelectionModal(false)}>
-          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">Choose Exercise</h2>
-                <p className="text-sm text-gray-500">Select which exercise to start from {selectedHomework.title}</p>
-              </div>
-              <button
-                onClick={() => setShowExerciseSelectionModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <XCircle className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="px-6 py-4 space-y-3">
-              {selectedHomework.exercises.map((exercise, index) => {
+      <Modal
+        isOpen={showExerciseSelectionModal}
+        onClose={closeExerciseSelectionModal}
+        title="Choose Exercise"
+        size="lg"
+      >
+        {selectedHomework && (
+          <>
+            <p className="text-sm text-gray-500 mb-4">Select which exercise to start from {selectedHomework.title}</p>
+            <div className="space-y-3">
+              {selectedHomework.exercises.map((exercise) => {
                 const fullExercise = selectedHomeworkExercises.find(ex => ex.id === exercise.exerciseId);
-                return (
-                  <button
+                return fullExercise ? (
+                  <ExerciseCard
                     key={exercise.exerciseId}
+                    exercise={fullExercise}
                     onClick={() => handleSelectExercise(exercise.exerciseId)}
-                    disabled={loadingExercise}
-                    className="w-full text-left bg-gray-50 hover:bg-blue-50 rounded-lg p-4 border-2 border-gray-200 hover:border-blue-300 transition-all disabled:opacity-60"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">{index + 1}. {exercise.exerciseTypeName}</p>
-                        {fullExercise && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            {formatExerciseParameters(fullExercise.parameters)}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-blue-600 font-medium">Start →</div>
-                    </div>
-                  </button>
-                );
+                    showDetails={true}
+                    variant="default"
+                  />
+                ) : null;
               })}
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </Layout>
   );
 }

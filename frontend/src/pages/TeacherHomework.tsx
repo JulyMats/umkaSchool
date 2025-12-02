@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Calendar, CalendarPlus, ClipboardList, Loader2, Plus, Trash2 } from 'lucide-react';
-import Layout from '../components/Layout';
+import Layout from '../components/layout';
 import { useAuth } from '../contexts/AuthContext';
 import { homeworkService } from '../services/homework.service';
 import { groupService } from '../services/group.service';
 import { studentService } from '../services/student.service';
 import { exerciseService } from '../services/exercise.service';
 import { exerciseTypeService } from '../services/exerciseType.service';
+import { formatExerciseParameters } from '../utils/exercise.utils';
 import {
     HomeworkDetail,
     HomeworkAssignmentDetail,
@@ -670,59 +671,6 @@ function HomeworkModal({
     const [creatingExercise, setCreatingExercise] = useState(false);
     const [createExerciseError, setCreateExerciseError] = useState<string | null>(null);
 
-    const formatExerciseParameters = (parameters: string): string => {
-        try {
-            const params = JSON.parse(parameters);
-            const parts: string[] = [];
-
-            if (params.exampleCount) {
-                parts.push(`${params.exampleCount} examples`);
-            }
-            if (params.cardCount) {
-                parts.push(`${params.cardCount} cards`);
-            }
-            if (params.digitType) {
-                const digitTypeLabels: Record<string, string> = {
-                    'single-digit': 'Single-digit',
-                    'two-digit': 'Two-digit',
-                    'three-digit': 'Three-digit',
-                    'four-digit': 'Four-digit'
-                };
-                parts.push(digitTypeLabels[params.digitType] || params.digitType);
-            }
-            if (params.dividendDigits) {
-                parts.push(`Dividend: ${params.dividendDigits[0]}-${params.dividendDigits[1]} digits`);
-            }
-            if (params.divisorDigits) {
-                parts.push(`Divisor: ${params.divisorDigits[0]}-${params.divisorDigits[1]} digits`);
-            }
-            if (params.firstMultiplierDigits) {
-                parts.push(`Multiplier: ${params.firstMultiplierDigits[0]}-${params.firstMultiplierDigits[1]} digits`);
-            }
-            if (params.minValue !== undefined && params.maxValue !== undefined) {
-                parts.push(`Range: ${params.minValue}-${params.maxValue}`);
-            }
-            if (params.timePerQuestion) {
-                const minutes = Math.floor(params.timePerQuestion / 60);
-                const seconds = params.timePerQuestion % 60;
-                if (minutes > 0) {
-                    parts.push(`Time: ${minutes}m ${seconds > 0 ? seconds + 's' : ''}`);
-                } else {
-                    parts.push(`Time: ${seconds}s`);
-                }
-            }
-            if (params.displaySpeed) {
-                parts.push(`Speed: ${params.displaySpeed}s`);
-            }
-            if (params.theme) {
-                parts.push(`Theme: ${params.theme}`);
-            }
-
-            return parts.length > 0 ? parts.join(' • ') : 'No parameters';
-        } catch {
-            return 'Invalid parameters';
-        }
-    };
 
     const toggleExercise = (exerciseId: string) => {
         onChange((prev) => {
