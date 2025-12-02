@@ -1,34 +1,38 @@
 import Layout from "../components/layout";
 import { ProblemsSolved, ActivityStreak, OverallProgress, HomeworkList, DailyChallenge } from "../components/features/dashboard";
 import { useAuth } from "../contexts/AuthContext";
+import { getDisplayName } from "../utils/user.utils";
 import bearAvatar from "../assets/avatar.png";
 
 export default function Dashboard() {
-  const { student, user } = useAuth();
-  const studentName = student?.firstName || user?.firstName || 'Student';
+  const { student, user, teacher } = useAuth();
+  const studentName = getDisplayName(user, student, teacher, 'Student');
 
   return (
     <Layout 
       title={`Welcome back, ${studentName}!`}
       subtitle="Let's practice some mental arithmetic today"
     >
-      <div className="flex items-start gap-6 mb-8">
-        <div className="flex-shrink-0">
+      {/* Welcome Section with Stats */}
+      <div className="flex flex-col md:flex-row items-start gap-6 mb-8">
+        <div className="flex-shrink-0 mx-auto md:mx-0">
           <img 
             src={bearAvatar} 
             alt="Umka Bear" 
-            className="w-64 h-64 rounded-full object-cover"
+            className="w-48 h-48 md:w-64 md:h-64 rounded-full object-cover"
           />
         </div>
-        <div className="grid grid-cols-2 gap-6 flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 w-full">
           <ProblemsSolved />
           <ActivityStreak />
-          <div className="col-start-2">
+          <div className="md:col-start-2">
             <OverallProgress />
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-6 mt-8">
+
+      {/* Homework and Daily Challenge */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <HomeworkList />
         <DailyChallenge />
       </div>

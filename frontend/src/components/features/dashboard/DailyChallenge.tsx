@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { exerciseTypeService } from '../../../services/exerciseType.service';
 import { ExerciseType } from '../../../types/exerciseType';
+import { SectionHeader, EmptyState, LoadingState } from '../../../components/common';
+import { Card, Button } from '../../../components/ui';
 
 export default function DailyChallenge() {
   const navigate = useNavigate();
@@ -29,18 +31,15 @@ export default function DailyChallenge() {
   }, []);
 
   return (
-    <div className="bg-blue-50 p-4 rounded-2xl">
-      <div className="flex justify-between items-center mb-3">
-        <h3 className="font-semibold text-blue-700 flex items-center gap-2">
-          <div className="bg-blue-100 p-1.5 rounded-full aspect-square flex items-center justify-center">
-            <Zap className="w-5 h-5 text-blue-700" />
-          </div>
-          Daily challenge
-        </h3>
-        <span className="text-sm text-blue-500 font-medium">Available now</span>
-      </div>
+    <Card variant="blue">
+      <SectionHeader
+        icon={Zap}
+        title="Daily challenge"
+        badge="Available now"
+        color="blue"
+      />
       {loading ? (
-        <div className="text-center py-4 text-gray-500">Loading...</div>
+        <LoadingState message="Loading challenge..." size="sm" />
       ) : challenge ? (
         <>
           <div className="bg-blue-100 p-4 rounded-xl mb-4">
@@ -49,21 +48,32 @@ export default function DailyChallenge() {
               {challenge.description || 'Complete this exercise to earn bonus points!'}
             </p>
             <div className="flex justify-between text-xs text-gray-500">
-              <p className="flex items-center gap-1"><Timer className="w-4 h-4" /> {challenge.duration}</p>
-              <p className="flex items-center gap-1"><TrendingUp className="w-4 h-4" /> Practice</p>
+              <p className="flex items-center gap-1">
+                <Timer className="w-4 h-4" /> {challenge.duration}
+              </p>
+              <p className="flex items-center gap-1">
+                <TrendingUp className="w-4 h-4" /> Practice
+              </p>
             </div>
           </div>
-          <button 
+          <Button
             onClick={() => navigate('/exercises')}
-            className="w-full bg-blue-500 text-white py-2 rounded-lg font-medium flex items-center justify-center gap-1 hover:bg-blue-600 transition-colors"
+            variant="secondary"
+            size="md"
+            fullWidth
+            className="flex items-center justify-center gap-1"
           >
-            <Play className="w-4 h-4" /> Start Challenge
-          </button>
+            <Play className="w-4 h-4" />
+            Start Challenge
+          </Button>
         </>
       ) : (
-        <div className="text-center py-4 text-gray-500">No challenge available</div>
+        <EmptyState
+          message="No challenge available"
+          icon={Zap}
+        />
       )}
-    </div>
+    </Card>
   );
 }
 
