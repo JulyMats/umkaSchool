@@ -38,7 +38,6 @@ public class UserServiceImpl implements UserService {
         user.setPasswordHash(encoded);
         user.setAvatarUrl("/static/default-avatar.png");
         user.setActive(true);
-        // let DB generate id and timestamps
         return userRepository.save(user);
     }
 

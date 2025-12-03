@@ -10,7 +10,7 @@ import java.util.UUID;
 @Data
 public class CreateGroupRequest {
     @NotBlank(message = "Group name is required")
-    @Size(min = 2, max = 100)
+    @Size(min = 2, max = 200, message = "Group name must be between 2 and 200 characters")
     private String name;
 
     @NotBlank(message = "Group code is required")
@@ -23,4 +23,3 @@ public class CreateGroupRequest {
 
     private List<UUID> studentIds;
 }
-

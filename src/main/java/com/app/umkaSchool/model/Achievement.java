@@ -16,11 +16,11 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "achievement", schema = "school")
+@Table(name = "achievement")
 public class Achievement {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "achievement_id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "achievement_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
     @Column(nullable = false, length = 100)
@@ -48,4 +48,3 @@ public class Achievement {
     @OneToMany(mappedBy = "achievement", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<StudentAchievement> studentAchievements = new HashSet<>();
 }
-

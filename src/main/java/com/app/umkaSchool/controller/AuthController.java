@@ -25,9 +25,9 @@ public class AuthController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<?> signin(@Valid @RequestBody LoginRequest request) {
-        String token = authService.signin(request);
-        return ResponseEntity.ok().body(token);
+    public ResponseEntity<LoginResponse> signin(@Valid @RequestBody LoginRequest request) {
+        LoginResponse response = authService.signin(request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/forgot-password")

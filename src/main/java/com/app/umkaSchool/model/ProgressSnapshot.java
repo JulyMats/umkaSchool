@@ -1,7 +1,10 @@
 package com.app.umkaSchool.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
@@ -13,10 +16,13 @@ import java.util.UUID;
 @Table(name = "progress_snapshot")
 public class ProgressSnapshot {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "progress_snapshot_id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "progress_snapshot_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;

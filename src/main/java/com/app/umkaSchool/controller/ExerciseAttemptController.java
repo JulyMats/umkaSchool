@@ -17,54 +17,56 @@ import java.util.UUID;
 @RequestMapping("/api/exercise-attempts")
 public class ExerciseAttemptController {
 
-    private final ExerciseAttemptServiceImpl service;
+    private final ExerciseAttemptServiceImpl exerciseAttemptService;
 
     @Autowired
-    public ExerciseAttemptController(ExerciseAttemptServiceImpl service) {
-        this.service = service;
+    public ExerciseAttemptController(ExerciseAttemptServiceImpl exerciseAttemptService) {
+        this.exerciseAttemptService = exerciseAttemptService;
     }
 
     @PostMapping
-    public ResponseEntity<ExerciseAttemptResponse> createAttempt(@Valid @RequestBody CreateExerciseAttemptRequest req) {
-        ExerciseAttemptResponse created = service.createExerciseAttempt(req);
-        return new ResponseEntity<>(created, HttpStatus.CREATED);
+    public ResponseEntity<ExerciseAttemptResponse> createAttempt(@Valid @RequestBody CreateExerciseAttemptRequest request) {
+        ExerciseAttemptResponse response = exerciseAttemptService.createExerciseAttempt(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{attemptId}")
-    public ResponseEntity<ExerciseAttemptResponse> updateAttempt(@PathVariable UUID attemptId, @Valid @RequestBody UpdateExerciseAttemptRequest req) {
-        ExerciseAttemptResponse updated = service.updateExerciseAttempt(attemptId, req);
-        return ResponseEntity.ok(updated);
+    public ResponseEntity<ExerciseAttemptResponse> updateAttempt(
+            @PathVariable UUID attemptId,
+            @Valid @RequestBody UpdateExerciseAttemptRequest request) {
+        ExerciseAttemptResponse response = exerciseAttemptService.updateExerciseAttempt(attemptId, request);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{attemptId}")
     public ResponseEntity<ExerciseAttemptResponse> getById(@PathVariable UUID attemptId) {
-        ExerciseAttemptResponse resp = service.getExerciseAttemptById(attemptId);
-        return ResponseEntity.ok(resp);
+        ExerciseAttemptResponse response = exerciseAttemptService.getExerciseAttemptById(attemptId);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping
     public ResponseEntity<List<ExerciseAttemptResponse>> getAll() {
-        return ResponseEntity.ok(service.getAllExerciseAttempts());
+        return ResponseEntity.ok(exerciseAttemptService.getAllExerciseAttempts());
     }
 
     @GetMapping("/student/{studentId}")
     public ResponseEntity<List<ExerciseAttemptResponse>> getByStudent(@PathVariable UUID studentId) {
-        return ResponseEntity.ok(service.getExerciseAttemptsByStudent(studentId));
+        return ResponseEntity.ok(exerciseAttemptService.getExerciseAttemptsByStudent(studentId));
     }
 
     @GetMapping("/exercise/{exerciseId}")
     public ResponseEntity<List<ExerciseAttemptResponse>> getByExercise(@PathVariable UUID exerciseId) {
-        return ResponseEntity.ok(service.getExerciseAttemptsByExercise(exerciseId));
+        return ResponseEntity.ok(exerciseAttemptService.getExerciseAttemptsByExercise(exerciseId));
     }
 
     @GetMapping("/student/{studentId}/count")
     public ResponseEntity<Long> countByStudent(@PathVariable UUID studentId) {
-        return ResponseEntity.ok(service.countAttemptsByStudent(studentId));
+        return ResponseEntity.ok(exerciseAttemptService.countAttemptsByStudent(studentId));
     }
 
     @DeleteMapping("/{attemptId}")
     public ResponseEntity<Void> deleteAttempt(@PathVariable UUID attemptId) {
-        service.deleteExerciseAttempt(attemptId);
+        exerciseAttemptService.deleteExerciseAttempt(attemptId);
         return ResponseEntity.noContent().build();
     }
 }

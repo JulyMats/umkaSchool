@@ -24,6 +24,3 @@ public class ExerciseTypeResponse {
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
 }
-
-
-

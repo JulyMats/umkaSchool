@@ -2,9 +2,6 @@ package com.app.umkaSchool.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -13,8 +10,8 @@ import java.util.UUID;
 @Table(name = "user_token")
 public class UserToken {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "token_id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "token_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -34,8 +31,8 @@ public class UserToken {
     @Column(name = "expires_at", nullable = false)
     private ZonedDateTime expiresAt;
 
-    @Column(name = "is_used")
-    private Boolean used;
+    @Column(name = "is_used", nullable = false)
+    private boolean used = false;
 
     public enum TokenType {
         EMAIL_VERIFICATION,

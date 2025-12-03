@@ -3,6 +3,7 @@ package com.app.umkaSchool.service.impl;
 import com.app.umkaSchool.dto.homework.CreateHomeworkRequest;
 import com.app.umkaSchool.dto.homework.HomeworkResponse;
 import com.app.umkaSchool.dto.homework.UpdateHomeworkRequest;
+import com.app.umkaSchool.exception.ResourceNotFoundException;
 import com.app.umkaSchool.model.*;
 import com.app.umkaSchool.repository.ExerciseRepository;
 import com.app.umkaSchool.repository.HomeworkRepository;
@@ -47,17 +48,14 @@ public class HomeworkServiceImpl implements HomeworkService {
         }
 
         Teacher teacher = teacherRepository.findById(request.getTeacherId())
-                .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
 
         Homework homework = new Homework();
         homework.setTitle(request.getTitle());
         homework.setDescription(request.getDescription());
         homework.setTeacher(teacher);
 
-        // Initialize empty exercises set to avoid lazy initialization issues
         homework.setExercises(new HashSet<>());
-
-        // Save homework first to get ID
         homework = homeworkRepository.saveAndFlush(homework);
 
         // Add exercises if provided
@@ -65,10 +63,9 @@ public class HomeworkServiceImpl implements HomeworkService {
             int orderIndex = 0;
             for (UUID exerciseId : request.getExerciseIds()) {
                 Exercise exercise = exerciseRepository.findById(exerciseId)
-                        .orElseThrow(() -> new IllegalArgumentException("Exercise not found: " + exerciseId));
+                        .orElseThrow(() -> new ResourceNotFoundException("Exercise not found: " + exerciseId));
 
                 HomeworkExercise homeworkExercise = new HomeworkExercise();
-                // Set the embedded ID fields through the entity
                 homeworkExercise.getId().setHomeworkId(homework.getId());
                 homeworkExercise.getId().setExerciseId(exerciseId);
                 homeworkExercise.setHomework(homework);
@@ -78,7 +75,6 @@ public class HomeworkServiceImpl implements HomeworkService {
 
                 homework.getExercises().add(homeworkExercise);
             }
-            // Flush changes to database
             homeworkRepository.flush();
         }
 
@@ -93,7 +89,7 @@ public class HomeworkServiceImpl implements HomeworkService {
         logger.info("Updating homework: {}", homeworkId);
 
         Homework homework = homeworkRepository.findById(homeworkId)
-                .orElseThrow(() -> new IllegalArgumentException("Homework not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Homework not found"));
 
         if (request.getTitle() != null && !request.getTitle().equals(homework.getTitle())) {
             if (homeworkRepository.existsByTitle(request.getTitle())) {
@@ -108,7 +104,7 @@ public class HomeworkServiceImpl implements HomeworkService {
 
         if (request.getTeacherId() != null) {
             Teacher teacher = teacherRepository.findById(request.getTeacherId())
-                    .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
             homework.setTeacher(teacher);
         }
 
@@ -119,10 +115,9 @@ public class HomeworkServiceImpl implements HomeworkService {
             int orderIndex = 0;
             for (UUID exerciseId : request.getExerciseIds()) {
                 Exercise exercise = exerciseRepository.findById(exerciseId)
-                        .orElseThrow(() -> new IllegalArgumentException("Exercise not found: " + exerciseId));
+                        .orElseThrow(() -> new ResourceNotFoundException("Exercise not found: " + exerciseId));
 
                 HomeworkExercise homeworkExercise = new HomeworkExercise();
-                // Set the embedded ID fields through the entity
                 homeworkExercise.getId().setHomeworkId(homework.getId());
                 homeworkExercise.getId().setExerciseId(exerciseId);
                 homeworkExercise.setHomework(homework);
@@ -144,14 +139,14 @@ public class HomeworkServiceImpl implements HomeworkService {
     @Override
     public HomeworkResponse getHomeworkById(UUID homeworkId) {
         Homework homework = homeworkRepository.findById(homeworkId)
-                .orElseThrow(() -> new IllegalArgumentException("Homework not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Homework not found"));
         return mapToResponse(homework);
     }
 
     @Override
     public HomeworkResponse getHomeworkByTitle(String title) {
         Homework homework = homeworkRepository.findByTitle(title)
-                .orElseThrow(() -> new IllegalArgumentException("Homework not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Homework not found"));
         return mapToResponse(homework);
     }
 
@@ -175,7 +170,7 @@ public class HomeworkServiceImpl implements HomeworkService {
         logger.info("Deleting homework: {}", homeworkId);
 
         Homework homework = homeworkRepository.findById(homeworkId)
-                .orElseThrow(() -> new IllegalArgumentException("Homework not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Homework not found"));
 
         homeworkRepository.delete(homework);
         logger.info("Homework deleted successfully: {}", homeworkId);

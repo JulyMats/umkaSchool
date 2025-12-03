@@ -23,8 +23,8 @@ import java.util.UUID;
 @Table(name = "app_user")
 public class AppUser implements UserDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "app_user_id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "app_user_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
     @Enumerated(EnumType.STRING)
@@ -52,7 +52,7 @@ public class AppUser implements UserDetails {
     private String avatarUrl;
 
     @Column(name = "is_active", nullable = false)
-    private boolean isActive = true;
+    private boolean active = true;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -105,12 +105,12 @@ public class AppUser implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return isActive;
+        return active;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return isActive;
+        return active;
     }
 
     @Override
@@ -120,16 +120,7 @@ public class AppUser implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return isActive;
-    }
-
-    // explicit getter/setter for `isActive` to avoid Lombok/IDE confusion
-    public boolean getActive() {
-        return this.isActive;
-    }
-
-    public void setActive(boolean active) {
-        this.isActive = active;
+        return active;
     }
 
     public enum UserRole {

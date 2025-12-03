@@ -1,6 +1,7 @@
 package com.app.umkaSchool.repository;
 
 import com.app.umkaSchool.model.UserToken;
+import com.app.umkaSchool.model.UserToken.TokenType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,18 +14,18 @@ import java.util.UUID;
 public interface UserTokenRepository extends JpaRepository<UserToken, UUID> {
     Optional<UserToken> findByTokenHashAndTokenTypeAndUsedFalseAndExpiresAtAfter(
             String tokenHash,
-            UserToken.TokenType tokenType,
+            TokenType tokenType,
             ZonedDateTime now
     );
 
     Optional<UserToken> findByTokenHashAndTokenType(
             String tokenHash,
-            UserToken.TokenType tokenType
+            TokenType tokenType
     );
 
     Optional<UserToken> findByUser_IdAndTokenTypeAndUsedFalseAndExpiresAtAfter(
             UUID userId,
-            UserToken.TokenType tokenType,
+            TokenType tokenType,
             ZonedDateTime now
     );
 

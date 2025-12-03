@@ -10,11 +10,11 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "guardian", schema = "school")
+@Table(name = "guardian")
 public class Guardian {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "guardian_id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "guardian_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
     @Column(name = "first_name", nullable = false)

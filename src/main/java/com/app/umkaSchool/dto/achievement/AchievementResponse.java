@@ -20,5 +20,6 @@ public class AchievementResponse {
     private String requiredCriteria; // JSON string
     private Integer points;
     private ZonedDateTime createdAt;
+    private ZonedDateTime earnedAt;
+    private Boolean isNew;
 }
-

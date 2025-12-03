@@ -1,6 +1,7 @@
 package com.app.umkaSchool.controller;
 
 import com.app.umkaSchool.dto.progresssnapshot.ProgressSnapshotResponse;
+import com.app.umkaSchool.exception.ResourceNotFoundException;
 import com.app.umkaSchool.model.Student;
 import com.app.umkaSchool.repository.StudentRepository;
 import com.app.umkaSchool.service.ProgressSnapshotService;
@@ -60,7 +61,6 @@ public class ProgressSnapshotController {
         return studentRepository.findById(studentId)
                 .map(student -> progressSnapshotService.getSnapshotForDate(student, date)
                         .map(snapshot -> {
-                            // Convert to response directly
                             Student studentEntity = snapshot.getStudent();
                             String studentName = studentEntity.getUser().getFirstName() + " " + studentEntity.getUser().getLastName();
                             
@@ -88,9 +88,8 @@ public class ProgressSnapshotController {
             @RequestParam(defaultValue = "all") String period) {
         
         Student student = studentRepository.findById(studentId)
-            .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
 
-        // Validate period parameter
         if (!isValidPeriod(period)) {
             return ResponseEntity.badRequest().build();
         }

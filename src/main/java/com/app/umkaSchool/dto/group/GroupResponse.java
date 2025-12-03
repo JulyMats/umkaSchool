@@ -23,4 +23,3 @@ public class GroupResponse {
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
 }
-

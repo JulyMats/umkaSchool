@@ -6,8 +6,10 @@ import com.app.umkaSchool.repository.ExerciseAttemptRepository;
 import com.app.umkaSchool.service.StudentActivityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -20,6 +22,7 @@ public class StudentActivityServiceImpl implements StudentActivityService {
     private static final Logger logger = LoggerFactory.getLogger(StudentActivityServiceImpl.class);
     private final ExerciseAttemptRepository exerciseAttemptRepository;
 
+    @Autowired
     public StudentActivityServiceImpl(ExerciseAttemptRepository exerciseAttemptRepository) {
         this.exerciseAttemptRepository = exerciseAttemptRepository;
     }
@@ -29,9 +32,9 @@ public class StudentActivityServiceImpl implements StudentActivityService {
         List<ExerciseAttempt> attempts = exerciseAttemptRepository.findByStudent_IdOrderByCompletedAtDesc(student.getId());
 
         if (date != null) {
-            ZonedDateTime endOfDay = date.atTime(23, 59, 59).atZone(ZoneId.systemDefault());
+            ZonedDateTime startOfNextDay = date.plusDays(1).atStartOfDay(ZoneId.systemDefault());
             attempts = attempts.stream()
-                    .filter(attempt -> attempt.getCompletedAt() != null && attempt.getCompletedAt().isBefore(endOfDay.plusSeconds(1)))
+                    .filter(attempt -> attempt.getCompletedAt() != null && attempt.getCompletedAt().isBefore(startOfNextDay))
                     .collect(Collectors.toList());
         }
 
@@ -45,9 +48,9 @@ public class StudentActivityServiceImpl implements StudentActivityService {
         List<ExerciseAttempt> attempts = exerciseAttemptRepository.findByStudent_IdOrderByCompletedAtDesc(student.getId());
 
         if (date != null) {
-            ZonedDateTime endOfDay = date.atTime(23, 59, 59).atZone(ZoneId.systemDefault());
+            ZonedDateTime startOfNextDay = date.plusDays(1).atStartOfDay(ZoneId.systemDefault());
             attempts = attempts.stream()
-                    .filter(attempt -> attempt.getCompletedAt() != null && attempt.getCompletedAt().isBefore(endOfDay.plusSeconds(1)))
+                    .filter(attempt -> attempt.getCompletedAt() != null && attempt.getCompletedAt().isBefore(startOfNextDay))
                     .collect(Collectors.toList());
         }
 
@@ -61,16 +64,16 @@ public class StudentActivityServiceImpl implements StudentActivityService {
         List<ExerciseAttempt> attempts = exerciseAttemptRepository.findByStudent_IdOrderByCompletedAtDesc(student.getId());
 
         if (date != null) {
-            ZonedDateTime endOfDay = date.atTime(23, 59, 59).atZone(ZoneId.systemDefault());
+            ZonedDateTime startOfNextDay = date.plusDays(1).atStartOfDay(ZoneId.systemDefault());
             attempts = attempts.stream()
-                    .filter(attempt -> attempt.getCompletedAt() != null && attempt.getCompletedAt().isBefore(endOfDay.plusSeconds(1)))
+                    .filter(attempt -> attempt.getCompletedAt() != null && attempt.getCompletedAt().isBefore(startOfNextDay))
                     .collect(Collectors.toList());
         }
 
         return attempts.stream()
                 .mapToLong(attempt -> {
                     if (attempt.getStartedAt() == null || attempt.getCompletedAt() == null) return 0L;
-                    return java.time.Duration.between(attempt.getStartedAt(), attempt.getCompletedAt()).getSeconds();
+                    return Duration.between(attempt.getStartedAt(), attempt.getCompletedAt()).getSeconds();
                 })
                 .sum();
     }
@@ -98,7 +101,6 @@ public class StudentActivityServiceImpl implements StudentActivityService {
             streak++;
             checkDate = checkDate.minusDays(1);
         }
-
         return streak;
     }
 }

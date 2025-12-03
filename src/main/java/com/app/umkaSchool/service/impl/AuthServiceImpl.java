@@ -1,6 +1,7 @@
 package com.app.umkaSchool.service.impl;
 
 import com.app.umkaSchool.dto.auth.LoginRequest;
+import com.app.umkaSchool.dto.auth.LoginResponse;
 import com.app.umkaSchool.dto.auth.RegisterRequest;
 import com.app.umkaSchool.dto.auth.SignupResponse;
 import com.app.umkaSchool.model.AppUser;
@@ -71,9 +72,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public String signin(LoginRequest request) {
-        Optional.ofNullable(request.getEmail()).orElseThrow(() -> new IllegalArgumentException("Email required"));
-        Optional.ofNullable(request.getPassword()).orElseThrow(() -> new IllegalArgumentException("Password required"));
+    public LoginResponse signin(LoginRequest request) {
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("Email required");
+        }
+        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+            throw new IllegalArgumentException("Password required");
+        }
 
         var userOpt = userRepository.findByEmail(request.getEmail());
         if (userOpt.isEmpty()) throw new IllegalArgumentException("Invalid credentials");
@@ -81,7 +86,7 @@ public class AuthServiceImpl implements AuthService {
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new IllegalArgumentException("Invalid credentials");
         }
-        // generate a token to return (not a JWT). Save as REFRESH_TOKEN for simplicity.
+        // generate a token to return
         String rawToken = tokenService.generateToken();
         String hash = tokenService.hashToken(rawToken);
         UserToken token = new UserToken();
@@ -92,23 +97,22 @@ public class AuthServiceImpl implements AuthService {
         token.setExpiresAt(ZonedDateTime.now().plusDays(30));
         token.setUsed(false);
         userTokenRepository.save(token);
-        return rawToken;
+        return LoginResponse.builder().token(rawToken).build();
     }
 
     @Override
     public void forgotPassword(String email, String appBaseUrl) {
-        logger.info("🔐 Password reset requested for email: {}", email);
+        logger.info("Password reset requested for email: {}", email);
         logger.info("App base URL: {}", appBaseUrl);
 
         var userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
-            logger.info("❌ User not found with email: {}", email);
-            // do not reveal user existence
+            logger.info("User not found with email: {}", email);
             return;
         }
 
         var user = userOpt.get();
-        logger.info("✅ User found: {} {}", user.getFirstName(), user.getLastName());
+        logger.info("User found: {} {}", user.getFirstName(), user.getLastName());
 
         String rawToken = tokenService.generateToken();
         String hash = tokenService.hashToken(rawToken);
@@ -127,8 +131,8 @@ public class AuthServiceImpl implements AuthService {
         token.setExpiresAt(ZonedDateTime.now().plusHours(2));
         token.setUsed(false);
         userTokenRepository.save(token);
-
-        logger.info("✅ Token saved to database");
+        
+        logger.info("Token saved to database");
 
         // Use configured frontend URL if appBaseUrl is empty or null
         String baseUrl = (appBaseUrl == null || appBaseUrl.trim().isEmpty())
@@ -136,11 +140,10 @@ public class AuthServiceImpl implements AuthService {
             : appBaseUrl;
 
         String resetLink = baseUrl + "/reset-password?token=" + rawToken;
-        logger.info("📧 Sending email with reset link: {}", resetLink);
+        logger.info("Sending email with reset link: {}", resetLink);
 
         emailService.sendPasswordReset(user.getEmail(), resetLink);
-
-        logger.info("📬 Email service call completed");
+        logger.info("Email service call completed");
     }
 
     @Override
@@ -160,7 +163,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(String token) {
-        logger.info("🔓 Logout requested");
+        logger.info("Logout requested");
 
         String hash = tokenService.hashToken(token);
         var opt = userTokenRepository.findByTokenHashAndTokenTypeAndUsedFalseAndExpiresAtAfter(
@@ -170,14 +173,13 @@ public class AuthServiceImpl implements AuthService {
         );
 
         if (opt.isEmpty()) {
-            logger.warn("❌ Token not found or already expired");
+            logger.warn("Token not found or already expired");
             throw new IllegalArgumentException("Invalid or expired token");
         }
 
         var userToken = opt.get();
         userToken.setUsed(true);
         userTokenRepository.save(userToken);
-
-        logger.info("✅ User logged out successfully");
+        logger.info("User logged out successfully");
     }
 }

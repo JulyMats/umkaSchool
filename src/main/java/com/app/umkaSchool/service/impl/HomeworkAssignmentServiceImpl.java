@@ -3,6 +3,7 @@ package com.app.umkaSchool.service.impl;
 import com.app.umkaSchool.dto.homeworkassignment.CreateHomeworkAssignmentRequest;
 import com.app.umkaSchool.dto.homeworkassignment.HomeworkAssignmentResponse;
 import com.app.umkaSchool.dto.homeworkassignment.UpdateHomeworkAssignmentRequest;
+import com.app.umkaSchool.exception.ResourceNotFoundException;
 import com.app.umkaSchool.model.*;
 import com.app.umkaSchool.model.enums.HomeworkStatus;
 import com.app.umkaSchool.repository.*;
@@ -52,7 +53,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
         logger.info("Creating new homework assignment for homework: {}", request.getHomeworkId());
 
         Homework homework = homeworkRepository.findById(request.getHomeworkId())
-                .orElseThrow(() -> new IllegalArgumentException("Homework not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Homework not found"));
 
         HomeworkAssignment assignment = new HomeworkAssignment();
         assignment.setHomework(homework);
@@ -61,7 +62,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
 
         if (request.getTeacherId() != null) {
             Teacher teacher = teacherRepository.findById(request.getTeacherId())
-                    .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
             assignment.setTeacher(teacher);
         }
 
@@ -74,7 +75,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
         if (request.getGroupIds() != null && !request.getGroupIds().isEmpty()) {
             for (UUID groupId : request.getGroupIds()) {
                 StudentGroup group = studentGroupRepository.findById(groupId)
-                        .orElseThrow(() -> new IllegalArgumentException("Student group not found: " + groupId));
+                        .orElseThrow(() -> new ResourceNotFoundException("Student group not found: " + groupId));
 
                 HomeworkAssignmentStudentGroup assignmentGroup = new HomeworkAssignmentStudentGroup();
                 assignmentGroup.getId().setHomeworkAssignmentId(assignment.getId());
@@ -90,7 +91,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
         if (request.getStudentIds() != null && !request.getStudentIds().isEmpty()) {
             for (UUID studentId : request.getStudentIds()) {
                 Student student = studentRepository.findById(studentId)
-                        .orElseThrow(() -> new IllegalArgumentException("Student not found: " + studentId));
+                        .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + studentId));
 
                 HomeworkAssignmentStudent assignmentStudent = new HomeworkAssignmentStudent();
                 assignmentStudent.getId().setHomeworkAssignmentId(assignment.getId());
@@ -114,7 +115,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
         logger.info("Updating homework assignment: {}", assignmentId);
 
         HomeworkAssignment assignment = homeworkAssignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new IllegalArgumentException("Homework assignment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Homework assignment not found"));
 
         if (request.getDueDate() != null) {
             assignment.setDueDate(request.getDueDate());
@@ -129,7 +130,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
             assignment.getAssignedGroups().clear();
             for (UUID groupId : request.getGroupIds()) {
                 StudentGroup group = studentGroupRepository.findById(groupId)
-                        .orElseThrow(() -> new IllegalArgumentException("Student group not found: " + groupId));
+                        .orElseThrow(() -> new ResourceNotFoundException("Student group not found: " + groupId));
 
                 HomeworkAssignmentStudentGroup assignmentGroup = new HomeworkAssignmentStudentGroup();
                 assignmentGroup.getId().setHomeworkAssignmentId(assignment.getId());
@@ -146,7 +147,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
             assignment.getAssignedStudents().clear();
             for (UUID studentId : request.getStudentIds()) {
                 Student student = studentRepository.findById(studentId)
-                        .orElseThrow(() -> new IllegalArgumentException("Student not found: " + studentId));
+                        .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + studentId));
 
                 HomeworkAssignmentStudent assignmentStudent = new HomeworkAssignmentStudent();
                 assignmentStudent.getId().setHomeworkAssignmentId(assignment.getId());
@@ -167,7 +168,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
     @Override
     public HomeworkAssignmentResponse getHomeworkAssignmentById(UUID assignmentId) {
         HomeworkAssignment assignment = homeworkAssignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new IllegalArgumentException("Homework assignment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Homework assignment not found"));
         return mapToResponse(assignment);
     }
 
@@ -219,7 +220,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
         logger.info("Deleting homework assignment: {}", assignmentId);
 
         HomeworkAssignment assignment = homeworkAssignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new IllegalArgumentException("Homework assignment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Homework assignment not found"));
 
         homeworkAssignmentRepository.delete(assignment);
         logger.info("Homework assignment deleted successfully: {}", assignmentId);
@@ -231,7 +232,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
         logger.info("Adding {} students to assignment: {}", studentIds.size(), assignmentId);
 
         HomeworkAssignment assignment = homeworkAssignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new IllegalArgumentException("Homework assignment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Homework assignment not found"));
 
         for (UUID studentId : studentIds) {
             Student student = studentRepository.findById(studentId)
@@ -256,7 +257,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
         logger.info("Adding {} groups to assignment: {}", groupIds.size(), assignmentId);
 
         HomeworkAssignment assignment = homeworkAssignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new IllegalArgumentException("Homework assignment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Homework assignment not found"));
 
         for (UUID groupId : groupIds) {
             StudentGroup group = studentGroupRepository.findById(groupId)
@@ -281,7 +282,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
         logger.info("Removing student {} from assignment: {}", studentId, assignmentId);
 
         HomeworkAssignment assignment = homeworkAssignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new IllegalArgumentException("Homework assignment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Homework assignment not found"));
 
         assignment.getAssignedStudents().removeIf(as -> as.getId().getStudentId().equals(studentId));
         homeworkAssignmentRepository.save(assignment);
@@ -295,7 +296,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
         logger.info("Removing group {} from assignment: {}", groupId, assignmentId);
 
         HomeworkAssignment assignment = homeworkAssignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new IllegalArgumentException("Homework assignment not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Homework assignment not found"));
 
         assignment.getAssignedGroups().removeIf(ag -> ag.getId().getStudentGroupId().equals(groupId));
         homeworkAssignmentRepository.save(assignment);

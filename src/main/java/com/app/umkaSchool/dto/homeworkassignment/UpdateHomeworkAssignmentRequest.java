@@ -9,7 +9,6 @@ import java.util.UUID;
 
 @Data
 public class UpdateHomeworkAssignmentRequest {
-
     private ZonedDateTime dueDate;
 
     private HomeworkStatus status;
