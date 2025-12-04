@@ -2,7 +2,7 @@ import React from 'react';
 import { LucideIcon } from 'lucide-react';
 
 interface SectionHeaderProps {
-  icon: LucideIcon;
+  icon?: LucideIcon;
   title: string;
   action?: {
     label: string;
@@ -11,6 +11,7 @@ interface SectionHeaderProps {
   };
   badge?: string;
   color?: 'pink' | 'blue' | 'purple' | 'yellow' | 'green';
+  iconPosition?: 'left' | 'right';
   className?: string;
 }
 
@@ -20,6 +21,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   action,
   badge,
   color = 'pink',
+  iconPosition = 'left',
   className = ''
 }) => {
   const colorClasses = {
@@ -61,31 +63,37 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   };
 
   const colors = colorClasses[color];
+  const iconElement = Icon ? (
+    <div className={`${colors.iconBg} ${colors.iconText} p-3 rounded-xl flex items-center justify-center flex-shrink-0`}>
+      <Icon className="w-5 h-5" />
+    </div>
+  ) : null;
 
   return (
     <div className={`flex justify-between items-center mb-3 ${className}`}>
       <h3 className={`font-semibold ${colors.title} flex items-center gap-2`}>
-        <div className={`${colors.iconBg} ${colors.iconText} p-1.5 rounded-full aspect-square flex items-center justify-center`}>
-          <Icon className="w-5 h-5" />
-        </div>
+        {iconPosition === 'left' && iconElement}
         {title}
       </h3>
-      {action ? (
-        <a
-          href={action.href || '#'}
-          onClick={(e) => {
-            e.preventDefault();
-            action.onClick();
-          }}
-          className={`text-sm ${colors.action} font-medium hover:underline transition-colors`}
-        >
-          {action.label}
-        </a>
-      ) : badge ? (
-        <span className={`text-sm ${colors.badge} font-medium`}>
-          {badge}
-        </span>
-      ) : null}
+      <div className="flex items-center gap-3">
+        {action ? (
+          <a
+            href={action.href || '#'}
+            onClick={(e) => {
+              e.preventDefault();
+              action.onClick();
+            }}
+            className={`text-sm ${colors.action} font-medium hover:underline transition-colors`}
+          >
+            {action.label}
+          </a>
+        ) : badge ? (
+          <span className={`text-sm ${colors.badge} font-medium`}>
+            {badge}
+          </span>
+        ) : null}
+        {iconPosition === 'right' && iconElement}
+      </div>
     </div>
   );
 };
