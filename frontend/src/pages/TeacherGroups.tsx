@@ -9,6 +9,7 @@ import { Button } from '../components/ui';
 import { useTeacherGroups } from '../hooks/useTeacherGroups';
 import { generateGroupCode, getInitialGroupForm } from '../utils/group.utils';
 import { useModal } from '../hooks';
+import { extractErrorMessage } from '../utils/error.utils';
 import { GroupCard, GroupModal, GroupFormState } from '../components/features/teacher';
 
 type Mode = 'create' | 'edit';
@@ -90,9 +91,9 @@ export default function TeacherGroups() {
 
             closeModal();
             await refetch();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('[TeacherGroups] Failed to save group', err);
-            setError(err?.message || 'Failed to save group. Please try again.');
+            setError(extractErrorMessage(err, 'Failed to save group. Please try again.'));
         } finally {
             setSaving(false);
         }
@@ -113,9 +114,9 @@ export default function TeacherGroups() {
         try {
             await groupService.deleteGroup(group.id);
             await refetch();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('[TeacherGroups] Failed to delete group', err);
-            setError(err?.message || 'Failed to delete group. Please try again.');
+            setError(extractErrorMessage(err, 'Failed to delete group. Please try again.'));
         } finally {
             setDeletingId(null);
         }

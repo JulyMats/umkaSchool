@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { homeworkService } from '../services/homework.service';
 import { Homework } from '../types/homework';
 import { useAuth } from '../contexts/AuthContext';
+import { extractErrorMessage } from '../utils/error.utils';
 
 interface UseHomeworkReturn {
   homework: Homework[];
@@ -34,8 +35,8 @@ export const useHomework = (): UseHomeworkReturn => {
       setError(null);
       const data = await homeworkService.getCurrentStudentHomework(student.id);
       setHomework(data);
-    } catch (err: any) {
-      const errorMessage = err?.message || 'Failed to load homework. Please try again later.';
+    } catch (err: unknown) {
+      const errorMessage = extractErrorMessage(err, 'Failed to load homework. Please try again later.');
       setError(errorMessage);
       console.error('Error fetching homework:', err);
     } finally {

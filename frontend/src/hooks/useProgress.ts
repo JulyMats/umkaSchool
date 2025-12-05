@@ -3,6 +3,7 @@ import { statsService } from '../services/stats.service';
 import { achievementService } from '../services/achievement.service';
 import { TimePeriod, StudentStats } from '../types/stats';
 import { StudentAchievement, Achievement } from '../types/achievement';
+import { extractErrorMessage } from '../utils/error.utils';
 
 interface UseProgressReturn {
   stats: StudentStats | null;
@@ -42,7 +43,7 @@ export const useProgress = (studentId: string | undefined, selectedPeriod: TimeP
         setStudentAchievements(earnedAchievements);
         setAllAchievements(allAchievementsList);
         achievementsFetched.current = true;
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Error fetching achievements:', err);
       }
     };
@@ -83,7 +84,7 @@ export const useProgress = (studentId: string | undefined, selectedPeriod: TimeP
             const prevStats = await statsService.getStudentStats(studentId, previousPeriod);
             setPreviousStats(prevStats);
             statsCache.current.set(prevCacheKey, prevStats);
-          } catch (err) {
+          } catch (err: unknown) {
             console.error('Error fetching previous stats:', err);
           }
         }
@@ -115,9 +116,9 @@ export const useProgress = (studentId: string | undefined, selectedPeriod: TimeP
           setPreviousStats(prevStats);
           statsCache.current.set(prevCacheKey, prevStats);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Error fetching stats:', err);
-        setError('Failed to load progress data');
+        setError(extractErrorMessage(err, 'Failed to load progress data'));
       } finally {
         setLoading(false);
         setStatsLoading(false);
@@ -158,9 +159,9 @@ export const useProgress = (studentId: string | undefined, selectedPeriod: TimeP
       const cacheKey = `${studentId}-${selectedPeriod}`;
       statsCache.current.set(cacheKey, currentStats);
       achievementsFetched.current = true;
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error refetching:', err);
-      setError('Failed to load progress data');
+      setError(extractErrorMessage(err, 'Failed to load progress data'));
     } finally {
       setLoading(false);
       setStatsLoading(false);

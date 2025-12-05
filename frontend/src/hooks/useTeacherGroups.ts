@@ -3,6 +3,7 @@ import { groupService } from '../services/group.service';
 import { studentService } from '../services/student.service';
 import { Group } from '../types/group';
 import { Student } from '../types/student';
+import { extractErrorMessage } from '../utils/error.utils';
 
 interface UseTeacherGroupsReturn {
   groups: Group[];
@@ -34,9 +35,9 @@ export const useTeacherGroups = (teacherId: string | undefined): UseTeacherGroup
       ]);
       setGroups(groupsResponse);
       setStudents(studentsResponse);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[TeacherGroups] Failed to load data', err);
-      setError(err?.message || 'Failed to load groups. Please try again later.');
+      setError(extractErrorMessage(err, 'Failed to load groups. Please try again later.'));
     } finally {
       setLoading(false);
     }

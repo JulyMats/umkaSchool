@@ -6,7 +6,7 @@ import { LoadingState, ErrorState, StatCard, SectionCard } from '../components/c
 import { Card } from '../components/ui';
 import { useTeacherDashboard } from '../hooks/useTeacherDashboard';
 import { calculateDashboardMetrics } from '../utils/teacher.utils';
-import { AssignmentCard, AchievementCard } from '../components/features/teacher';
+import { UpcomingDeadlineCard, AchievementCard } from '../components/features/teacher';
 
 export default function TeacherDashboard() {
     const { teacher, user, isLoading } = useAuth();
@@ -91,9 +91,15 @@ export default function TeacherDashboard() {
                     icon={<Clock className="w-6 h-6 text-amber-500" />}
                     emptyMessage="No upcoming deadlines. Great job staying ahead!"
                 >
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         {metrics.upcomingAssignments.map((assignment) => (
-                            <AssignmentCard key={assignment.id} assignment={assignment} />
+                            <UpcomingDeadlineCard
+                                key={assignment.id}
+                                assignment={assignment}
+                                homeworkTitle={assignment.homeworkTitle}
+                                groups={data.groups}
+                                students={data.students}
+                            />
                         ))}
                     </div>
                 </SectionCard>

@@ -9,6 +9,7 @@ import { Group } from '../types/group';
 import { Student } from '../types/student';
 import { Exercise } from '../types/exercise';
 import { ExerciseType } from '../types/exerciseType';
+import { extractErrorMessage } from '../utils/error.utils';
 
 interface UseTeacherHomeworkReturn {
   homework: HomeworkDetail[];
@@ -64,9 +65,9 @@ export const useTeacherHomework = (teacherId: string | undefined): UseTeacherHom
       setStudents(studentsResponse);
       setExercises(exercisesResponse);
       setExerciseTypes(exerciseTypesResponse);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[TeacherHomework] Failed to load data', err);
-      setError(err?.message || 'Failed to load homework data. Please try again later.');
+      setError(extractErrorMessage(err, 'Failed to load homework data. Please try again later.'));
     } finally {
       setLoading(false);
     }

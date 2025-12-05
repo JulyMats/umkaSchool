@@ -16,6 +16,7 @@ const HomeworkCard: React.FC<HomeworkCardProps> = ({
   homework,
   onAssign,
   onEdit,
+  
   onDelete,
   isDeleting
 }) => {

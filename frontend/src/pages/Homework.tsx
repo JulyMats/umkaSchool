@@ -9,6 +9,7 @@ import { Exercise } from '../types/exercise';
 import { useHomework } from '../hooks/useHomework';
 import { filterHomework, convertExerciseToConfig, HomeworkFilter } from '../utils/homework.utils';
 import { LoadingState, ErrorState, FilterTabs, EmptyState } from '../components/common';
+import { extractErrorMessage } from '../utils/error.utils';
 import { HomeworkCardWithActions, HomeworkDetailsModal, ExerciseSelectionModal } from '../components/features/homework';
 import { useModal } from '../hooks';
 
@@ -63,7 +64,7 @@ export default function Homework() {
       setSelectedHomeworkExercises(exercises);
       
       return { homeworkDetail, exercises };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load homework details:', err);
       throw err;
     }
@@ -73,8 +74,8 @@ export default function Homework() {
     try {
       await loadHomeworkDetails(homeworkId);
       openDetailsModal();
-    } catch (err: any) {
-      // Error handling is done in the hook
+    } catch (err: unknown) {
+     
     }
   };
 
@@ -97,7 +98,7 @@ export default function Homework() {
       } else {
         openExerciseSelectionModal();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to start homework:', err);
     } finally {
       setLoadingExercise(false);
@@ -111,7 +112,7 @@ export default function Homework() {
       const config = convertExerciseToConfig(exercise);
       closeExerciseSelectionModal();
       navigate('/exercises/play', { state: { config } });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load exercise:', err);
     } finally {
       setLoadingExercise(false);

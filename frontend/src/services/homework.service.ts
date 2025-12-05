@@ -9,6 +9,7 @@ import {
     CreateHomeworkAssignmentPayload,
     UpdateHomeworkAssignmentPayload
 } from '../types/homework';
+import { extractErrorMessage } from '../utils/error.utils';
 
 const mapApiStatusToUiStatus = (apiStatus: string): 'pending' | 'completed' | 'overdue' => {
     switch (apiStatus) {
@@ -90,28 +91,10 @@ export const homeworkService = {
             
             console.log('[homeworkService] Mapped homework data:', mappedData);
             return mappedData;
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('[homeworkService] Error fetching homework assignments:', error);
-            console.error('[homeworkService] Error details:', {
-                message: error?.message,
-                response: error?.response?.data,
-                status: error?.response?.status,
-                statusText: error?.response?.statusText,
-                config: {
-                    url: error?.config?.url,
-                    method: error?.config?.method,
-                    baseURL: error?.config?.baseURL,
-                    headers: error?.config?.headers
-                }
-            });
-            // Provide more detailed error message
-            if (error.response) {
-                throw new Error(error.response.data?.message || `Failed to load homework: ${error.response.status}`);
-            } else if (error.request) {
-                throw new Error('No response from server. Please check your connection.');
-            } else {
-                throw new Error(error.message || 'Failed to load homework');
-            }
+            const errorMessage = extractErrorMessage(error, 'Failed to load homework');
+            throw new Error(errorMessage);
         }
     },
 
@@ -129,15 +112,10 @@ export const homeworkService = {
                 teacherName: assignment.teacherName,
                 timeEstimate: calculateTimeEstimate(assignment.dueDate, assignment.assignedAt)
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(`Error fetching homework assignment with id ${assignmentId}:`, error);
-            if (error.response) {
-                throw new Error(error.response.data?.message || `Failed to load homework: ${error.response.status}`);
-            } else if (error.request) {
-                throw new Error('No response from server. Please check your connection.');
-            } else {
-                throw new Error(error.message || 'Failed to load homework');
-            }
+            const errorMessage = extractErrorMessage(error, 'Failed to load homework');
+            throw new Error(errorMessage);
         }
     },
 

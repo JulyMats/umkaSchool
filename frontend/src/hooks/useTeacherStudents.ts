@@ -6,6 +6,7 @@ import { Student } from '../types/student';
 import { Group } from '../types/group';
 import { StudentAchievement } from '../types/achievement';
 import { getLastAchievementsForStudents, getUnassignedStudents } from '../utils/teacher.utils';
+import { extractErrorMessage } from '../utils/error.utils';
 
 interface UseTeacherStudentsReturn {
   students: Student[];
@@ -47,9 +48,9 @@ export const useTeacherStudents = (teacherId: string | undefined): UseTeacherStu
 
       const achievementsMap = await getLastAchievementsForStudents(assignedStudents);
       setStudentLastAchievements(achievementsMap);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[TeacherStudents] Failed to load data', err);
-      setError(err?.message || 'Failed to load students. Please try again later.');
+      setError(extractErrorMessage(err, 'Failed to load students. Please try again later.'));
     } finally {
       setLoading(false);
     }

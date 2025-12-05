@@ -65,8 +65,13 @@ export const calculateDashboardMetrics = (
     (assignment) => assignment.status !== 'COMPLETED'
   );
 
+  const now = new Date();
   const upcomingAssignments = [...activeAssignments]
-    .filter((assignment) => assignment.dueDate)
+    .filter((assignment) => {
+      if (!assignment.dueDate) return false;
+      const dueDate = new Date(assignment.dueDate);
+      return dueDate >= now && assignment.status !== 'OVERDUE';
+    })
     .sort(
       (a, b) =>
         new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()

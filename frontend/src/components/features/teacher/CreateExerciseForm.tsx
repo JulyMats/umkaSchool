@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react';
 import { exerciseService } from '../../../services/exercise.service';
 import { ExerciseType } from '../../../types/exerciseType';
 import { Exercise, DigitType, DigitLength } from '../../../types/exercise';
+import { extractErrorMessage, extractFieldErrors } from '../../../utils/error.utils';
 
 interface CreateExerciseFormProps {
   exerciseTypes: ExerciseType[];
@@ -266,23 +267,17 @@ const CreateExerciseForm: React.FC<CreateExerciseFormProps> = ({
 
       setSelectedExerciseTypeId('');
       setExerciseType(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[CreateExerciseForm] Failed to create exercise', err);
       let errorMessage = 'Failed to create exercise. Please try again.';
       
-      if (err?.response?.data) {
-        if (err.response.data.fieldErrors) {
-          const fieldErrors = err.response.data.fieldErrors;
-          errorMessage = Object.entries(fieldErrors)
-            .map(([field, message]) => `${field}: ${message}`)
-            .join(', ');
-        } else if (err.response.data.message) {
-          errorMessage = err.response.data.message;
-        } else if (err.response.data.error) {
-          errorMessage = err.response.data.error;
-        }
-      } else if (err?.message) {
-        errorMessage = err.message;
+      const fieldErrors = extractFieldErrors(err);
+      if (fieldErrors) {
+        errorMessage = Object.entries(fieldErrors)
+          .map(([field, message]) => `${field}: ${message}`)
+          .join(', ');
+      } else {
+        errorMessage = extractErrorMessage(err, 'Failed to create exercise. Please try again.');
       }
       
       onErrorChange(errorMessage);

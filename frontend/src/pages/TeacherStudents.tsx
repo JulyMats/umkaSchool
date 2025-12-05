@@ -10,6 +10,7 @@ import { Button, SearchInput } from '../components/ui';
 import { useTeacherStudents } from '../hooks/useTeacherStudents';
 import { filterStudents } from '../utils/student.utils';
 import { useModal } from '../hooks';
+import { extractErrorMessage } from '../utils/error.utils';
 import { AssignStudentModal, ManageStudentModal, StudentTableRow } from '../components/features/teacher';
 
 interface AssignFormState {
@@ -72,9 +73,9 @@ export default function TeacherStudents() {
 
             closeAssignModal();
             await refetch();
-        } catch (err: any) {
-            console.error('[TeacherStudents] Failed to assign student', err);
-            setError(err?.message || 'Failed to assign student. Please try again.');
+                } catch (err: unknown) {
+                    console.error('[TeacherStudents] Failed to assign student', err);
+                    setError(extractErrorMessage(err, 'Failed to assign student. Please try again.'));
         } finally {
             setSaving(false);
         }
@@ -99,9 +100,9 @@ export default function TeacherStudents() {
 
             closeManageModal();
             await refetch();
-        } catch (err: any) {
-            console.error('[TeacherStudents] Failed to update student', err);
-            setError(err?.message || 'Failed to update student. Please try again.');
+                } catch (err: unknown) {
+                    console.error('[TeacherStudents] Failed to update student', err);
+                    setError(extractErrorMessage(err, 'Failed to update student. Please try again.'));
         } finally {
             setSaving(false);
         }

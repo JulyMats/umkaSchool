@@ -51,12 +51,12 @@ const AssignmentCard: React.FC<AssignmentCardProps> = ({
       </div>
 
       <div className="mt-3 space-y-2 text-sm text-gray-600">
-        {assignedGroups.length > 0 && (
+        {assignedGroups && assignedGroups.length > 0 && (
           <p>
             Groups: {assignedGroups.join(', ')}
           </p>
         )}
-        {assignedStudents.length > 0 && (
+        {assignedStudents && assignedStudents.length > 0 && (
           <p>
             Students: {assignedStudents.join(', ')}
           </p>

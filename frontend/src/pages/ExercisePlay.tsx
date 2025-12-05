@@ -9,6 +9,7 @@ import { achievementService } from '../services/achievement.service';
 import { ExerciseAttempt } from '../types/exerciseAttempt';
 import { StudentAchievement } from '../types/achievement';
 import { AchievementModal } from '../components/features/achievement';
+import { extractErrorMessage, extractErrorStatus } from '../utils/error.utils';
 
 interface LocationState {
   config?: ExerciseSessionConfig;
@@ -141,15 +142,11 @@ export default function ExercisePlay() {
           console.error('Failed to fetch initial achievements:', error);
           previousAchievementsRef.current = new Set();
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Failed to initialize session:', error);
-        const errorMessage = error?.response?.data?.message || 
-                            error?.response?.data?.error || 
-                            error?.message || 
-                            'Failed to start session. Please try again.';
+        const errorMessage = extractErrorMessage(error, 'Failed to start session. Please try again.');
         console.error('Error details:', {
-          status: error?.response?.status,
-          data: error?.response?.data,
+          status: extractErrorStatus(error),
           message: errorMessage
         });
         alert(`Failed to start session: ${errorMessage}`);

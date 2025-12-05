@@ -1,4 +1,5 @@
 export { default as AssignmentCard } from './AssignmentCard';
+export { default as UpcomingDeadlineCard } from './UpcomingDeadlineCard';
 export { default as AchievementCard } from './AchievementCard';
 export { default as AssignStudentModal } from './AssignStudentModal';
 export { default as ManageStudentModal } from './ManageStudentModal';

@@ -14,6 +14,7 @@ import {
 import { LoadingState, ErrorState, EmptyState } from '../components/common';
 import { Button } from '../components/ui';
 import { useTeacherHomework } from '../hooks/useTeacherHomework';
+import { extractErrorMessage } from '../utils/error.utils';
 import { useModal } from '../hooks';
 import {
     HomeworkCard,
@@ -161,9 +162,9 @@ export default function TeacherHomework() {
 
             closeHomeworkModal();
             await refetch();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('[TeacherHomework] Failed to save homework', err);
-            setError(err?.message || 'Failed to save homework. Please try again.');
+            setError(extractErrorMessage(err, 'Failed to save homework. Please try again.'));
         } finally {
             setSaving(false);
         }
@@ -225,9 +226,9 @@ export default function TeacherHomework() {
 
             closeAssignmentModal();
             await refetch();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('[TeacherHomework] Failed to save assignment', err);
-            setError(err?.message || 'Failed to save assignment. Please try again.');
+            setError(extractErrorMessage(err, 'Failed to save assignment. Please try again.'));
         } finally {
             setSaving(false);
         }
@@ -248,9 +249,9 @@ export default function TeacherHomework() {
         try {
             await homeworkService.deleteHomework(homeworkItem.id);
             await refetch();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('[TeacherHomework] Failed to delete homework', err);
-            setError(err?.message || 'Failed to delete homework. Please try again.');
+            setError(extractErrorMessage(err, 'Failed to delete homework. Please try again.'));
         } finally {
             setDeletingHomeworkId(null);
         }
@@ -267,9 +268,9 @@ export default function TeacherHomework() {
         try {
             await homeworkService.deleteHomeworkAssignment(assignment.id);
             await refetch();
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('[TeacherHomework] Failed to delete assignment', err);
-            setError(err?.message || 'Failed to delete assignment. Please try again.');
+            setError(extractErrorMessage(err, 'Failed to delete assignment. Please try again.'));
         } finally {
             setDeletingAssignmentId(null);
         }
@@ -351,15 +352,15 @@ export default function TeacherHomework() {
                     <div className="space-y-4 overflow-y-auto flex-1 max-h-[calc(100vh-250px)] -mt-2">
                         {assignments.map((assignment) => {
                             const homeworkInfo = homeworkById.get(assignment.homeworkId);
-                            const assignedGroups = assignment.assignedGroupIds
+                            const assignedGroups: string[] = (assignment.assignedGroupIds || [])
                                 .map((groupId) => groupById.get(groupId)?.name)
-                                .filter(Boolean) as string[];
-                            const assignedStudents = assignment.assignedStudentIds
+                                .filter((name): name is string => Boolean(name));
+                            const assignedStudents: string[] = (assignment.assignedStudentIds || [])
                                 .map((studentId) => {
                                     const student = studentById.get(studentId);
                                     return student ? `${student.firstName} ${student.lastName}` : null;
                                 })
-                                .filter(Boolean) as string[];
+                                .filter((name): name is string => Boolean(name));
 
                             return (
                                 <TeacherAssignmentCard

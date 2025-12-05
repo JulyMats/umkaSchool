@@ -7,6 +7,7 @@ import { SignInRequest, SignUpRequest } from '../types/auth';
 import { User } from '../types/user';
 import { Student } from '../types/student';
 import { Teacher } from '../types/teacher';
+import { extractErrorMessage, extractErrorStatus } from '../utils/error.utils';
 
 interface AuthContextType {
     user: User | null;
@@ -46,12 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     console.log('[AuthContext] Student data received:', { id: studentData.id, firstName: studentData.firstName, lastName: studentData.lastName });
                     setStudent(studentData);
                     setTeacher(null);
-                } catch (error: any) {
+                } catch (error: unknown) {
                     console.error('[AuthContext] Failed to fetch student data:', error);
                     console.error('[AuthContext] Student fetch error details:', {
-                        message: error?.message,
-                        response: error?.response?.data,
-                        status: error?.response?.status
+                        message: extractErrorMessage(error),
+                        status: extractErrorStatus(error)
                     });
                     // Student profile might not be created yet
                     setStudent(null);
@@ -64,12 +64,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     console.log('[AuthContext] Teacher data received:', { id: teacherData.id, firstName: teacherData.firstName, lastName: teacherData.lastName });
                     setTeacher(teacherData);
                     setStudent(null);
-                } catch (error: any) {
+                } catch (error: unknown) {
                     console.error('[AuthContext] Failed to fetch teacher data:', error);
                     console.error('[AuthContext] Teacher fetch error details:', {
-                        message: error?.message,
-                        response: error?.response?.data,
-                        status: error?.response?.status
+                        message: extractErrorMessage(error),
+                        status: extractErrorStatus(error)
                     });
                     // Teacher profile might not be created yet
                     setTeacher(null);
@@ -80,12 +79,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setStudent(null);
                 setTeacher(null);
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('[AuthContext] Failed to fetch user data:', error);
             console.error('[AuthContext] User fetch error details:', {
-                message: error?.message,
-                response: error?.response?.data,
-                status: error?.response?.status
+                message: extractErrorMessage(error),
+                status: extractErrorStatus(error)
             });
             throw error;
         }
@@ -111,12 +109,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         console.log('[AuthContext] Fetching user data for email:', storedEmail);
                         await fetchUserData(storedEmail);
                         console.log('[AuthContext] User data fetched successfully');
-                    } catch (error: any) {
+                    } catch (error: unknown) {
                         console.error('[AuthContext] Failed to fetch user data on initialization:', error);
                         console.error('[AuthContext] Error details:', {
-                            message: error?.message,
-                            response: error?.response?.data,
-                            status: error?.response?.status
+                            message: extractErrorMessage(error),
+                            status: extractErrorStatus(error)
                         });
                         // If fetching fails, clear everything and require re-login
                         localStorage.removeItem('token');

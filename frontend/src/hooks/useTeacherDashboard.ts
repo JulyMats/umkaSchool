@@ -8,6 +8,7 @@ import { Group } from '../types/group';
 import { HomeworkAssignmentDetail } from '../types/homework';
 import { StudentAchievement } from '../types/achievement';
 import { getRecentStudentAchievements } from '../utils/teacher.utils';
+import { extractErrorMessage } from '../utils/error.utils';
 
 interface DashboardData {
   students: Student[];
@@ -58,9 +59,9 @@ export const useTeacherDashboard = (teacherId: string | undefined): UseTeacherDa
       // Fetch recent achievements for all students
       const achievements = await getRecentStudentAchievements(students);
       setRecentAchievements(achievements);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[TeacherDashboard] Failed to load dashboard data', err);
-      setError(err?.message || 'Failed to load dashboard data. Please try again later.');
+      setError(extractErrorMessage(err, 'Failed to load dashboard data. Please try again later.'));
     } finally {
       setLoading(false);
     }

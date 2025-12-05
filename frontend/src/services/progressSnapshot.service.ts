@@ -1,13 +1,14 @@
 import axiosInstance from './axios.config';
 import { ProgressSnapshot } from '../types/progress';
+import { extractErrorStatus } from '../utils/error.utils';
 
 export const progressSnapshotService = {
     getLatestSnapshot: async (studentId: string): Promise<ProgressSnapshot | null> => {
         try {
             const response = await axiosInstance.get<ProgressSnapshot>(`/api/progress-snapshots/student/${studentId}/latest`);
             return response.data;
-        } catch (error: any) {
-            if (error.response?.status === 404) {
+        } catch (error: unknown) {
+            if (extractErrorStatus(error) === 404) {
                 return null; // No snapshot yet
             }
             console.error('Error fetching latest snapshot:', error);
@@ -19,7 +20,7 @@ export const progressSnapshotService = {
         try {
             const response = await axiosInstance.get<ProgressSnapshot[]>(`/api/progress-snapshots/student/${studentId}`);
             return response.data;
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Error fetching snapshots:', error);
             throw error;
         }
@@ -38,7 +39,7 @@ export const progressSnapshotService = {
                 }
             );
             return response.data;
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Error fetching snapshots by date range:', error);
             throw error;
         }
@@ -50,8 +51,8 @@ export const progressSnapshotService = {
                 `/api/progress-snapshots/student/${studentId}/date/${date}`
             );
             return response.data;
-        } catch (error: any) {
-            if (error.response?.status === 404) {
+        } catch (error: unknown) {
+            if (extractErrorStatus(error) === 404) {
                 return null;
             }
             console.error('Error fetching snapshot by date:', error);
