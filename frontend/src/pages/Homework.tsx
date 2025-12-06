@@ -9,7 +9,6 @@ import { Exercise } from '../types/exercise';
 import { useHomework } from '../hooks/useHomework';
 import { filterHomework, convertExerciseToConfig, HomeworkFilter } from '../utils/homework.utils';
 import { LoadingState, ErrorState, FilterTabs, EmptyState } from '../components/common';
-import { extractErrorMessage } from '../utils/error.utils';
 import { HomeworkCardWithActions, HomeworkDetailsModal, ExerciseSelectionModal } from '../components/features/homework';
 import { useModal } from '../hooks';
 
