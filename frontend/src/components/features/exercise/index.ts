@@ -1,4 +1,13 @@
 export { default as ExerciseCard } from './ExerciseCard';
 export { default as ExerciseTypeCard } from './ExerciseTypeCard';
-export type { ColorScheme } from './ExerciseTypeCard';
-
+export { default as ExerciseDisplay } from './ExerciseDisplay';
+export { default as ExerciseAnswerInput } from './ExerciseAnswerInput';
+export { default as ExerciseFeedback } from './ExerciseFeedback';
+export { default as ExerciseSummary } from './ExerciseSummary';
+export { default as NumbersOverlay } from './NumbersOverlay';
+export { default as ParameterSlider } from './ParameterSlider';
+export { default as RangeSlider } from './RangeSlider';
+export { default as ThemeSelector } from './ThemeSelector';
+export { default as DigitTypeSelector } from './DigitTypeSelector';
+export { default as ExerciseTypeHeader } from './ExerciseTypeHeader';
+export { default as ExerciseSetupSummary } from './ExerciseSetupSummary';

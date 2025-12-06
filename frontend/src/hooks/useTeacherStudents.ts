@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { studentService } from '../services/student.service';
 import { groupService } from '../services/group.service';
-import { achievementService } from '../services/achievement.service';
 import { Student } from '../types/student';
 import { Group } from '../types/group';
 import { StudentAchievement } from '../types/achievement';

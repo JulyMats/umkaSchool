@@ -20,7 +20,6 @@ export interface ColorScheme {
 const ExerciseTypeCard: React.FC<ExerciseTypeCardProps> = ({
   exerciseType,
   colorScheme,
-  index
 }) => {
   const navigate = useNavigate();
 
