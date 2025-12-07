@@ -12,6 +12,7 @@ interface UseExerciseSessionProps {
   config: ExerciseSessionConfig | undefined;
   studentId: string | undefined;
   onError: (message: string) => void;
+  returnPath?: string; // Optional custom return path after completion
 }
 
 interface UseExerciseSessionReturn {
@@ -32,7 +33,8 @@ interface UseExerciseSessionReturn {
 export const useExerciseSession = ({
   config,
   studentId,
-  onError
+  onError,
+  returnPath = '/exercises'
 }: UseExerciseSessionProps): UseExerciseSessionReturn => {
   const navigate = useNavigate();
   
@@ -116,9 +118,9 @@ export const useExerciseSession = ({
       const errorMessage = extractErrorMessage(error, 'Failed to start session. Please try again.');
       onError(errorMessage);
       isInitializingRef.current = false;
-      navigate('/exercises');
+      navigate(returnPath);
     }
-  }, [config, studentId, sessionStarted, navigate, onError]);
+  }, [config, studentId, sessionStarted, navigate, onError, returnPath]);
 
   const handleAnswer = useCallback(async (isCorrect: boolean) => {
     if (!currentAttempt) return;
@@ -169,7 +171,7 @@ export const useExerciseSession = ({
             setCurrentAchievementIndex(0);
             setShowAchievementModal(true);
           } else {
-            navigate('/exercises');
+            navigate(returnPath);
           }
           
           previousAchievementsRef.current = currentAchievementIds;
@@ -181,7 +183,7 @@ export const useExerciseSession = ({
       console.error('Failed to complete session:', error);
       sessionCompletedRef.current = false;
     }
-  }, [currentAttempt, exerciseId, studentId, totalAttempts, totalCorrect, navigate]);
+  }, [currentAttempt, exerciseId, studentId, totalAttempts, totalCorrect, navigate, returnPath]);
 
   const handleAchievementModalClose = useCallback(() => {
     if (currentAchievementIndex < newAchievements.length - 1) {
@@ -190,9 +192,9 @@ export const useExerciseSession = ({
       setShowAchievementModal(false);
       setNewAchievements([]);
       setCurrentAchievementIndex(0);
-      navigate('/exercises');
+      navigate(returnPath);
     }
-  }, [currentAchievementIndex, newAchievements.length, navigate]);
+  }, [currentAchievementIndex, newAchievements.length, navigate, returnPath]);
 
   useEffect(() => {
     return () => {
