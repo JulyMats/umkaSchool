@@ -13,4 +13,5 @@ export * from './common';
 export * from './exercise';
 export * from './exerciseType';
 export * from './exerciseAttempt';
+export * from './dailyChallenge';
 
