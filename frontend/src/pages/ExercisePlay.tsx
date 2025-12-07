@@ -20,6 +20,7 @@ import { ErrorState, LoadingState } from '../components/common';
 
 interface LocationState {
   config?: ExerciseSessionConfig;
+  returnPath?: string;
 }
 
 type Feedback = 'correct' | 'incorrect' | 'timeout' | null;
@@ -27,7 +28,7 @@ type Feedback = 'correct' | 'incorrect' | 'timeout' | null;
 export default function ExercisePlay() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { config } = (location.state as LocationState) ?? {};
+  const { config, returnPath } = (location.state as LocationState) ?? {};
   const { student } = useAuth();
 
   const [userAnswer, setUserAnswer] = useState('');
@@ -54,7 +55,8 @@ export default function ExercisePlay() {
   } = useExerciseSession({
     config,
     studentId: student?.id,
-    onError: setError
+    onError: setError,
+    returnPath: returnPath || '/exercises'
   });
 
   const handleTimeoutRef = useRef<(() => void) | null>(null);
@@ -176,7 +178,7 @@ export default function ExercisePlay() {
     if (currentAttempt && sessionStarted) {
       await completeSession();
     } else {
-      navigate('/exercises');
+      navigate(returnPath || '/exercises');
     }
   };
 
