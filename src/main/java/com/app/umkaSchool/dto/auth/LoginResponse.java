@@ -10,6 +10,20 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginResponse {
-    private String token;
+    private String jwtToken;
+    private String refreshToken;
+    private UserInfo user;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UserInfo {
+        private String id;
+        private String firstName;
+        private String lastName;
+        private String email;
+        private String role;
+    }
 }
 

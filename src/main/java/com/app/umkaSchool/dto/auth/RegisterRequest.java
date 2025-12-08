@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -30,5 +32,16 @@ public class RegisterRequest {
 
     @NotBlank(message = "Role is required")
     @Size(max = 16, message = "Role must not exceed 16 characters")
-    private String role; // STUDENT, TEACHER, ADMIN
+    private String role; 
+
+    private LocalDate dateOfBirth;
+    private String avatarUrl;
+    private String guardianFirstName;
+    private String guardianLastName;
+    private String guardianEmail;
+    private String guardianPhone;
+    private String guardianRelationship; 
+
+    private String phone;
+    private String bio;
 }
