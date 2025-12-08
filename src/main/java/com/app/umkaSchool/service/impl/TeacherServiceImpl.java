@@ -68,7 +68,6 @@ public class TeacherServiceImpl implements TeacherService {
 
         // Create teacher
         Teacher teacher = new Teacher();
-        teacher.setId(user.getId());
         teacher.setUser(user);
         teacher.setBio(request.getBio());
         teacher.setPhone(request.getPhone());

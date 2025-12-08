@@ -82,7 +82,6 @@ public class StudentServiceImpl implements StudentService {
 
         // Create student
         Student student = new Student();
-        student.setId(user.getId());
         student.setUser(user);
         student.setDateOfBirth(request.getDateOfBirth());
         student.setGuardian(guardian);
