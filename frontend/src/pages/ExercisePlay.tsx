@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { exerciseService } from '../services/exercise.service';
 import { AchievementModal } from '../components/features/achievement';
 import { isSubtractionExercise } from '../utils/exercise.utils';
-import { useExerciseSession, useExerciseDisplay } from '../hooks';
+import { useExerciseSession, useExerciseDisplay, usePronunciation } from '../hooks';
 import {
   ExerciseDisplay,
   ExerciseAnswerInput,
@@ -29,7 +29,8 @@ export default function ExercisePlay() {
   const navigate = useNavigate();
   const location = useLocation();
   const { config, returnPath } = (location.state as LocationState) ?? {};
-  const { student } = useAuth();
+  const { student, user } = useAuth();
+  const [pronunciationEnabled] = usePronunciation(true);
 
   const [userAnswer, setUserAnswer] = useState('');
   const [feedback, setFeedback] = useState<Feedback>(null);
@@ -82,7 +83,9 @@ export default function ExercisePlay() {
     config,
     sessionStarted,
     exerciseId,
-    onTimeout
+    onTimeout,
+    enablePronunciation: pronunciationEnabled,
+    userLanguage: user?.appLanguage
   });
 
   useEffect(() => {
