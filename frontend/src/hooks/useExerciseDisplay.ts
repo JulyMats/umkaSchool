@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ExerciseSessionConfig } from '../types/exercise';
 import { exerciseService } from '../services/exercise.service';
+import { speakNumber, getTTSLanguage, stopSpeech, calculateSpeechRate } from '../utils/speech.utils';
 
 interface UseExerciseDisplayProps {
   config: ExerciseSessionConfig | undefined;
   sessionStarted: boolean;
   exerciseId: string | null;
   onTimeout: () => void;
+  enablePronunciation?: boolean;
+  userLanguage?: string;
 }
 
 interface UseExerciseDisplayReturn {
@@ -25,7 +28,9 @@ export const useExerciseDisplay = ({
   config,
   sessionStarted,
   exerciseId,
-  onTimeout
+  onTimeout,
+  enablePronunciation = true,
+  userLanguage
 }: UseExerciseDisplayProps): UseExerciseDisplayReturn => {
   const [numbers, setNumbers] = useState<number[]>([]);
   const [expectedAnswer, setExpectedAnswer] = useState<number | null>(null);
@@ -73,6 +78,7 @@ export const useExerciseDisplay = ({
     setShowAnswerBox(false);
     setCountdown(config?.timePerQuestion ?? 10);
     stopTimer();
+    stopSpeech(); 
   }, [config?.timePerQuestion, stopTimer]);
 
   useEffect(() => {
@@ -121,6 +127,22 @@ export const useExerciseDisplay = ({
       }
 
       setDisplayIndex(index);
+      
+      if (enablePronunciation && numbers[index] !== undefined) {
+        stopSpeech();
+        
+        const currentNumber = numbers[index];
+        const ttsLang = getTTSLanguage(userLanguage);
+        const speechRate = calculateSpeechRate(displaySpeed);
+        
+        speakNumber(currentNumber, { 
+          lang: ttsLang,
+          rate: speechRate 
+        }).catch(err => {
+          console.warn('Failed to speak number:', err);
+        });
+      }
+      
       if (index < numbers.length - 1) {
         displayTimeoutRef.current = setTimeout(() => runSequence(index + 1), displaySpeed * 1000);
       } else {
@@ -134,6 +156,7 @@ export const useExerciseDisplay = ({
 
     return () => {
       isSequenceRunningRef.current = false;
+      stopSpeech(); 
       if (displayTimeoutRef.current) {
         clearTimeout(displayTimeoutRef.current);
         displayTimeoutRef.current = null;
@@ -143,7 +166,7 @@ export const useExerciseDisplay = ({
         answerIntervalRef.current = null;
       }
     };
-  }, [config, numbers, sessionStarted, loadingNumbers, onTimeout]);
+  }, [config, numbers, sessionStarted, loadingNumbers, onTimeout, enablePronunciation, userLanguage]);
 
   return {
     numbers,

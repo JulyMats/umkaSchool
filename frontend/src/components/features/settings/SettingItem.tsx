@@ -2,19 +2,18 @@ import React from 'react';
 import { LucideIcon } from 'lucide-react';
 import ToggleSwitch from '../../ui/ToggleSwitch';
 import { SelectField } from '../../common';
-import { Button } from '../../ui';
 
 export interface SettingItemData {
   id: string;
   label: string;
   description: string;
-  type: 'toggle' | 'select' | 'button';
+  type: 'toggle' | 'select';
   value?: boolean | string;
-  options?: string[];
+  options?: { value: string; label: string }[] | string[];
   icon: LucideIcon;
   onToggle?: (id: string, value: boolean) => void;
   onSelect?: (id: string, value: string) => void;
-  onButtonClick?: (id: string) => void;
+  disabled?: boolean;
 }
 
 interface SettingItemProps {
@@ -31,28 +30,23 @@ const SettingItem: React.FC<SettingItemProps> = ({ setting }) => {
           <ToggleSwitch
             checked={setting.value as boolean}
             onChange={(checked) => setting.onToggle?.(setting.id, checked)}
+            disabled={setting.disabled}
           />
         );
       case 'select':
+        const selectOptions = setting.options?.map(opt => 
+          typeof opt === 'string' ? { value: opt, label: opt } : opt
+        ) || [];
         return (
           <SelectField
             name={setting.id}
             label=""
             value={setting.value as string}
             onChange={(e) => setting.onSelect?.(setting.id, e.target.value)}
-            options={setting.options?.map(opt => ({ value: opt, label: opt })) || []}
+            options={selectOptions}
             className="w-40"
+            disabled={setting.disabled}
           />
-        );
-      case 'button':
-        return (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setting.onButtonClick?.(setting.id)}
-          >
-            Manage
-          </Button>
         );
       default:
         return null;

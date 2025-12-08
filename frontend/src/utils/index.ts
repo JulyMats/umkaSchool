@@ -9,4 +9,5 @@ export * from './homeworkStatus.utils';
 export * from './progress.utils';
 export * from './group.utils';
 export * from './student.utils';
+export * from './speech.utils';
 

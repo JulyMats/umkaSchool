@@ -1,39 +1,83 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Layout from "../components/layout";
 import { SettingsSection } from "../components/features/settings";
 import { SettingItemData } from "../components/features/settings";
-import { HelpButton } from "../components/common";
 import { DEFAULT_SETTINGS, SETTINGS_SECTIONS, SettingSection } from "../config/settings.config";
+import { useAuth } from "../contexts/AuthContext";
+import { userService } from "../services/user.service";
 
 export default function Settings() {
-  // Initialize settings from config
-  const [settings, setSettings] = useState<Record<string, boolean | string>>(() => {
-    const initial: Record<string, boolean | string> = {};
-    DEFAULT_SETTINGS.forEach(setting => {
-      initial[setting.id] = setting.defaultValue;
-    });
-    return initial;
-  });
+  const { user, refreshUserData } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
+  const [settings, setSettings] = useState<Record<string, boolean | string>>({});
 
-  const handleToggle = (settingId: string, value: boolean) => {
+  useEffect(() => {
+    if (user) {
+      setSettings({
+        appTheme: user.appTheme === 'DARK',
+        appLanguage: user.appLanguage || 'EN'
+      });
+    }
+  }, [user]);
+
+  const handleToggle = async (settingId: string, value: boolean) => {
+    if (!user) return;
+
     setSettings(prev => ({
       ...prev,
       [settingId]: value
     }));
-    // TODO: Save to backend/localStorage
+
+    try {
+      setIsSaving(true);
+      const payload: { appTheme?: 'LIGHT' | 'DARK' } = {};
+      
+      if (settingId === 'appTheme') {
+        payload.appTheme = value ? 'DARK' : 'LIGHT';
+      }
+
+      await userService.updateUser(user.id, payload);
+      await refreshUserData();
+      console.log('Settings saved successfully');
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      setSettings(prev => ({
+        ...prev,
+        [settingId]: !value
+      }));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleSelect = (settingId: string, value: string) => {
+  const handleSelect = async (settingId: string, value: string) => {
+    if (!user) return;
+
     setSettings(prev => ({
       ...prev,
       [settingId]: value
     }));
-    // TODO: Save to backend/localStorage
-  };
 
-  const handleButtonClick = (settingId: string) => {
-    // TODO: Handle button actions (e.g., open privacy modal)
-    console.log(`Button clicked for setting: ${settingId}`);
+    try {
+      setIsSaving(true);
+      const payload: { appLanguage?: string } = {};
+      
+      if (settingId === 'appLanguage') {
+        payload.appLanguage = value;
+      }
+
+      await userService.updateUser(user.id, payload);
+      await refreshUserData();
+      console.log('Settings saved successfully');
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      setSettings(prev => ({
+        ...prev,
+        [settingId]: user.appLanguage || 'EN'
+      }));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Transform config to SettingItemData format
@@ -48,16 +92,13 @@ export default function Settings() {
       icon: config.icon,
       onToggle: config.type === 'toggle' ? handleToggle : undefined,
       onSelect: config.type === 'select' ? handleSelect : undefined,
-      onButtonClick: config.type === 'button' ? handleButtonClick : undefined
+      disabled: isSaving
     }));
-  }, [settings]);
+  }, [settings, isSaving]);
 
-  // Group settings by section
   const settingsBySection = useMemo(() => {
     const grouped: Record<SettingSection, SettingItemData[]> = {
-      preferences: [],
-      notifications: [],
-      account: []
+      preferences: []
     };
 
     settingItems.forEach(item => {
@@ -70,10 +111,13 @@ export default function Settings() {
     return grouped;
   }, [settingItems]);
 
-  const handleHelpClick = () => {
-    // TODO: Open help modal or navigate to help page
-    console.log('Help clicked');
-  };
+  if (!user) {
+    return (
+      <Layout title="Settings" subtitle="Loading...">
+        <div className="text-center py-8 text-gray-500">Loading settings...</div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout
@@ -81,10 +125,7 @@ export default function Settings() {
       subtitle="Customize your learning experience"
     >
       <div className="w-full">
-        <div className="mb-8">
-          <HelpButton onClick={handleHelpClick} />
-        </div>
-
+        
         {(Object.entries(SETTINGS_SECTIONS) as [SettingSection, string][]).map(([section, title]) => (
           <SettingsSection
             key={section}
