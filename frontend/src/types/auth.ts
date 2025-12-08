@@ -4,6 +4,17 @@ export interface SignUpRequest {
     email: string;
     password: string;
     role: 'TEACHER' | 'STUDENT';
+    avatarUrl?: string;
+    // Student fields
+    dateOfBirth?: string;
+    guardianFirstName?: string;
+    guardianLastName?: string;
+    guardianEmail?: string;
+    guardianPhone?: string;
+    guardianRelationship?: 'MOTHER' | 'FATHER' | 'GUARDIAN' | 'OTHER';
+    // Teacher fields
+    phone?: string;
+    bio?: string;
 }
 
 export interface SignInRequest {
@@ -13,6 +24,7 @@ export interface SignInRequest {
 
 export interface LoginResponse {
     jwtToken: string;
+    refreshToken: string;
     user: {
         id: string;
         firstName: string;

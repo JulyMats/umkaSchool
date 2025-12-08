@@ -2,9 +2,16 @@ import axiosInstance from './axios.config';
 import { SignUpRequest, SignInRequest, LoginResponse, RegisterResponse } from '../types/auth';
 
 export const authService = {
-    async login(credentials: SignInRequest): Promise<string> {
+    async login(credentials: SignInRequest): Promise<LoginResponse> {
         const response = await axiosInstance.post<LoginResponse>('/api/auth/signin', credentials);
-        return response.data.jwtToken;
+        return response.data;
+    },
+
+    async refreshToken(refreshToken: string): Promise<LoginResponse> {
+        const response = await axiosInstance.post<LoginResponse>('/api/auth/refresh', {
+            refreshToken
+        });
+        return response.data;
     },
 
     async register(data: SignUpRequest): Promise<RegisterResponse> {
@@ -23,8 +30,8 @@ export const authService = {
         });
     },
 
-    async logout(): Promise<void> {
-        await axiosInstance.post('/api/auth/logout');
+    async logout(refreshToken: string): Promise<void> {
+        await axiosInstance.post('/api/auth/logout', { refreshToken });
     },
 
     setAuthToken(token: string | null) {
