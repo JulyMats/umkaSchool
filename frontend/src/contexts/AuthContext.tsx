@@ -120,14 +120,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                                 const refreshResponse = await authService.refreshToken(refreshToken);
                                 localStorage.setItem('token', refreshResponse.jwtToken);
                                 localStorage.setItem('refreshToken', refreshResponse.refreshToken);
+                                localStorage.setItem('userEmail', refreshResponse.user.email);
                                 authService.setAuthToken(refreshResponse.jwtToken);
-                                setUser({
-                                    id: refreshResponse.user.id,
-                                    firstName: refreshResponse.user.firstName,
-                                    lastName: refreshResponse.user.lastName,
-                                    email: refreshResponse.user.email,
-                                    role: refreshResponse.user.role as 'STUDENT' | 'TEACHER' | 'ADMIN'
-                                });
                                 await fetchUserData(refreshResponse.user.email);
                             } catch (refreshError) {
                                 console.error('[AuthContext] Token refresh failed:', refreshError);
@@ -178,15 +172,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             
             // Set auth token for API requests
             authService.setAuthToken(loginResponse.jwtToken);
-            
-            // Set user from login response
-            setUser({
-                id: loginResponse.user.id,
-                firstName: loginResponse.user.firstName,
-                lastName: loginResponse.user.lastName,
-                email: loginResponse.user.email,
-                role: loginResponse.user.role as 'STUDENT' | 'TEACHER' | 'ADMIN'
-            });
             
             setIsAuthenticated(true);
             
