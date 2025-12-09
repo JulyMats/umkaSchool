@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { extractErrorMessage } from '../utils/error.utils';
 
 export default function ResetPassword() {
   const { resetPassword } = useAuth();
@@ -41,8 +42,8 @@ export default function ResetPassword() {
       setTimeout(() => {
         navigate('/login');
       }, 3000);
-    } catch (error: any) {
-      setError(error.response?.data?.message || 'Failed to reset password');
+    } catch (error: unknown) {
+      setError(extractErrorMessage(error, 'Failed to reset password'));
     }
   };
 

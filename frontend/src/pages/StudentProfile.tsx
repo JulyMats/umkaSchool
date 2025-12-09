@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Loader2, Save, User, Mail, Calendar, Users, Edit2, X, Image } from 'lucide-react';
-import Layout from '../components/Layout';
+import Layout from '../components/layout';
 import { useAuth } from '../contexts/AuthContext';
-import { studentService, UpdateStudentPayload } from '../services/student.service';
+import { studentService } from '../services/student.service';
+import { UpdateStudentPayload } from '../types/student';
 import { userService } from '../services/user.service';
 import avatar from '../assets/avatar.png';
+import { extractErrorMessage, extractFieldErrors } from '../utils/error.utils';
 
 interface GuardianInfo {
     firstName: string;
@@ -102,31 +104,18 @@ export default function StudentProfile() {
             await refreshUserData();
             setSuccess('Profile updated successfully!');
             setIsEditing(false);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('[StudentProfile] Failed to update profile', err);
-            console.error('[StudentProfile] Error details:', {
-                message: err?.message,
-                response: err?.response?.data,
-                status: err?.response?.status,
-                statusText: err?.response?.statusText
-            });
             
+            const fieldErrors = extractFieldErrors(err);
             let errorMessage = 'Failed to update profile. Please try again.';
             
-            if (err?.response?.data) {
-                // Handle validation errors
-                if (err.response.data.fieldErrors) {
-                    const fieldErrors = Object.entries(err.response.data.fieldErrors)
-                        .map(([field, message]) => `${field}: ${message}`)
-                        .join(', ');
-                    errorMessage = `Validation errors: ${fieldErrors}`;
-                } else if (err.response.data.message) {
-                    errorMessage = err.response.data.message;
-                } else if (err.response.data.error) {
-                    errorMessage = err.response.data.error;
-                }
-            } else if (err?.message) {
-                errorMessage = err.message;
+            if (fieldErrors) {
+                errorMessage = `Validation errors: ${Object.entries(fieldErrors)
+                    .map(([field, message]) => `${field}: ${message}`)
+                    .join(', ')}`;
+            } else {
+                errorMessage = extractErrorMessage(err, 'Failed to update profile. Please try again.');
             }
             
             setError(errorMessage);

@@ -25,11 +25,38 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
     (response) => response,
     async (error) => {
-        if (error.response?.status === 401) {
-            // On unauthorized, clear token and redirect to login
-            localStorage.removeItem('token');
-            delete axios.defaults.headers.common['Authorization'];
-            window.location.href = '/login';
+        const originalRequest = error.config;
+        
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+            
+            const refreshToken = localStorage.getItem('refreshToken');
+            if (refreshToken) {
+                try {
+                    const { authService } = await import('./auth.service');
+                    const refreshResponse = await authService.refreshToken(refreshToken);
+                    
+                    localStorage.setItem('token', refreshResponse.jwtToken);
+                    localStorage.setItem('refreshToken', refreshResponse.refreshToken);
+                    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${refreshResponse.jwtToken}`;
+                    
+                    originalRequest.headers['Authorization'] = `Bearer ${refreshResponse.jwtToken}`;
+                    return axiosInstance(originalRequest);
+                } catch (refreshError) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('refreshToken');
+                    localStorage.removeItem('userEmail');
+                    delete axiosInstance.defaults.headers.common['Authorization'];
+                    window.location.href = '/login';
+                    return Promise.reject(refreshError);
+                }
+            } else {
+                localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
+                localStorage.removeItem('userEmail');
+                delete axiosInstance.defaults.headers.common['Authorization'];
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }

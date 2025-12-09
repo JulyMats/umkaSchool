@@ -113,6 +113,31 @@ public class ExerciseAttemptServiceImpl {
             attempt.setSettings(request.getSettings());
         }
 
+        // Calculate score automatically if totalAttempts and totalCorrect are provided but score is not
+        if (request.getTotalAttempts() != null && request.getTotalCorrect() != null) {
+            if (request.getScore() != null) {
+                attempt.setScore(request.getScore());
+            } else {
+                // Calculate score: base points from exercise * accuracy percentage
+                int basePoints = attempt.getExercise().getPoints() != null ? attempt.getExercise().getPoints() : 0;
+                long totalAttempts = request.getTotalAttempts();
+                long totalCorrect = request.getTotalCorrect();
+                if (totalAttempts > 0) {
+                    // Score = base points * (correct / total) * difficulty multiplier
+                    double accuracy = (double) totalCorrect / totalAttempts;
+                    int difficulty = attempt.getExercise().getDifficulty() != null ? attempt.getExercise().getDifficulty() : 1;
+                    int calculatedScore = (int) Math.round(basePoints * accuracy * (1 + difficulty * 0.1));
+                    attempt.setScore(calculatedScore);
+                    logger.info("Calculated score: {} (base: {}, accuracy: {}, difficulty: {})", 
+                            calculatedScore, basePoints, accuracy, difficulty);
+                } else {
+                    attempt.setScore(0);
+                }
+            }
+        } else if (request.getScore() != null) {
+            attempt.setScore(request.getScore());
+        }
+
         boolean shouldUpdateSnapshot = false;
         if (request.getCompletedAt() != null) {
             attempt.setCompletedAt(request.getCompletedAt());

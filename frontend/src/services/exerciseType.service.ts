@@ -1,43 +1,5 @@
 import axiosInstance from './axios.config';
-
-interface APIExerciseType {
-    id: string;
-    name: string;
-    description: string;
-    baseDifficulty: number;
-    avgTimeSeconds: number;
-    parameterRanges?: string; // JSON: {"cardCount": [2, 20], "displaySpeed": [0.5, 3.0], "timePerQuestion": [2, 20]}
-    createdById: string;
-    createdByName: string;
-    createdAt: string;
-    updatedAt: string;
-}
-
-export interface ParameterRanges {
-    cardCount?: [number, number];
-    displaySpeed?: [number, number]; 
-    timePerQuestion?: [number, number]; 
-    
-    exampleCount?: [number, number]; 
-    dividendDigits?: [number, number]; 
-    divisorDigits?: [number, number]; 
-    
-    firstMultiplierDigits?: [number, number]; 
-    minValue?: number; 
-    maxValue?: number; 
-    
-    digitTypes?: string[]; 
-    themes?: string[]; 
-}
-
-export interface ExerciseType {
-    id: string;
-    name: string;
-    description: string;
-    difficulty: 'beginner' | 'intermediate' | 'advanced';
-    duration: string;
-    parameterRanges?: ParameterRanges;
-}
+import { ExerciseType, ParameterRanges, APIExerciseType } from '../types/exerciseType';
 
 const mapDifficulty = (baseDifficulty: number): 'beginner' | 'intermediate' | 'advanced' => {
     if (baseDifficulty <= 1) return 'beginner';
@@ -48,16 +10,6 @@ const mapDifficulty = (baseDifficulty: number): 'beginner' | 'intermediate' | 'a
 const formatDuration = (seconds: number): string => {
     const minutes = Math.round(seconds / 60);
     return `${minutes} mins`;
-};
-
-const parseParameterRanges = (parameterRangesJson: string | null): ParameterRanges | null => {
-    if (!parameterRangesJson) return null;
-    try {
-        return JSON.parse(parameterRangesJson) as ParameterRanges;
-    } catch (error) {
-        console.error('Error parsing parameterRanges:', error);
-        return null;
-    }
 };
 
 export const exerciseTypeService = {

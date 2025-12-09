@@ -2,7 +2,11 @@ package com.app.umkaSchool.controller;
 
 import com.app.umkaSchool.dto.exercise.CreateExerciseRequest;
 import com.app.umkaSchool.dto.exercise.ExerciseResponse;
+import com.app.umkaSchool.dto.exercise.GenerateExerciseNumbersRequest;
+import com.app.umkaSchool.dto.exercise.GenerateExerciseNumbersResponse;
 import com.app.umkaSchool.dto.exercise.UpdateExerciseRequest;
+import com.app.umkaSchool.dto.exercise.ValidateAnswerRequest;
+import com.app.umkaSchool.dto.exercise.ValidateAnswerResponse;
 import com.app.umkaSchool.service.ExerciseService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,6 +76,20 @@ public class ExerciseController {
     public ResponseEntity<Void> deleteExercise(@PathVariable UUID exerciseId) {
         exerciseService.deleteExercise(exerciseId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/generate-numbers")
+    public ResponseEntity<GenerateExerciseNumbersResponse> generateExerciseNumbers(
+            @Valid @RequestBody GenerateExerciseNumbersRequest request) {
+        GenerateExerciseNumbersResponse response = exerciseService.generateExerciseNumbers(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/validate-answer")
+    public ResponseEntity<ValidateAnswerResponse> validateAnswer(
+            @Valid @RequestBody ValidateAnswerRequest request) {
+        ValidateAnswerResponse response = exerciseService.validateAnswer(request);
+        return ResponseEntity.ok(response);
     }
 }
 

@@ -27,3 +27,31 @@ export interface ExerciseSessionConfig {
   min?: number;
   max?: number;
 }
+
+export interface Exercise {
+    id: string;
+    exerciseTypeId: string;
+    exerciseTypeName: string;
+    parameters: string;
+    difficulty: number;
+    points: number;
+    createdById: string;
+    createdByName: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateExercisePayload {
+    exerciseTypeId: string;
+    parameters: string;
+    difficulty?: number; // Optional 
+    points?: number; // Optional 
+    createdById?: string;
+}
+
+export interface UpdateExercisePayload {
+    exerciseTypeId?: string;
+    parameters?: string;
+    difficulty?: number;
+    points?: number;
+}
