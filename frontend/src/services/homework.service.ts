@@ -17,8 +17,8 @@ const mapApiStatusToUiStatus = (apiStatus: string): 'pending' | 'completed' | 'o
             return 'completed';
         case 'OVERDUE':
             return 'overdue';
-        case 'ASSIGNED':
-        case 'IN_PROGRESS':
+        case 'PENDING':
+            return 'pending'
         default:
             return 'pending';
     }
