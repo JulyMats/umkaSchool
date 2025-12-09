@@ -3,6 +3,7 @@ package com.app.umkaSchool.service.impl;
 import com.app.umkaSchool.dto.exercisetype.CreateExerciseTypeRequest;
 import com.app.umkaSchool.dto.exercisetype.ExerciseTypeResponse;
 import com.app.umkaSchool.dto.exercisetype.UpdateExerciseTypeRequest;
+import com.app.umkaSchool.exception.ResourceNotFoundException;
 import com.app.umkaSchool.model.ExerciseType;
 import com.app.umkaSchool.model.Teacher;
 import com.app.umkaSchool.repository.ExerciseTypeRepository;
@@ -50,7 +51,7 @@ public class ExerciseTypeServiceImpl implements ExerciseTypeService {
 
         if (request.getCreatedById() != null) {
             Teacher teacher = teacherRepository.findById(request.getCreatedById())
-                    .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
             exerciseType.setCreatedBy(teacher);
         }
 
@@ -66,7 +67,7 @@ public class ExerciseTypeServiceImpl implements ExerciseTypeService {
         logger.info("Updating exercise type: {}", exerciseTypeId);
 
         ExerciseType exerciseType = exerciseTypeRepository.findById(exerciseTypeId)
-                .orElseThrow(() -> new IllegalArgumentException("Exercise type not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise type not found"));
 
         if (request.getName() != null && !request.getName().equals(exerciseType.getName())) {
             if (exerciseTypeRepository.existsByName(request.getName())) {
@@ -84,12 +85,14 @@ public class ExerciseTypeServiceImpl implements ExerciseTypeService {
         if (request.getAvgTimeSeconds() != null) {
             exerciseType.setAvgTimeSeconds(request.getAvgTimeSeconds());
         }
+        if (request.getParameterRanges() != null) {
+            exerciseType.setParameterRanges(request.getParameterRanges());
+        }
         if (request.getCreatedById() != null) {
             Teacher teacher = teacherRepository.findById(request.getCreatedById())
-                    .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
             exerciseType.setCreatedBy(teacher);
         }
-
         exerciseType = exerciseTypeRepository.save(exerciseType);
         logger.info("Exercise type updated successfully: {}", exerciseTypeId);
 
@@ -99,14 +102,14 @@ public class ExerciseTypeServiceImpl implements ExerciseTypeService {
     @Override
     public ExerciseTypeResponse getExerciseTypeById(UUID exerciseTypeId) {
         ExerciseType exerciseType = exerciseTypeRepository.findById(exerciseTypeId)
-                .orElseThrow(() -> new IllegalArgumentException("Exercise type not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise type not found"));
         return mapToResponse(exerciseType);
     }
 
     @Override
     public ExerciseTypeResponse getExerciseTypeByName(String name) {
         ExerciseType exerciseType = exerciseTypeRepository.findByName(name)
-                .orElseThrow(() -> new IllegalArgumentException("Exercise type not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise type not found"));
         return mapToResponse(exerciseType);
     }
 
@@ -130,7 +133,7 @@ public class ExerciseTypeServiceImpl implements ExerciseTypeService {
         logger.info("Deleting exercise type: {}", exerciseTypeId);
 
         ExerciseType exerciseType = exerciseTypeRepository.findById(exerciseTypeId)
-                .orElseThrow(() -> new IllegalArgumentException("Exercise type not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise type not found"));
 
         exerciseTypeRepository.delete(exerciseType);
         logger.info("Exercise type deleted successfully: {}", exerciseTypeId);
@@ -139,7 +142,7 @@ public class ExerciseTypeServiceImpl implements ExerciseTypeService {
     @Override
     public ExerciseType getExerciseTypeEntity(UUID exerciseTypeId) {
         return exerciseTypeRepository.findById(exerciseTypeId)
-                .orElseThrow(() -> new IllegalArgumentException("Exercise type not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise type not found"));
     }
 
     private ExerciseTypeResponse mapToResponse(ExerciseType exerciseType) {
@@ -159,5 +162,3 @@ public class ExerciseTypeServiceImpl implements ExerciseTypeService {
                 .build();
     }
 }
-
-

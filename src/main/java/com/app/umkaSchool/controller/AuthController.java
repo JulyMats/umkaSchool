@@ -25,9 +25,9 @@ public class AuthController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<?> signin(@Valid @RequestBody LoginRequest request) {
-        String token = authService.signin(request);
-        return ResponseEntity.ok().body(token);
+    public ResponseEntity<LoginResponse> signin(@Valid @RequestBody LoginRequest request) {
+        LoginResponse response = authService.signin(request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/forgot-password")
@@ -44,14 +44,15 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        LoginResponse response = authService.refreshToken(request.getRefreshToken());
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
-        // Expecting header format: "Bearer <token>"
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest().body("Missing or invalid Authorization header");
-        }
-        String token = authHeader.substring(7);
-        authService.logout(token);
+    public ResponseEntity<?> logout(@Valid @RequestBody LogoutRequest request) {
+        authService.logout(request.getRefreshToken());
         return ResponseEntity.ok().build();
     }
 }

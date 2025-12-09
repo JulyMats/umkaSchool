@@ -1,8 +1,13 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authService, SignInRequest, SignUpRequest } from '../services/auth.service';
-import { userService, User } from '../services/user.service';
-import { studentService, Student } from '../services/student.service';
-import { teacherService, Teacher } from '../services/teacher.service';
+import { authService } from '../services/auth.service';
+import { userService } from '../services/user.service';
+import { studentService } from '../services/student.service';
+import { teacherService } from '../services/teacher.service';
+import { SignInRequest, SignUpRequest } from '../types/auth';
+import { User } from '../types/user';
+import { Student } from '../types/student';
+import { Teacher } from '../types/teacher';
+import { extractErrorMessage, extractErrorStatus } from '../utils/error.utils';
 
 interface AuthContextType {
     user: User | null;
@@ -12,7 +17,7 @@ interface AuthContextType {
     isLoading: boolean;
     login: (credentials: SignInRequest) => Promise<void>;
     register: (data: SignUpRequest) => Promise<void>;
-    logout: () => void;
+    logout: () => Promise<void>;
     forgotPassword: (email: string) => Promise<void>;
     resetPassword: (token: string, newPassword: string) => Promise<void>;
     refreshUserData: () => Promise<void>;
@@ -42,12 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     console.log('[AuthContext] Student data received:', { id: studentData.id, firstName: studentData.firstName, lastName: studentData.lastName });
                     setStudent(studentData);
                     setTeacher(null);
-                } catch (error: any) {
+                } catch (error: unknown) {
                     console.error('[AuthContext] Failed to fetch student data:', error);
                     console.error('[AuthContext] Student fetch error details:', {
-                        message: error?.message,
-                        response: error?.response?.data,
-                        status: error?.response?.status
+                        message: extractErrorMessage(error),
+                        status: extractErrorStatus(error)
                     });
                     // Student profile might not be created yet
                     setStudent(null);
@@ -60,12 +64,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     console.log('[AuthContext] Teacher data received:', { id: teacherData.id, firstName: teacherData.firstName, lastName: teacherData.lastName });
                     setTeacher(teacherData);
                     setStudent(null);
-                } catch (error: any) {
+                } catch (error: unknown) {
                     console.error('[AuthContext] Failed to fetch teacher data:', error);
                     console.error('[AuthContext] Teacher fetch error details:', {
-                        message: error?.message,
-                        response: error?.response?.data,
-                        status: error?.response?.status
+                        message: extractErrorMessage(error),
+                        status: extractErrorStatus(error)
                     });
                     // Teacher profile might not be created yet
                     setTeacher(null);
@@ -76,12 +79,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setStudent(null);
                 setTeacher(null);
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('[AuthContext] Failed to fetch user data:', error);
             console.error('[AuthContext] User fetch error details:', {
-                message: error?.message,
-                response: error?.response?.data,
-                status: error?.response?.status
+                message: extractErrorMessage(error),
+                status: extractErrorStatus(error)
             });
             throw error;
         }
@@ -91,12 +93,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const initializeAuth = async () => {
             console.log('[AuthContext] Initializing auth...');
             const token = localStorage.getItem('token');
+            const refreshToken = localStorage.getItem('refreshToken');
             const storedEmail = localStorage.getItem('userEmail');
             
             console.log('[AuthContext] Token exists:', !!token);
+            console.log('[AuthContext] Refresh token exists:', !!refreshToken);
             console.log('[AuthContext] Stored email:', storedEmail);
             
-            if (token) {
+            if (token && refreshToken) {
                 authService.setAuthToken(token);
                 setIsAuthenticated(true);
                 console.log('[AuthContext] Token set, isAuthenticated = true');
@@ -107,23 +111,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         console.log('[AuthContext] Fetching user data for email:', storedEmail);
                         await fetchUserData(storedEmail);
                         console.log('[AuthContext] User data fetched successfully');
-                    } catch (error: any) {
+                    } catch (error: unknown) {
                         console.error('[AuthContext] Failed to fetch user data on initialization:', error);
-                        console.error('[AuthContext] Error details:', {
-                            message: error?.message,
-                            response: error?.response?.data,
-                            status: error?.response?.status
-                        });
-                        // If fetching fails, clear everything and require re-login
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('userEmail');
-                        setIsAuthenticated(false);
+                        const errorStatus = extractErrorStatus(error);
+                        if (errorStatus === 401) {
+                            try {
+                                console.log('[AuthContext] Token expired, attempting refresh...');
+                                const refreshResponse = await authService.refreshToken(refreshToken);
+                                localStorage.setItem('token', refreshResponse.jwtToken);
+                                localStorage.setItem('refreshToken', refreshResponse.refreshToken);
+                                localStorage.setItem('userEmail', refreshResponse.user.email);
+                                authService.setAuthToken(refreshResponse.jwtToken);
+                                await fetchUserData(refreshResponse.user.email);
+                            } catch (refreshError) {
+                                console.error('[AuthContext] Token refresh failed:', refreshError);
+                                localStorage.removeItem('token');
+                                localStorage.removeItem('refreshToken');
+                                localStorage.removeItem('userEmail');
+                                setIsAuthenticated(false);
+                            }
+                        } else {
+                            localStorage.removeItem('token');
+                            localStorage.removeItem('refreshToken');
+                            localStorage.removeItem('userEmail');
+                            setIsAuthenticated(false);
+                        }
                     }
                 } else {
                     console.warn('[AuthContext] No stored email found. User needs to log in again.');
                 }
             } else {
-                console.log('[AuthContext] No token found');
+                console.log('[AuthContext] No tokens found');
+                localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
+                localStorage.removeItem('userEmail');
             }
             
             setIsLoading(false);
@@ -142,22 +163,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const login = async (credentials: SignInRequest) => {
         try {
             console.log('[AuthContext] Login attempt for email:', credentials.email);
-            const token = await authService.login(credentials);
-            console.log('[AuthContext] Login successful, token received');
-            localStorage.setItem('token', token);
-            localStorage.setItem('userEmail', credentials.email); // Store email for later use
-            console.log('[AuthContext] Token and email stored in localStorage');
-            authService.setAuthToken(token);
+            const loginResponse = await authService.login(credentials);
+            console.log('[AuthContext] Login successful, tokens received');
+            
+            localStorage.setItem('token', loginResponse.jwtToken);
+            localStorage.setItem('refreshToken', loginResponse.refreshToken);
+            localStorage.setItem('userEmail', loginResponse.user.email);
+            
+            // Set auth token for API requests
+            authService.setAuthToken(loginResponse.jwtToken);
+            
             setIsAuthenticated(true);
-            // Fetch user data after login
-            await fetchUserData(credentials.email);
+            
+            await fetchUserData(loginResponse.user.email);
             console.log('[AuthContext] Login complete, user data loaded');
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('[AuthContext] Login failed:', error);
+            const errorObj = error as { message?: string; response?: { data?: unknown; status?: number } };
             console.error('[AuthContext] Login error details:', {
-                message: error?.message,
-                response: error?.response?.data,
-                status: error?.response?.status
+                message: errorObj?.message,
+                response: errorObj?.response?.data,
+                status: errorObj?.response?.status
             });
             throw error;
         }
@@ -166,25 +192,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const register = async (data: SignUpRequest) => {
         try {
             await authService.register(data);
-            // After successful registration, log in the user
-            await login({
-                email: data.email,
-                password: data.password
-            });
+
         } catch (error) {
             console.error('Registration failed:', error);
             throw error;
         }
     };
 
-    const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userEmail');
-        authService.setAuthToken(null);
-        setUser(null);
-        setStudent(null);
-        setTeacher(null);
-        setIsAuthenticated(false);
+    const logout = async () => {
+        try {
+            const refreshToken = localStorage.getItem('refreshToken');
+            if (refreshToken) {
+                await authService.logout(refreshToken);
+            }
+        } catch (error) {
+            console.error('[AuthContext] Logout error:', error);
+        } finally {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('userEmail');
+            authService.setAuthToken(null);
+            setUser(null);
+            setStudent(null);
+            setTeacher(null);
+            setIsAuthenticated(false);
+        }
     };
 
     const forgotPassword = async (email: string) => {

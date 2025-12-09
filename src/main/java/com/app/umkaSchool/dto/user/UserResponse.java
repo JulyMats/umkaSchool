@@ -25,4 +25,3 @@ public class UserResponse {
     private ZonedDateTime createdAt;
     private ZonedDateTime lastLoginAt;
 }
-

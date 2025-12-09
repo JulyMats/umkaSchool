@@ -1,6 +1,7 @@
 package com.app.umkaSchool.repository;
 
 import com.app.umkaSchool.model.HomeworkAssignment;
+import com.app.umkaSchool.model.enums.HomeworkStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,9 +18,9 @@ public interface HomeworkAssignmentRepository extends JpaRepository<HomeworkAssi
 
     List<HomeworkAssignment> findByTeacher_Id(UUID teacherId);
 
-    List<HomeworkAssignment> findByStatusOrderByDueDateAsc(com.app.umkaSchool.model.enums.HomeworkStatus status);
+    List<HomeworkAssignment> findByStatusOrderByDueDateAsc(HomeworkStatus status);
 
-    List<HomeworkAssignment> findByDueDateBeforeAndStatus(ZonedDateTime date, com.app.umkaSchool.model.enums.HomeworkStatus status);
+    List<HomeworkAssignment> findByDueDateBeforeAndStatus(ZonedDateTime date, HomeworkStatus status);
 
     List<HomeworkAssignment> findByAssignedGroups_StudentGroup_Id(UUID groupId);
 
@@ -55,6 +56,5 @@ public interface HomeworkAssignmentRepository extends JpaRepository<HomeworkAssi
            "LEFT JOIN Student s ON s.id = :studentId " +
            "WHERE he.exercise.id = :exerciseId " +
            "AND (ast.student.id = :studentId OR ag.studentGroup.id = s.group.id)")
-    List<HomeworkAssignment> findByExerciseIdAndStudentId(@Param("exerciseId") UUID exerciseId,
-                                                            @Param("studentId") UUID studentId);
+    List<HomeworkAssignment> findByExerciseIdAndStudentId(@Param("exerciseId") UUID exerciseId, @Param("studentId") UUID studentId);
 }

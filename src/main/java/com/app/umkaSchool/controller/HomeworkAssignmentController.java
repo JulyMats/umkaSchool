@@ -42,7 +42,6 @@ public class HomeworkAssignmentController {
 
     @GetMapping("/{assignmentId}")
     public ResponseEntity<HomeworkAssignmentResponse> getHomeworkAssignmentById(@PathVariable UUID assignmentId) {
-        // Update overdue assignments before returning
         homeworkAssignmentService.updateOverdueAssignments();
         HomeworkAssignmentResponse response = homeworkAssignmentService.getHomeworkAssignmentById(assignmentId);
         return ResponseEntity.ok(response);
@@ -50,7 +49,6 @@ public class HomeworkAssignmentController {
 
     @GetMapping
     public ResponseEntity<List<HomeworkAssignmentResponse>> getAllHomeworkAssignments() {
-        // Update overdue assignments before returning
         homeworkAssignmentService.updateOverdueAssignments();
         List<HomeworkAssignmentResponse> assignments = homeworkAssignmentService.getAllHomeworkAssignments();
         return ResponseEntity.ok(assignments);
@@ -59,7 +57,6 @@ public class HomeworkAssignmentController {
     @GetMapping("/homework/{homeworkId}")
     public ResponseEntity<List<HomeworkAssignmentResponse>> getHomeworkAssignmentsByHomework(
             @PathVariable UUID homeworkId) {
-        // Update overdue assignments before returning
         homeworkAssignmentService.updateOverdueAssignments();
         List<HomeworkAssignmentResponse> assignments = homeworkAssignmentService.getHomeworkAssignmentsByHomework(homeworkId);
         return ResponseEntity.ok(assignments);
@@ -68,7 +65,6 @@ public class HomeworkAssignmentController {
     @GetMapping("/teacher/{teacherId}")
     public ResponseEntity<List<HomeworkAssignmentResponse>> getHomeworkAssignmentsByTeacher(
             @PathVariable UUID teacherId) {
-        // Update overdue assignments before returning
         homeworkAssignmentService.updateOverdueAssignments();
         List<HomeworkAssignmentResponse> assignments = homeworkAssignmentService.getHomeworkAssignmentsByTeacher(teacherId);
         return ResponseEntity.ok(assignments);
@@ -77,7 +73,6 @@ public class HomeworkAssignmentController {
     @GetMapping("/status/{status}")
     public ResponseEntity<List<HomeworkAssignmentResponse>> getHomeworkAssignmentsByStatus(
             @PathVariable HomeworkStatus status) {
-        // Update overdue assignments before returning
         homeworkAssignmentService.updateOverdueAssignments();
         List<HomeworkAssignmentResponse> assignments = homeworkAssignmentService.getHomeworkAssignmentsByStatus(status);
         return ResponseEntity.ok(assignments);
@@ -86,7 +81,6 @@ public class HomeworkAssignmentController {
     @GetMapping("/group/{groupId}")
     public ResponseEntity<List<HomeworkAssignmentResponse>> getHomeworkAssignmentsByGroup(
             @PathVariable UUID groupId) {
-        // Update overdue assignments before returning
         homeworkAssignmentService.updateOverdueAssignments();
         List<HomeworkAssignmentResponse> assignments = homeworkAssignmentService.getHomeworkAssignmentsByGroup(groupId);
         return ResponseEntity.ok(assignments);
@@ -95,7 +89,6 @@ public class HomeworkAssignmentController {
     @GetMapping("/student/{studentId}")
     public ResponseEntity<List<HomeworkAssignmentResponse>> getHomeworkAssignmentsByStudent(
             @PathVariable UUID studentId) {
-        // Update overdue assignments before returning
         homeworkAssignmentService.updateOverdueAssignments();
         List<HomeworkAssignmentResponse> assignments = homeworkAssignmentService.getHomeworkAssignmentsByStudent(studentId);
         return ResponseEntity.ok(assignments);
@@ -110,7 +103,7 @@ public class HomeworkAssignmentController {
     @PostMapping("/{assignmentId}/students")
     public ResponseEntity<Void> addStudentsToAssignment(
             @PathVariable UUID assignmentId,
-            @RequestBody List<UUID> studentIds) {
+            @Valid @RequestBody List<UUID> studentIds) {
         homeworkAssignmentService.addStudentsToAssignment(assignmentId, studentIds);
         return ResponseEntity.ok().build();
     }
@@ -118,7 +111,7 @@ public class HomeworkAssignmentController {
     @PostMapping("/{assignmentId}/groups")
     public ResponseEntity<Void> addGroupsToAssignment(
             @PathVariable UUID assignmentId,
-            @RequestBody List<UUID> groupIds) {
+            @Valid @RequestBody List<UUID> groupIds) {
         homeworkAssignmentService.addGroupsToAssignment(assignmentId, groupIds);
         return ResponseEntity.ok().build();
     }

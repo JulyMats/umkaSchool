@@ -3,6 +3,7 @@ package com.app.umkaSchool.service.impl;
 import com.app.umkaSchool.dto.guardian.CreateGuardianRequest;
 import com.app.umkaSchool.dto.guardian.GuardianResponse;
 import com.app.umkaSchool.dto.guardian.UpdateGuardianRequest;
+import com.app.umkaSchool.exception.ResourceNotFoundException;
 import com.app.umkaSchool.model.Guardian;
 import com.app.umkaSchool.model.enums.GuardianRelationship;
 import com.app.umkaSchool.repository.GuardianRepository;
@@ -56,7 +57,7 @@ public class GuardianServiceImpl implements GuardianService {
         logger.info("Updating guardian: {}", guardianId);
 
         Guardian guardian = guardianRepository.findById(guardianId)
-                .orElseThrow(() -> new IllegalArgumentException("Guardian not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Guardian not found"));
 
         if (request.getFirstName() != null) {
             guardian.setFirstName(request.getFirstName());
@@ -86,14 +87,14 @@ public class GuardianServiceImpl implements GuardianService {
     @Override
     public GuardianResponse getGuardianById(UUID guardianId) {
         Guardian guardian = guardianRepository.findById(guardianId)
-                .orElseThrow(() -> new IllegalArgumentException("Guardian not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Guardian not found"));
         return mapToResponse(guardian);
     }
 
     @Override
     public GuardianResponse getGuardianByEmail(String email) {
         Guardian guardian = guardianRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Guardian not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Guardian not found"));
         return mapToResponse(guardian);
     }
 
@@ -110,7 +111,7 @@ public class GuardianServiceImpl implements GuardianService {
         logger.info("Deleting guardian: {}", guardianId);
 
         Guardian guardian = guardianRepository.findById(guardianId)
-                .orElseThrow(() -> new IllegalArgumentException("Guardian not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Guardian not found"));
 
         guardianRepository.delete(guardian);
         logger.info("Guardian deleted successfully: {}", guardianId);
@@ -119,7 +120,7 @@ public class GuardianServiceImpl implements GuardianService {
     @Override
     public Guardian getGuardianEntity(UUID guardianId) {
         return guardianRepository.findById(guardianId)
-                .orElseThrow(() -> new IllegalArgumentException("Guardian not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Guardian not found"));
     }
 
     private GuardianResponse mapToResponse(Guardian guardian) {
@@ -133,4 +134,3 @@ public class GuardianServiceImpl implements GuardianService {
                 .build();
     }
 }
-

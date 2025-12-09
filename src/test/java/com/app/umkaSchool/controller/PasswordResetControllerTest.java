@@ -79,7 +79,7 @@ class PasswordResetControllerTest {
         var tokens = userTokenRepository.findAll();
         var passwordResetTokens = tokens.stream()
                 .filter(t -> t.getTokenType() == UserToken.TokenType.PASSWORD_RESET)
-                .filter(t -> !t.getUsed())
+                .filter(t -> !t.isUsed())
                 .count();
 
         assert passwordResetTokens > 0 : "Password reset token should be created";
@@ -147,7 +147,7 @@ class PasswordResetControllerTest {
                 UserToken.TokenType.PASSWORD_RESET
         );
         assert tokenOpt.isPresent() : "Token should exist";
-        assert tokenOpt.get().getUsed() : "Token should be marked as used";
+        assert tokenOpt.get().isUsed() : "Token should be marked as used";
     }
 
     @Test

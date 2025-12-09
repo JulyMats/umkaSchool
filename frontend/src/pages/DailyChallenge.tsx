@@ -1,120 +1,231 @@
-import Layout from "../components/Layout";
-import { Star, Trophy, Clock, Zap, Target, Flame, Brain, TrendingUp } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { exerciseTypeService, ExerciseType } from '../services/exerciseType.service';
+import Layout from "../components/layout";
+import { Trophy, Zap, Target, TrendingUp } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { dailyChallengeService } from '../services/dailyChallenge.service';
+import { DailyChallenge, DailyChallengeExercise } from '../types/dailyChallenge';
 import { useAuth } from '../contexts/AuthContext';
 import { exerciseAttemptService } from '../services/exerciseAttempt.service';
+import { exerciseService } from '../services/exercise.service';
+import { Exercise } from '../types/exercise';
+import { extractErrorMessage } from '../utils/error.utils';
+import { convertExerciseToConfig } from '../utils/homework.utils';
+import { LoadingState, ErrorState, EmptyState, FilterTabs } from '../components/common';
+import { Card } from '../components/ui';
+import { DailyChallengeExerciseCard, DailyChallengeDetailsModal } from '../components/features/dailyChallenge';
+import { useModal } from '../hooks';
+import { useMemo } from 'react';
 
-interface Challenge extends ExerciseType {
-  category: 'daily' | 'special' | 'streak';
+interface ExerciseCompletion {
+  exerciseId: string;
+  completed: boolean;
   completionRate?: number;
 }
 
 export default function DailyChallenge() {
   const { student } = useAuth();
   const navigate = useNavigate();
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const location = useLocation();
+  const prevPathRef = useRef<string>(location.pathname);
+  const [dailyChallenge, setDailyChallenge] = useState<DailyChallenge | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [exerciseCompletions, setExerciseCompletions] = useState<ExerciseCompletion[]>([]);
+  const [loadingExercise, setLoadingExercise] = useState<string | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<DailyChallengeExercise | null>(null);
+  const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
+  const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
+  const { isOpen: showDetailsModal, open: openDetailsModal, close: closeDetailsModal } = useModal();
+
+  const fetchCompletionStatus = useCallback(async (challenge: DailyChallenge) => {
+    if (!student?.id || challenge.exercises.length === 0) return;
+
+    try {
+      const attempts = await exerciseAttemptService.getAttemptsByStudent(student.id);
+      const completions: ExerciseCompletion[] = challenge.exercises.map((exercise) => {
+        const exerciseAttempts = attempts.filter(
+          a => a.exerciseId === exercise.exerciseId && a.completedAt
+        );
+        const totalAttempts = attempts.filter(
+          a => a.exerciseId === exercise.exerciseId
+        );
+        const completionRate = totalAttempts.length > 0
+          ? Math.round((exerciseAttempts.length / totalAttempts.length) * 100)
+          : 0;
+
+        return {
+          exerciseId: exercise.exerciseId,
+          completed: exerciseAttempts.length > 0,
+          completionRate
+        };
+      });
+      setExerciseCompletions(completions);
+    } catch (err) {
+      console.error('Error fetching completion status:', err);
+    }
+  }, [student?.id]);
 
   useEffect(() => {
-    const fetchChallenges = async () => {
+    const fetchTodayChallenge = async () => {
       try {
-        const exerciseTypes = await exerciseTypeService.getAllExerciseTypes();
-        
-        // Convert exercise types to challenges
-        const challengesData: Challenge[] = await Promise.all(
-          exerciseTypes.map(async (exerciseType) => {
-            // Determine category based on difficulty
-            let category: 'daily' | 'special' | 'streak' = 'daily';
-            if (exerciseType.difficulty === 'advanced') {
-              category = 'special';
-            } else if (exerciseType.difficulty === 'intermediate') {
-              category = 'streak';
-            }
+        setLoading(true);
+        setError(null);
+        const challenge = await dailyChallengeService.getTodayChallenge();
+        setDailyChallenge(challenge);
 
-            // Calculate completion rate if student is available
-            let completionRate: number | undefined;
-            if (student?.id) {
-              try {
-                const attempts = await exerciseAttemptService.getAttemptsByStudent(student.id);
-                const completedAttempts = attempts.filter(
-                  a => a.exerciseTypeName === exerciseType.name && a.completedAt
-                );
-                const totalAttempts = attempts.filter(
-                  a => a.exerciseTypeName === exerciseType.name
-                );
-                if (totalAttempts.length > 0) {
-                  completionRate = Math.round((completedAttempts.length / totalAttempts.length) * 100);
-                }
-              } catch (error) {
-                console.error('Error calculating completion rate:', error);
-              }
-            }
-
-            return {
-              ...exerciseType,
-              category,
-              completionRate
-            };
-          })
-        );
-
-        setChallenges(challengesData);
-      } catch (error) {
-        console.error('Error fetching challenges:', error);
+        // Fetch completion status for each exercise
+        await fetchCompletionStatus(challenge);
+      } catch (err) {
+        console.error('Error fetching daily challenge:', err);
+        setError(extractErrorMessage(err, 'Failed to load today\'s challenge'));
       } finally {
         setLoading(false);
       }
     };
 
-    fetchChallenges();
-  }, [student?.id]);
+    fetchTodayChallenge();
+  }, [student?.id, fetchCompletionStatus]);
 
-  const getDifficultyColor = (difficulty: Challenge['difficulty']) => {
-    switch (difficulty) {
-      case 'beginner':
-        return 'text-green-600 bg-green-50';
-      case 'intermediate':
-        return 'text-yellow-600 bg-yellow-50';
-      case 'advanced':
-        return 'text-red-600 bg-red-50';
-      default:
-        return 'text-gray-600 bg-gray-50';
+  // Refresh completion status when returning from exercise (location change)
+  useEffect(() => {
+    // Check if we're returning to this page from another route
+    if (location.pathname === '/challenges' && prevPathRef.current !== location.pathname && dailyChallenge && student?.id && !loading) {
+      fetchCompletionStatus(dailyChallenge);
+    }
+    prevPathRef.current = location.pathname;
+  }, [location.pathname, dailyChallenge, student?.id, fetchCompletionStatus, loading]);
+
+  // Also refresh when window gains focus (user returns to tab)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (dailyChallenge && student?.id && !loading) {
+        fetchCompletionStatus(dailyChallenge);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [dailyChallenge, student?.id, fetchCompletionStatus, loading]);
+
+  const loadExerciseDetails = async (exercise: DailyChallengeExercise) => {
+    try {
+      const fullExercise = await exerciseService.getExerciseById(exercise.exerciseId);
+      setSelectedExercise(exercise);
+      setSelectedExercises([fullExercise]);
+      return fullExercise;
+    } catch (err) {
+      console.error('Failed to load exercise details:', err);
+      throw err;
     }
   };
 
-  const getCategoryIcon = (category: Challenge['category']) => {
-    switch (category) {
-      case 'daily':
-        return <Zap className="w-5 h-5 text-yellow-500" />;
-      case 'special':
-        return <Star className="w-5 h-5 text-purple-500" />;
-      case 'streak':
-        return <Flame className="w-5 h-5 text-orange-500" />;
-      default:
-        return null;
+  const handleSeeDetails = async (exercise: DailyChallengeExercise) => {
+    try {
+      await loadExerciseDetails(exercise);
+      openDetailsModal();
+    } catch (err) {
+      console.error('Failed to load exercise details:', err);
     }
   };
 
-  const filteredChallenges = selectedDifficulty === 'all'
-    ? challenges
-    : challenges.filter(challenge => challenge.difficulty === selectedDifficulty);
+  const handleStartExercise = async (exercise: DailyChallengeExercise) => {
+    try {
+      setLoadingExercise(exercise.exerciseId);
+      
+      // Start the clicked exercise directly
+      const fullExercise = await exerciseService.getExerciseById(exercise.exerciseId);
+      const config = convertExerciseToConfig(fullExercise);
+      
+      navigate('/exercises/play', { 
+        state: { 
+          config,
+          returnPath: '/challenges'
+        } 
+      });
+    } catch (err) {
+      console.error('Failed to start exercise:', err);
+      setError(extractErrorMessage(err, 'Failed to start exercise. Please try again.'));
+    } finally {
+      setLoadingExercise(null);
+    }
+  };
 
-  const dailyChallenges = challenges.filter(c => c.category === 'daily');
-  const completedDaily = dailyChallenges.filter(c => c.completionRate && c.completionRate >= 100).length;
-  const remainingDaily = dailyChallenges.length - completedDaily;
+  const handleStartFromDetails = () => {
+    closeDetailsModal();
+    if (selectedExercise) {
+      handleStartExercise(selectedExercise);
+    }
+  };
+
+  const getCompletionStatus = (exerciseId: string) => {
+    return exerciseCompletions.find(ec => ec.exerciseId === exerciseId);
+  };
+
+  // Determine difficulty level from numeric difficulty
+  const getDifficultyLevel = (difficulty?: number): 'beginner' | 'intermediate' | 'advanced' => {
+    if (!difficulty) return 'beginner';
+    if (difficulty <= 3) return 'beginner';
+    if (difficulty <= 7) return 'intermediate';
+    return 'advanced';
+  };
+
+  // Filter exercises by difficulty
+  const filteredExercises = useMemo(() => {
+    if (!dailyChallenge) return [];
+    if (difficultyFilter === 'all') return dailyChallenge.exercises;
+    
+    return dailyChallenge.exercises.filter(exercise => {
+      const level = getDifficultyLevel(exercise.difficulty);
+      return level === difficultyFilter;
+    });
+  }, [dailyChallenge, difficultyFilter]);
+
+  const completedCount = exerciseCompletions.filter(ec => ec.completed).length;
+  const totalExercises = dailyChallenge?.exercises.length || 0;
+  const remainingCount = totalExercises - completedCount;
+
+  const filterOptions = [
+    { value: 'all' as const, label: 'All' },
+    { value: 'beginner' as const, label: 'Beginner', color: 'green' as const },
+    { value: 'intermediate' as const, label: 'Intermediate', color: 'yellow' as const },
+    { value: 'advanced' as const, label: 'Advanced', color: 'red' as const }
+  ];
 
   if (loading) {
     return (
       <Layout
         title="Daily Challenges"
-        subtitle="Loading challenges..."
+        subtitle="Loading today's challenge..."
       >
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        </div>
+        <LoadingState message="Loading your daily challenge..." />
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout
+        title="Daily Challenges"
+        subtitle="Oops! Something went wrong"
+      >
+        <ErrorState
+          message={error}
+          onRetry={() => window.location.reload()}
+          retryLabel="Try Again"
+        />
+      </Layout>
+    );
+  }
+
+  if (!dailyChallenge) {
+    return (
+      <Layout
+        title="Daily Challenges"
+        subtitle="No challenge available"
+      >
+        <EmptyState
+          message="No daily challenge available for today. Check back tomorrow!"
+        />
       </Layout>
     );
   }
@@ -122,108 +233,87 @@ export default function DailyChallenge() {
   return (
     <Layout
       title="Daily Challenges"
-      subtitle="Push your limits with exciting math challenges"
+      subtitle={dailyChallenge.title}
     >
-      {/* Featured Challenge */}
-      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-8 mb-8 text-white">
+      {/* Featured Challenge Header */}
+      <Card variant="blue" className="mb-8">
         <div className="flex items-center gap-3 mb-4">
-          <Trophy className="w-8 h-8" />
-          <h2 className="text-2xl font-bold">Today's Special Challenge</h2>
+          <div className="p-3 bg-white/20 rounded-xl">
+            <Trophy className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white">Today's Challenge</h2>
+            <p className="text-blue-100">{dailyChallenge.description || 'Complete all exercises to earn bonus points!'}</p>
+          </div>
         </div>
-        <p className="text-lg mb-6 text-blue-100">
-          Complete all daily challenges this week to earn bonus points and unlock special achievements!
-        </p>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 text-white">
           <div className="flex items-center gap-2">
             <Target className="w-5 h-5" />
-            <span>{remainingDaily} challenges remaining</span>
+            <span>{remainingCount} exercises remaining</span>
           </div>
           <div className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
-            <span>Practice to improve</span>
+            <span>{completedCount} of {totalExercises} completed</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Zap className="w-5 h-5" />
+            <span>Challenge Date: {new Date(dailyChallenge.challengeDate).toLocaleDateString()}</span>
           </div>
         </div>
-      </div>
+      </Card>
 
-      {/* Difficulty Filter */}
-      <div className="flex gap-2 mb-6">
-        {['all', 'beginner', 'intermediate', 'advanced'].map((difficulty) => (
-          <button
-            key={difficulty}
-            onClick={() => setSelectedDifficulty(difficulty)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors
-              ${selectedDifficulty === difficulty
-                ? 'bg-blue-100 text-blue-600'
-                : 'text-gray-600 hover:bg-gray-100'}`}
-          >
-            {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
-          </button>
-        ))}
-      </div>
+      {/* Exercises List */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold text-gray-800">Exercises</h3>
+          {dailyChallenge.exercises.length > 0 && (
+            <FilterTabs
+              filters={filterOptions}
+              activeFilter={difficultyFilter}
+              onFilterChange={setDifficultyFilter}
+            />
+          )}
+        </div>
+        {dailyChallenge.exercises.length === 0 ? (
+          <EmptyState
+            message="No exercises in today's challenge"
+          />
+        ) : filteredExercises.length === 0 ? (
+          <EmptyState
+            message={`No ${difficultyFilter} exercises in today's challenge`}
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredExercises.map((exercise, index) => {
+              const completion = getCompletionStatus(exercise.exerciseId);
+              const isCompleted = completion?.completed || false;
+              // Find original index for numbering
+              const originalIndex = dailyChallenge.exercises.findIndex(ex => ex.exerciseId === exercise.exerciseId);
 
-      {/* Challenge Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredChallenges.map((challenge) => (
-          <div
-            key={challenge.id}
-            className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-50">
-                  {getCategoryIcon(challenge.category)}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">{challenge.title}</h3>
-                  <p className="text-gray-500 text-sm">{challenge.type}</p>
-                </div>
-              </div>
-              <div className={`px-3 py-1 rounded-full text-sm ${getDifficultyColor(challenge.difficulty)}`}>
-                {challenge.difficulty.charAt(0).toUpperCase() + challenge.difficulty.slice(1)}
-              </div>
-            </div>
-
-            <p className="text-gray-600 mb-6">
-              {challenge.description}
-            </p>
-
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex gap-4 text-sm text-gray-500">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  {challenge.duration}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Brain className="w-4 h-4" />
-                  {challenge.difficulty}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              {challenge.completionRate !== undefined && (
-                <div className="flex items-center gap-2">
-                  <div className="w-24 h-2 bg-gray-100 rounded-full">
-                    <div
-                      className="h-2 bg-green-500 rounded-full"
-                      style={{ width: `${challenge.completionRate}%` }}
-                    />
-                  </div>
-                  <span className="text-sm text-gray-500">
-                    {challenge.completionRate}% completed
-                  </span>
-                </div>
-              )}
-              <button 
-                onClick={() => navigate('/exercises')}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
-              >
-                Start Challenge
-              </button>
-            </div>
+              return (
+                <DailyChallengeExerciseCard
+                  key={exercise.exerciseId}
+                  exercise={exercise}
+                  index={originalIndex >= 0 ? originalIndex : index}
+                  isCompleted={isCompleted}
+                  onSeeDetails={() => handleSeeDetails(exercise)}
+                  onStart={() => handleStartExercise(exercise)}
+                  isLoading={loadingExercise === exercise.exerciseId}
+                />
+              );
+            })}
           </div>
-        ))}
+        )}
       </div>
+
+      <DailyChallengeDetailsModal
+        isOpen={showDetailsModal}
+        onClose={closeDetailsModal}
+        dailyChallenge={dailyChallenge}
+        exercises={selectedExercises}
+        onStart={handleStartFromDetails}
+        isLoading={loadingExercise !== null}
+      />
     </Layout>
   );
 }

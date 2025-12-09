@@ -3,6 +3,7 @@ package com.app.umkaSchool.service.impl;
 import com.app.umkaSchool.dto.teacher.CreateTeacherRequest;
 import com.app.umkaSchool.dto.teacher.TeacherResponse;
 import com.app.umkaSchool.dto.teacher.UpdateTeacherRequest;
+import com.app.umkaSchool.exception.ResourceNotFoundException;
 import com.app.umkaSchool.model.AppUser;
 import com.app.umkaSchool.model.Teacher;
 import com.app.umkaSchool.repository.AppUserRepository;
@@ -13,7 +14,6 @@ import com.app.umkaSchool.service.TeacherService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,19 +29,16 @@ public class TeacherServiceImpl implements TeacherService {
     private final AppUserRepository userRepository;
     private final StudentRepository studentRepository;
     private final StudentGroupRepository groupRepository;
-    private final PasswordEncoder passwordEncoder;
 
     @Autowired
     public TeacherServiceImpl(TeacherRepository teacherRepository,
                               AppUserRepository userRepository,
                               StudentRepository studentRepository,
-                              StudentGroupRepository groupRepository,
-                              PasswordEncoder passwordEncoder) {
+                              StudentGroupRepository groupRepository) {
         this.teacherRepository = teacherRepository;
         this.userRepository = userRepository;
         this.studentRepository = studentRepository;
         this.groupRepository = groupRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -51,7 +48,7 @@ public class TeacherServiceImpl implements TeacherService {
 
         // Find existing user by email
         AppUser user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("User with email " + request.getEmail() + " not found. User must be created first via signup."));
+                .orElseThrow(() -> new ResourceNotFoundException("User with email " + request.getEmail() + " not found. User must be created first via signup."));
 
         // Check if teacher already exists for this user
         if (teacherRepository.findByUser_Id(user.getId()).isPresent()) {
@@ -71,7 +68,6 @@ public class TeacherServiceImpl implements TeacherService {
 
         // Create teacher
         Teacher teacher = new Teacher();
-        teacher.setId(user.getId());
         teacher.setUser(user);
         teacher.setBio(request.getBio());
         teacher.setPhone(request.getPhone());
@@ -87,7 +83,7 @@ public class TeacherServiceImpl implements TeacherService {
         logger.info("Updating teacher: {}", teacherId);
 
         Teacher teacher = teacherRepository.findById(teacherId)
-                .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
 
         AppUser user = teacher.getUser();
 
@@ -123,14 +119,14 @@ public class TeacherServiceImpl implements TeacherService {
     @Override
     public TeacherResponse getTeacherById(UUID teacherId) {
         Teacher teacher = teacherRepository.findById(teacherId)
-                .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
         return mapToResponse(teacher);
     }
 
     @Override
     public TeacherResponse getTeacherByUserId(UUID userId) {
         Teacher teacher = teacherRepository.findByUser_Id(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Teacher not found for user"));
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found for user"));
         return mapToResponse(teacher);
     }
 
@@ -146,7 +142,7 @@ public class TeacherServiceImpl implements TeacherService {
     public void deleteTeacher(UUID teacherId) {
         logger.info("Deleting teacher: {}", teacherId);
         Teacher teacher = teacherRepository.findById(teacherId)
-                .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
 
         AppUser user = teacher.getUser();
         teacherRepository.delete(teacher);

@@ -1,128 +1,123 @@
-import Layout from "../components/Layout";
-import { Bell, Globe, Moon, Volume2, Shield, HelpCircle } from "lucide-react";
-import { JSX, useState } from "react";
-
-interface Setting {
-  id: string;
-  label: string;
-  description: string;
-  type: "toggle" | "select" | "button";
-  value?: boolean | string;
-  options?: string[];
-  section: "account" | "preferences" | "notifications";
-  icon: JSX.Element;
-}
+import { useState, useMemo, useEffect } from "react";
+import Layout from "../components/layout";
+import { SettingsSection } from "../components/features/settings";
+import { SettingItemData } from "../components/features/settings";
+import { DEFAULT_SETTINGS, SETTINGS_SECTIONS, SettingSection } from "../config/settings.config";
+import { useAuth } from "../contexts/AuthContext";
+import { userService } from "../services/user.service";
 
 export default function Settings() {
-  const [settings, setSettings] = useState<Setting[]>([
-    {
-      id: "darkMode",
-      label: "Dark Mode",
-      description: "Use dark theme for better visibility in low light",
-      type: "toggle",
-      value: false,
-      section: "preferences",
-      icon: <Moon className="w-5 h-5" />
-    },
-    {
-      id: "language",
-      label: "Language",
-      description: "Choose your preferred language",
-      type: "select",
-      value: "English",
-      options: ["English", "Español", "Français", "Deutsch"],
-      section: "preferences",
-      icon: <Globe className="w-5 h-5" />
-    },
-    {
-      id: "sound",
-      label: "Sound Effects",
-      description: "Play sound effects for actions and achievements",
-      type: "toggle",
-      value: true,
-      section: "preferences",
-      icon: <Volume2 className="w-5 h-5" />
-    },
-    {
-      id: "emailNotif",
-      label: "Email Notifications",
-      description: "Receive updates about your progress and new challenges",
-      type: "toggle",
-      value: true,
-      section: "notifications",
-      icon: <Bell className="w-5 h-5" />
-    },
-    {
-      id: "privacy",
-      label: "Privacy Settings",
-      description: "Manage your data and privacy preferences",
-      type: "button",
-      section: "account",
-      icon: <Shield className="w-5 h-5" />
+  const { user, refreshUserData } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
+  const [settings, setSettings] = useState<Record<string, boolean | string>>({});
+
+  useEffect(() => {
+    if (user) {
+      setSettings({
+        appTheme: user.appTheme === 'DARK',
+        appLanguage: user.appLanguage || 'EN'
+      });
     }
-  ]);
+  }, [user]);
 
-  const handleToggle = (settingId: string) => {
-    setSettings(settings.map(setting => 
-      setting.id === settingId && setting.type === "toggle"
-        ? { ...setting, value: !setting.value }
-        : setting
-    ));
-  };
+  const handleToggle = async (settingId: string, value: boolean) => {
+    if (!user) return;
 
-  const handleSelect = (settingId: string, value: string) => {
-    setSettings(settings.map(setting =>
-      setting.id === settingId
-        ? { ...setting, value }
-        : setting
-    ));
-  };
+    setSettings(prev => ({
+      ...prev,
+      [settingId]: value
+    }));
 
-  const renderSettingControl = (setting: Setting) => {
-    switch (setting.type) {
-      case "toggle":
-        return (
-          <button
-            onClick={() => handleToggle(setting.id)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-              ${setting.value ? 'bg-blue-500' : 'bg-gray-200'}`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                ${setting.value ? 'translate-x-6' : 'translate-x-1'}`}
-            />
-          </button>
-        );
-      case "select":
-        return (
-          <select
-            value={setting.value as string}
-            onChange={(e) => handleSelect(setting.id, e.target.value)}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {setting.options?.map(option => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        );
-      case "button":
-        return (
-          <button className="px-4 py-1.5 text-sm text-blue-600 font-medium hover:bg-blue-50 rounded-lg transition-colors">
-            Manage
-          </button>
-        );
-      default:
-        return null;
+    try {
+      setIsSaving(true);
+      const payload: { appTheme?: 'LIGHT' | 'DARK' } = {};
+      
+      if (settingId === 'appTheme') {
+        payload.appTheme = value ? 'DARK' : 'LIGHT';
+      }
+
+      await userService.updateUser(user.id, payload);
+      await refreshUserData();
+      console.log('Settings saved successfully');
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      setSettings(prev => ({
+        ...prev,
+        [settingId]: !value
+      }));
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const sections = {
-    preferences: "Preferences",
-    notifications: "Notifications",
-    account: "Account Settings"
+  const handleSelect = async (settingId: string, value: string) => {
+    if (!user) return;
+
+    setSettings(prev => ({
+      ...prev,
+      [settingId]: value
+    }));
+
+    try {
+      setIsSaving(true);
+      const payload: { appLanguage?: string } = {};
+      
+      if (settingId === 'appLanguage') {
+        payload.appLanguage = value;
+      }
+
+      await userService.updateUser(user.id, payload);
+      await refreshUserData();
+      console.log('Settings saved successfully');
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      setSettings(prev => ({
+        ...prev,
+        [settingId]: user.appLanguage || 'EN'
+      }));
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  // Transform config to SettingItemData format
+  const settingItems: SettingItemData[] = useMemo(() => {
+    return DEFAULT_SETTINGS.map(config => ({
+      id: config.id,
+      label: config.label,
+      description: config.description,
+      type: config.type,
+      value: settings[config.id] ?? config.defaultValue,
+      options: config.options,
+      icon: config.icon,
+      onToggle: config.type === 'toggle' ? handleToggle : undefined,
+      onSelect: config.type === 'select' ? handleSelect : undefined,
+      disabled: isSaving
+    }));
+  }, [settings, isSaving]);
+
+  const settingsBySection = useMemo(() => {
+    const grouped: Record<SettingSection, SettingItemData[]> = {
+      preferences: []
+    };
+
+    settingItems.forEach(item => {
+      const config = DEFAULT_SETTINGS.find(s => s.id === item.id);
+      if (config) {
+        grouped[config.section].push(item);
+      }
+    });
+
+    return grouped;
+  }, [settingItems]);
+
+  if (!user) {
+    return (
+      <Layout title="Settings" subtitle="Loading...">
+        <div className="text-center py-8 text-gray-500">Loading settings...</div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout
@@ -130,41 +125,15 @@ export default function Settings() {
       subtitle="Customize your learning experience"
     >
       <div className="w-full">
-        {/* Help Button */}
-        <button className="mb-8 flex items-center gap-2 px-4 py-2 text-sm text-blue-600 font-medium hover:bg-blue-50 rounded-lg transition-colors">
-          <HelpCircle className="w-5 h-5" />
-          Need help with settings?
-        </button>
-
-        {/* Settings Sections */}
-        {(Object.entries(sections) as [keyof typeof sections, string][]).map(([section, title]) => (
-          <div key={section} className="mb-8">
-            <h2 className="text-lg font-semibold mb-4">{title}</h2>
-            <div className="bg-white rounded-2xl shadow-sm divide-y divide-gray-100">
-              {settings
-                .filter(setting => setting.section === section)
-                .map(setting => (
-                  <div
-                    key={setting.id}
-                    className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-blue-50 rounded-lg">
-                        {setting.icon}
-                      </div>
-                      <div className="text-left">
-                        <h3 className="font-medium">{setting.label}</h3>
-                        <p className="text-sm text-gray-500">{setting.description}</p>
-                      </div>
-                    </div>
-                    {renderSettingControl(setting)}
-                  </div>
-                ))}
-            </div>
-          </div>
+        
+        {(Object.entries(SETTINGS_SECTIONS) as [SettingSection, string][]).map(([section, title]) => (
+          <SettingsSection
+            key={section}
+            title={title}
+            settings={settingsBySection[section]}
+          />
         ))}
         
-        {/* Version Info */}
         <div className="mt-8 text-sm text-gray-500">
           Version 1.0.0
         </div>

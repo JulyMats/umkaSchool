@@ -11,9 +11,15 @@ import java.util.UUID;
 
 @Repository
 public interface ExerciseAttemptRepository extends JpaRepository<ExerciseAttempt, UUID> {
-    @Query("SELECT ea FROM ExerciseAttempt ea JOIN FETCH ea.student s JOIN FETCH s.user JOIN FETCH ea.exercise e JOIN FETCH e.exerciseType WHERE ea.student.id = :studentId ORDER BY ea.completedAt DESC")
+    @Query("SELECT ea FROM ExerciseAttempt ea " +
+           "JOIN FETCH ea.student s " +
+           "JOIN FETCH s.user " +
+           "JOIN FETCH ea.exercise e " +
+           "JOIN FETCH e.exerciseType " +
+           "WHERE ea.student.id = :studentId " +
+           "ORDER BY ea.completedAt DESC")
     List<ExerciseAttempt> findByStudent_IdOrderByCompletedAtDesc(@Param("studentId") UUID studentId);
-    
+
     List<ExerciseAttempt> findByExercise_IdOrderByCompletedAtDesc(UUID exerciseId);
     List<ExerciseAttempt> findByStudent_IdAndExercise_IdOrderByCompletedAtDesc(UUID studentId, UUID exerciseId);
     Long countByStudent_Id(UUID studentId);
@@ -30,6 +36,5 @@ public interface ExerciseAttemptRepository extends JpaRepository<ExerciseAttempt
            "AND ea.student.id = :studentId " +
            "AND ea.completedAt IS NOT NULL " +
            "AND (has.student.id = :studentId OR hasg.studentGroup.id = s.group.id)")
-    Long countCompletedExercises(@Param("homeworkAssignmentId") UUID homeworkAssignmentId,
-                                  @Param("studentId") UUID studentId);
+    Long countCompletedExercises(@Param("homeworkAssignmentId") UUID homeworkAssignmentId, @Param("studentId") UUID studentId);
 }

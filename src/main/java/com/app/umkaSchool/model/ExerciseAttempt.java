@@ -17,8 +17,8 @@ import java.util.UUID;
 @Table(name = "exercise_attempt")
 public class ExerciseAttempt {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "attempt_id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "attempt_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
     @JsonIgnore
@@ -61,5 +61,4 @@ public class ExerciseAttempt {
         if (startedAt == null || completedAt == null) return 0L;
         return Duration.between(startedAt, completedAt).getSeconds();
     }
-
 }

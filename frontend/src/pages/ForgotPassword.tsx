@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { extractErrorMessage } from '../utils/error.utils';
 
 export default function ForgotPassword() {
   const { forgotPassword } = useAuth();
@@ -14,8 +15,8 @@ export default function ForgotPassword() {
     try {
       await forgotPassword(email);
       setSuccess(true);
-    } catch (error: any) {
-      setError(error.response?.data?.message || 'Failed to process request');
+    } catch (error: unknown) {
+      setError(extractErrorMessage(error, 'Failed to process request'));
     }
   };
 

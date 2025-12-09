@@ -15,8 +15,8 @@ public class UpdateExerciseRequest {
     @Max(value = 10, message = "Difficulty must be between 1 and 10")
     private Integer difficulty;
 
-    @Min(value = 0, message = "Points must be at least 0")
+    @Min(value = 0, message = "Points must be greater than 0")
     private Integer points;
 
-    private UUID createdById; // Teacher ID
+    private UUID createdById;
 }

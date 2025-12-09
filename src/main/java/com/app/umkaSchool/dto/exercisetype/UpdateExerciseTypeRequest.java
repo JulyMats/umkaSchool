@@ -2,13 +2,16 @@ package com.app.umkaSchool.dto.exercisetype;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.UUID;
 
 @Data
 public class UpdateExerciseTypeRequest {
+    @Size(min = 3, max = 100, message = "Name must be between 3 and 100 characters")
     private String name;
+
     private String description;
 
     @Min(value = 1, message = "Base difficulty must be between 1 and 10")
@@ -20,5 +23,5 @@ public class UpdateExerciseTypeRequest {
 
     private String parameterRanges; // JSON: {"cardCount": [2, 20], "displaySpeed": [0.5, 3.0], "timePerQuestion": [2, 20]}
 
-    private UUID createdById; // Teacher ID
+    private UUID createdById;
 }

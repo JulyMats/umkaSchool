@@ -1,24 +1,5 @@
 import axiosInstance from './axios.config';
-
-export interface Achievement {
-    id: string;
-    name: string;
-    description: string;
-    iconUrl: string;
-    requiredCriteria: string; // JSON string
-    points: number;
-    createdAt: string;
-}
-
-export interface StudentAchievement {
-    achievementId: string;
-    name: string;
-    description: string;
-    iconUrl: string;
-    points: number;
-    earnedAt: string;
-    isNew: boolean;
-}
+import { Achievement, StudentAchievement } from '../types/achievement';
 
 export const achievementService = {
     getAllAchievements: async (): Promise<Achievement[]> => {

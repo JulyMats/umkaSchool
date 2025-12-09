@@ -3,6 +3,7 @@ package com.app.umkaSchool.service.impl;
 import com.app.umkaSchool.dto.group.CreateGroupRequest;
 import com.app.umkaSchool.dto.group.GroupResponse;
 import com.app.umkaSchool.dto.group.UpdateGroupRequest;
+import com.app.umkaSchool.exception.ResourceNotFoundException;
 import com.app.umkaSchool.model.Student;
 import com.app.umkaSchool.model.StudentGroup;
 import com.app.umkaSchool.model.Teacher;
@@ -42,7 +43,11 @@ public class GroupServiceImpl implements GroupService {
     public GroupResponse createGroup(CreateGroupRequest request) {
         logger.info("Creating new group: {}", request.getName());
 
-        if (groupRepository.existsByCode(request.getCode())) {
+        // Convert code to uppercase for consistency
+        String codeUpper = request.getCode() != null ? request.getCode().toUpperCase() : null;
+        
+        // Check code existence with uppercase version
+        if (codeUpper != null && groupRepository.existsByCode(codeUpper)) {
             throw new IllegalArgumentException("Group code already exists");
         }
 
@@ -50,22 +55,25 @@ public class GroupServiceImpl implements GroupService {
             throw new IllegalArgumentException("Group name already exists");
         }
 
-        Teacher teacher = teacherRepository.findById(request.getTeacherId())
-                .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
-
         StudentGroup group = new StudentGroup();
-        group.setId(UUID.randomUUID());
         group.setName(request.getName());
-        group.setCode(request.getCode().toUpperCase());
+        group.setCode(codeUpper);
         group.setDescription(request.getDescription());
-        group.setTeacher(teacher);
+        
+        // Teacher is optional (nullable in model)
+        if (request.getTeacherId() != null) {
+            Teacher teacher = teacherRepository.findById(request.getTeacherId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
+            group.setTeacher(teacher);
+        }
+        
         group = groupRepository.save(group);
 
         // Add students to group if provided
         if (request.getStudentIds() != null && !request.getStudentIds().isEmpty()) {
             for (UUID studentId : request.getStudentIds()) {
                 Student student = studentRepository.findById(studentId)
-                        .orElseThrow(() -> new IllegalArgumentException("Student not found: " + studentId));
+                        .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + studentId));
                 student.setGroup(group);
                 studentRepository.save(student);
             }
@@ -81,7 +89,7 @@ public class GroupServiceImpl implements GroupService {
         logger.info("Updating group: {}", groupId);
 
         StudentGroup group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
         if (request.getName() != null) {
             if (!request.getName().equals(group.getName()) && groupRepository.existsByName(request.getName())) {
@@ -96,7 +104,7 @@ public class GroupServiceImpl implements GroupService {
 
         if (request.getTeacherId() != null) {
             Teacher teacher = teacherRepository.findById(request.getTeacherId())
-                    .orElseThrow(() -> new IllegalArgumentException("Teacher not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
             group.setTeacher(teacher);
         }
 
@@ -114,7 +122,7 @@ public class GroupServiceImpl implements GroupService {
             // Add new students to group
             for (UUID studentId : request.getStudentIds()) {
                 Student student = studentRepository.findById(studentId)
-                        .orElseThrow(() -> new IllegalArgumentException("Student not found: " + studentId));
+                        .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + studentId));
                 student.setGroup(group);
                 studentRepository.save(student);
             }
@@ -127,14 +135,14 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public GroupResponse getGroupById(UUID groupId) {
         StudentGroup group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
         return mapToResponse(group);
     }
 
     @Override
     public GroupResponse getGroupByCode(String code) {
         StudentGroup group = groupRepository.findByCode(code.toUpperCase())
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
         return mapToResponse(group);
     }
 
@@ -158,7 +166,7 @@ public class GroupServiceImpl implements GroupService {
         logger.info("Deleting group: {}", groupId);
 
         StudentGroup group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
         // Remove group from all students
         List<Student> students = studentRepository.findByGroup_Id(groupId);
@@ -175,7 +183,7 @@ public class GroupServiceImpl implements GroupService {
     @Transactional
     public void addStudentsToGroup(UUID groupId, List<UUID> studentIds) {
         StudentGroup group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
 
         for (UUID studentId : studentIds) {
             Student student = studentRepository.findById(studentId)
@@ -189,7 +197,7 @@ public class GroupServiceImpl implements GroupService {
     @Transactional
     public void removeStudentFromGroup(UUID studentId) {
         Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
         student.setGroup(null);
         studentRepository.save(student);
     }
@@ -197,7 +205,7 @@ public class GroupServiceImpl implements GroupService {
     @Override
     public StudentGroup getGroupEntity(UUID groupId) {
         return groupRepository.findById(groupId)
-                .orElseThrow(() -> new IllegalArgumentException("Group not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Group not found"));
     }
 
     private GroupResponse mapToResponse(StudentGroup group) {

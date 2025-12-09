@@ -11,7 +11,7 @@ import java.time.ZonedDateTime;
 
 @Data
 @Entity
-@Table(name = "student_achievement", schema = "school")
+@Table(name = "student_achievement")
 public class StudentAchievement {
     @EmbeddedId
     private StudentAchievementId id = new StudentAchievementId();
@@ -35,6 +35,3 @@ public class StudentAchievement {
     @Column(name = "earned_at", nullable = false, updatable = false)
     private ZonedDateTime earnedAt;
 }
-
-
-

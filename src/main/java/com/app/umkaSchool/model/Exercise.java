@@ -15,11 +15,11 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "exercise", schema = "school")
+@Table(name = "exercise")
 public class Exercise {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "exercise_id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "exercise_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
     @ToString.Exclude
@@ -34,7 +34,6 @@ public class Exercise {
 
     @Column(nullable = false)
     private Integer difficulty;
-
 
     @Column(nullable = false)
     private Integer points;

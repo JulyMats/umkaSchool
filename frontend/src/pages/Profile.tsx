@@ -1,8 +1,8 @@
 import { useAuth } from '../contexts/AuthContext';
 import StudentProfile from './StudentProfile';
 import TeacherProfile from './TeacherProfile';
-import { Loader2 } from 'lucide-react';
-import Layout from '../components/Layout';
+import Layout from '../components/layout';
+import { LoadingState, ErrorState } from '../components/common';
 
 export default function Profile() {
     const { user, student, teacher, isLoading } = useAuth();
@@ -10,9 +10,7 @@ export default function Profile() {
     if (isLoading) {
         return (
             <Layout title="Profile" subtitle="Loading...">
-                <div className="flex justify-center items-center h-64">
-                    <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
-                </div>
+                <LoadingState message="Loading your profile..." size="lg" className="h-64" />
             </Layout>
         );
     }
@@ -27,9 +25,11 @@ export default function Profile() {
 
     return (
         <Layout title="Profile" subtitle="Profile not found">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <p className="text-gray-600">Unable to load profile. Please try again later.</p>
-            </div>
+            <ErrorState 
+                message="Unable to load profile. Please try again later or contact support if the problem persists." 
+                onRetry={() => window.location.reload()}
+                retryLabel="Refresh Page"
+            />
         </Layout>
     );
 }

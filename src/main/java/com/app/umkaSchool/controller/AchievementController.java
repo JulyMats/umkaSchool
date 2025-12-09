@@ -1,7 +1,6 @@
 package com.app.umkaSchool.controller;
 
 import com.app.umkaSchool.dto.achievement.AchievementResponse;
-import com.app.umkaSchool.dto.achievement.StudentAchievementResponse;
 import com.app.umkaSchool.model.Achievement;
 import com.app.umkaSchool.model.StudentAchievement;
 import com.app.umkaSchool.repository.AchievementRepository;
@@ -39,32 +38,34 @@ public class AchievementController {
     }
 
     @GetMapping("/student/{studentId}")
-    public ResponseEntity<List<StudentAchievementResponse>> getStudentAchievements(
+    public ResponseEntity<List<AchievementResponse>> getStudentAchievements(
             @PathVariable UUID studentId) {
         List<StudentAchievement> studentAchievements = studentAchievementRepository.findByStudent_Id(studentId);
-        List<StudentAchievementResponse> responses = studentAchievements.stream()
+        List<AchievementResponse> responses = studentAchievements.stream()
                 .map(this::mapToStudentAchievementResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/student/{studentId}/recent")
-    public ResponseEntity<List<StudentAchievementResponse>> getRecentStudentAchievements(
+    public ResponseEntity<List<AchievementResponse>> getRecentStudentAchievements(
             @PathVariable UUID studentId,
             @RequestParam(defaultValue = "24") int hours) {
         ZonedDateTime cutoffTime = ZonedDateTime.now().minusHours(hours);
         List<StudentAchievement> studentAchievements = studentAchievementRepository.findByStudent_Id(studentId);
         
-        List<StudentAchievementResponse> responses = studentAchievements.stream()
+        List<AchievementResponse> responses = studentAchievements.stream()
                 .filter(sa -> sa.getEarnedAt().isAfter(cutoffTime))
                 .map(sa -> {
-                    StudentAchievementResponse response = mapToStudentAchievementResponse(sa);
-                    return StudentAchievementResponse.builder()
-                            .achievementId(response.getAchievementId())
+                    AchievementResponse response = mapToStudentAchievementResponse(sa);
+                    return AchievementResponse.builder()
+                            .id(response.getId())
                             .name(response.getName())
                             .description(response.getDescription())
                             .iconUrl(response.getIconUrl())
+                            .requiredCriteria(response.getRequiredCriteria())
                             .points(response.getPoints())
+                            .createdAt(response.getCreatedAt())
                             .earnedAt(response.getEarnedAt())
                             .isNew(true)
                             .build();
@@ -82,20 +83,23 @@ public class AchievementController {
                 .requiredCriteria(achievement.getRequiredCriteria())
                 .points(achievement.getPoints())
                 .createdAt(achievement.getCreatedAt())
+                .earnedAt(null)
+                .isNew(null)
                 .build();
     }
 
-    private StudentAchievementResponse mapToStudentAchievementResponse(StudentAchievement studentAchievement) {
+    private AchievementResponse mapToStudentAchievementResponse(StudentAchievement studentAchievement) {
         Achievement achievement = studentAchievement.getAchievement();
-        return StudentAchievementResponse.builder()
-                .achievementId(achievement.getId())
+        return AchievementResponse.builder()
+                .id(achievement.getId())
                 .name(achievement.getName())
                 .description(achievement.getDescription())
                 .iconUrl(achievement.getIconUrl())
+                .requiredCriteria(achievement.getRequiredCriteria())
                 .points(achievement.getPoints())
+                .createdAt(achievement.getCreatedAt())
                 .earnedAt(studentAchievement.getEarnedAt())
                 .isNew(false)
                 .build();
     }
 }
-

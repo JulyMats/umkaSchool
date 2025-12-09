@@ -15,11 +15,11 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "homework_assignment", schema = "school")
+@Table(name = "homework_assignment")
 public class HomeworkAssignment {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "homework_assignment_id", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "homework_assignment_id", insertable = false, updatable = false, nullable = false)
     private UUID id;
 
     @JsonIgnore
@@ -60,4 +60,3 @@ public class HomeworkAssignment {
     @OneToMany(mappedBy = "homeworkAssignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<HomeworkAssignmentStudent> assignedStudents = new HashSet<>();
 }
-

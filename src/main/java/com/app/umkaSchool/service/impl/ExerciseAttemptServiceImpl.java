@@ -3,6 +3,7 @@ package com.app.umkaSchool.service.impl;
 import com.app.umkaSchool.dto.exerciseattempt.CreateExerciseAttemptRequest;
 import com.app.umkaSchool.dto.exerciseattempt.ExerciseAttemptResponse;
 import com.app.umkaSchool.dto.exerciseattempt.UpdateExerciseAttemptRequest;
+import com.app.umkaSchool.exception.ResourceNotFoundException;
 import com.app.umkaSchool.model.Exercise;
 import com.app.umkaSchool.model.ExerciseAttempt;
 import com.app.umkaSchool.model.Student;
@@ -18,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -55,10 +58,10 @@ public class ExerciseAttemptServiceImpl {
                 request.getStudentId(), request.getExerciseId());
 
         Student student = studentRepository.findById(request.getStudentId())
-                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
 
         Exercise exercise = exerciseRepository.findById(request.getExerciseId())
-                .orElseThrow(() -> new IllegalArgumentException("Exercise not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
 
         ExerciseAttempt attempt = new ExerciseAttempt();
         attempt.setStudent(student);
@@ -72,7 +75,6 @@ public class ExerciseAttemptServiceImpl {
         attempt = exerciseAttemptRepository.save(attempt);
         logger.info("Exercise attempt created successfully: {}", attempt.getId());
 
-        // Not updating snapshot yet — will update on completion
         return mapToResponse(attempt);
     }
 
@@ -81,17 +83,17 @@ public class ExerciseAttemptServiceImpl {
         logger.info("Updating exercise attempt: {}", attemptId);
 
         ExerciseAttempt attempt = exerciseAttemptRepository.findById(attemptId)
-                .orElseThrow(() -> new IllegalArgumentException("Exercise attempt not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise attempt not found"));
 
         if (request.getStudentId() != null) {
             Student student = studentRepository.findById(request.getStudentId())
-                    .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
             attempt.setStudent(student);
         }
 
         if (request.getExerciseId() != null) {
             Exercise exercise = exerciseRepository.findById(request.getExerciseId())
-                    .orElseThrow(() -> new IllegalArgumentException("Exercise not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
             attempt.setExercise(exercise);
         }
 
@@ -109,6 +111,31 @@ public class ExerciseAttemptServiceImpl {
         }
         if (request.getSettings() != null) {
             attempt.setSettings(request.getSettings());
+        }
+
+        // Calculate score automatically if totalAttempts and totalCorrect are provided but score is not
+        if (request.getTotalAttempts() != null && request.getTotalCorrect() != null) {
+            if (request.getScore() != null) {
+                attempt.setScore(request.getScore());
+            } else {
+                // Calculate score: base points from exercise * accuracy percentage
+                int basePoints = attempt.getExercise().getPoints() != null ? attempt.getExercise().getPoints() : 0;
+                long totalAttempts = request.getTotalAttempts();
+                long totalCorrect = request.getTotalCorrect();
+                if (totalAttempts > 0) {
+                    // Score = base points * (correct / total) * difficulty multiplier
+                    double accuracy = (double) totalCorrect / totalAttempts;
+                    int difficulty = attempt.getExercise().getDifficulty() != null ? attempt.getExercise().getDifficulty() : 1;
+                    int calculatedScore = (int) Math.round(basePoints * accuracy * (1 + difficulty * 0.1));
+                    attempt.setScore(calculatedScore);
+                    logger.info("Calculated score: {} (base: {}, accuracy: {}, difficulty: {})", 
+                            calculatedScore, basePoints, accuracy, difficulty);
+                } else {
+                    attempt.setScore(0);
+                }
+            }
+        } else if (request.getScore() != null) {
+            attempt.setScore(request.getScore());
         }
 
         boolean shouldUpdateSnapshot = false;
@@ -168,7 +195,7 @@ public class ExerciseAttemptServiceImpl {
 
     public ExerciseAttemptResponse getExerciseAttemptById(UUID attemptId) {
         ExerciseAttempt attempt = exerciseAttemptRepository.findById(attemptId)
-                .orElseThrow(() -> new IllegalArgumentException("Exercise attempt not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise attempt not found"));
         return mapToResponse(attempt);
     }
 
@@ -205,7 +232,7 @@ public class ExerciseAttemptServiceImpl {
         logger.info("Deleting exercise attempt: {}", attemptId);
 
         ExerciseAttempt attempt = exerciseAttemptRepository.findById(attemptId)
-                .orElseThrow(() -> new IllegalArgumentException("Exercise attempt not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise attempt not found"));
 
         exerciseAttemptRepository.delete(attempt);
         logger.info("Exercise attempt deleted successfully: {}", attemptId);
@@ -219,9 +246,9 @@ public class ExerciseAttemptServiceImpl {
     private ExerciseAttemptResponse mapToResponse(ExerciseAttempt attempt) {
         Long totalAttempts = attempt.getTotalAttempts() == null ? 0L : attempt.getTotalAttempts();
         Long totalCorrect = attempt.getTotalCorrect() == null ? 0L : attempt.getTotalCorrect();
-        java.math.BigDecimal accuracy = java.math.BigDecimal.ZERO;
+        BigDecimal accuracy = BigDecimal.ZERO;
         if (totalAttempts > 0) {
-            accuracy = java.math.BigDecimal.valueOf(totalCorrect * 100.0 / totalAttempts).setScale(2, java.math.RoundingMode.HALF_UP);
+            accuracy = BigDecimal.valueOf(totalCorrect * 100.0 / totalAttempts).setScale(2, RoundingMode.HALF_UP);
         }
 
         return ExerciseAttemptResponse.builder()
