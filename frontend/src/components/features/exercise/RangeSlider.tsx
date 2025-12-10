@@ -40,13 +40,14 @@ const RangeSlider: React.FC<RangeSliderProps> = ({
   const colors = colorClasses[color];
 
   return (
-    <div className={`bg-gradient-to-br ${colors.bg} rounded-2xl p-6 border-2 ${colors.border}`}>
-      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-        {icon} {label}
+    <div className={`bg-gradient-to-br ${colors.bg} rounded-2xl p-4 sm:p-6 border-2 ${colors.border}`}>
+      <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
+        <span className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0">{icon}</span>
+        <span className="break-words">{label}</span>
       </h3>
-      <div className={`bg-white rounded-xl p-4 border-2 ${colors.border} space-y-4`}>
-        {description && <p className="text-sm text-gray-600">{description}</p>}
-        <div className="flex items-center gap-4">
+      <div className={`bg-white rounded-xl p-3 sm:p-4 border-2 ${colors.border} space-y-3 sm:space-y-4`}>
+        {description && <p className="text-xs sm:text-sm text-gray-600">{description}</p>}
+        <div className="flex items-center gap-3 sm:gap-4">
           <div className="flex-1">
             <label className="text-xs font-semibold text-gray-700 mb-2 block">Min</label>
             <input
@@ -57,7 +58,7 @@ const RangeSlider: React.FC<RangeSliderProps> = ({
               onChange={(e) => onChange([Number(e.target.value), value[1]])}
               className={`w-full ${colors.accent}`}
             />
-            <div className={`text-center ${colors.text} font-bold text-lg mt-1`}>{value[0]}</div>
+            <div className={`text-center ${colors.text} font-bold text-base sm:text-lg mt-1`}>{value[0]}</div>
           </div>
           <div className="flex-1">
             <label className="text-xs font-semibold text-gray-700 mb-2 block">Max</label>
@@ -69,7 +70,7 @@ const RangeSlider: React.FC<RangeSliderProps> = ({
               onChange={(e) => onChange([value[0], Number(e.target.value)])}
               className={`w-full ${colors.accent}`}
             />
-            <div className={`text-center ${colors.text} font-bold text-lg mt-1`}>{value[1]}</div>
+            <div className={`text-center ${colors.text} font-bold text-base sm:text-lg mt-1`}>{value[1]}</div>
           </div>
         </div>
       </div>
