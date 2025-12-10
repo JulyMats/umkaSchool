@@ -18,10 +18,13 @@ import TeacherGroups from "./pages/TeacherGroups";
 import TeacherHomework from "./pages/TeacherHomework";
 import Profile from "./pages/Profile";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { Menu } from "lucide-react";
+import { useState } from "react";
 import "./App.css";
 
 function AppContent() {
   const { isAuthenticated, user, isLoading } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     return isAuthenticated ? children : <Navigate to="/login" replace />;
@@ -87,8 +90,16 @@ function AppContent() {
                   path="*"
                   element={
                     <div className="flex h-screen overflow-hidden">
-                      <Sidebar />
-                      <main className="flex-1 bg-gray-50 overflow-y-auto ml-64">
+                      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+                      <main className="flex-1 bg-gray-50 overflow-y-auto lg:ml-64">
+                        {/* Mobile menu button */}
+                        <button
+                          onClick={() => setSidebarOpen(true)}
+                          className="lg:hidden fixed top-4 left-4 z-30 p-2 bg-white rounded-lg shadow-md hover:bg-gray-100"
+                          aria-label="Open menu"
+                        >
+                          <Menu size={24} />
+                        </button>
                         <Routes>
                           {renderProtectedRoutes()}
                         </Routes>

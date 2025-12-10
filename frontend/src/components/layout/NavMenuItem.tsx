@@ -38,6 +38,7 @@ const NavMenuItem: React.FC<NavMenuItemProps> = ({
     <li>
       <Link
         to={path}
+        onClick={onClick}
         className={`${baseClasses} ${activeClasses} ${className}`}
       >
         <Icon size={18} className={iconClasses} />
