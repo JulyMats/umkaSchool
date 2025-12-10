@@ -198,15 +198,15 @@ export default function ExerciseSetup() {
 
   return (
     <AnimatedBackground>
-      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen py-4 sm:py-8 px-3 sm:px-4 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <ExerciseTypeHeader
             exerciseType={exerciseType}
             onBack={() => navigate(-1)}
           />
 
-          <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 border-4 border-pink-300">
-            <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 md:p-8 border-2 sm:border-4 border-pink-300">
+            <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
               {/* DIVISION */}
               {isDivision && (
                 <>
@@ -285,13 +285,13 @@ export default function ExerciseSetup() {
                     color="green"
                   />
 
-                  <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 border-2 border-yellow-200">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                      <Hash className="w-6 h-6 text-yellow-600" /> Value Range 🔢
+                  <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 border-2 border-yellow-200">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
+                      <Hash className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" /> Value Range 🔢
                     </h3>
-                    <div className="bg-white rounded-xl p-4 border-2 border-yellow-200 space-y-4">
-                      <p className="text-sm text-gray-600">From {ranges.minValue || 1} to {ranges.maxValue || 9}.</p>
-                      <div className="flex items-center gap-4">
+                    <div className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 border-2 border-yellow-200 space-y-3 sm:space-y-4">
+                      <p className="text-xs sm:text-sm text-gray-600">From {ranges.minValue || 1} to {ranges.maxValue || 9}.</p>
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                         <div className="flex-1">
                           <label className="text-xs font-semibold text-gray-700 mb-2 block">Min value</label>
                           <input
@@ -302,7 +302,7 @@ export default function ExerciseSetup() {
                             onChange={(e) => setMinValue(Number(e.target.value))}
                             className="w-full accent-yellow-500"
                           />
-                          <div className="text-center text-yellow-600 font-bold text-lg mt-1">{minValue}</div>
+                          <div className="text-center text-yellow-600 font-bold text-base sm:text-lg mt-1">{minValue}</div>
                         </div>
                         <div className="flex-1">
                           <label className="text-xs font-semibold text-gray-700 mb-2 block">Max value</label>
@@ -314,7 +314,7 @@ export default function ExerciseSetup() {
                             onChange={(e) => setMaxValue(Number(e.target.value))}
                             className="w-full accent-yellow-500"
                           />
-                          <div className="text-center text-yellow-600 font-bold text-lg mt-1">{maxValue}</div>
+                          <div className="text-center text-yellow-600 font-bold text-base sm:text-lg mt-1">{maxValue}</div>
                         </div>
                       </div>
                     </div>
@@ -435,11 +435,13 @@ export default function ExerciseSetup() {
                 selectedTheme={selectedTheme}
               />
 
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 pt-4">
                 <Button
                   type="button"
                   onClick={() => navigate('/exercises')}
                   variant="outline"
+                  className="w-full sm:w-auto"
+                  size="sm"
                 >
                   ← Back to list
                 </Button>
@@ -447,7 +449,7 @@ export default function ExerciseSetup() {
                   type="submit"
                   variant="gradient-yellow"
                   size="lg"
-                  className="inline-flex items-center gap-2"
+                  className="inline-flex items-center justify-center gap-2 w-full sm:w-auto"
                 >
                   <Rocket className="w-5 h-5" />
                   Start the challenge! 🚀

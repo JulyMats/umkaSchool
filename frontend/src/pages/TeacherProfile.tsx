@@ -137,33 +137,33 @@ export default function TeacherProfile() {
             )}
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-6">
                     {/* Profile Header */}
-                    <div className="flex items-center gap-6 pb-6 border-b border-gray-100">
-                        <div className="relative">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 pb-6 border-b border-gray-100">
+                        <div className="relative flex-shrink-0">
                             <img
                                 src={displayAvatarUrl}
                                 alt={`${firstName} ${lastName}`}
-                                className="w-24 h-24 rounded-full bg-gray-100 object-cover border-4 border-gray-50"
+                                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-100 object-cover border-4 border-gray-50"
                                 onError={(e) => {
                                     (e.target as HTMLImageElement).src = avatar;
                                 }}
                             />
                         </div>
-                        <div className="flex-1">
-                            <h2 className="text-2xl font-semibold text-gray-900">
+                        <div className="flex-1 text-center sm:text-left w-full sm:w-auto">
+                            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 break-words">
                                 {firstName} {lastName}
                             </h2>
-                            <p className="text-gray-500 mt-1">Teacher Account</p>
+                            <p className="text-sm sm:text-base text-gray-500 mt-1">Teacher Account</p>
                         </div>
                         {!isEditing && (
                             <button
                                 type="button"
                                 onClick={() => setIsEditing(true)}
-                                className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors font-medium"
                             >
                                 <Edit2 className="w-4 h-4" />
-                                Edit Profile
+                                <span>Edit Profile</span>
                             </button>
                         )}
                     </div>

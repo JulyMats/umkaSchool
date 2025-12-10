@@ -54,14 +54,14 @@ const ExerciseAnswerInput: React.FC<ExerciseAnswerInputProps> = ({
           disabled={feedback !== null || countdown === 0}
           autoFocus
         />
-        <div className="mt-6">
+        <div className="mt-4">
           <Button
             type="submit"
             variant="gradient-yellow"
-            size="lg"
+            size="md"
             fullWidth
             disabled={feedback !== null || countdown === 0}
-            className="text-lg"
+            className="text-sm sm:text-base"
           >
             Check Answer! ✅
           </Button>

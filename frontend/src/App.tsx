@@ -18,13 +18,14 @@ import TeacherGroups from "./pages/TeacherGroups";
 import TeacherHomework from "./pages/TeacherHomework";
 import Profile from "./pages/Profile";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { Menu } from "lucide-react";
-import { useState } from "react";
+import { SidebarProvider, useSidebar } from "./contexts/SidebarContext";
 import "./App.css";
 
 function AppContent() {
   const { isAuthenticated, user, isLoading } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const sidebarContext = useSidebar();
+  const sidebarOpen = sidebarContext?.isOpen ?? false;
+  const handleCloseSidebar = sidebarContext?.closeSidebar ?? (() => {});
 
   const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     return isAuthenticated ? children : <Navigate to="/login" replace />;
@@ -70,10 +71,11 @@ function AppContent() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/" replace />} />
-        <Route path="/forgot-password" element={!isAuthenticated ? <ForgotPassword /> : <Navigate to="/" replace />} />
-        <Route path="/reset-password" element={!isAuthenticated ? <ResetPassword /> : <Navigate to="/" replace />} />
-        <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/" replace />} />
+        <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
+        <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" replace />} />
+        <Route path="/forgot-password" element={!isAuthenticated ? <ForgotPassword /> : <Navigate to="/dashboard" replace />} />
+        <Route path="/reset-password" element={!isAuthenticated ? <ResetPassword /> : <Navigate to="/dashboard" replace />} />
+        <Route path="/register" element={!isAuthenticated ? <Register /> : <Navigate to="/dashboard" replace />} />
 
         {/* Protected Routes */}
         <Route
@@ -89,17 +91,9 @@ function AppContent() {
                 <Route
                   path="*"
                   element={
-                    <div className="flex h-screen overflow-hidden">
-                      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-                      <main className="flex-1 bg-gray-50 overflow-y-auto lg:ml-64">
-                        {/* Mobile menu button */}
-                        <button
-                          onClick={() => setSidebarOpen(true)}
-                          className="lg:hidden fixed top-4 left-4 z-30 p-2 bg-white rounded-lg shadow-md hover:bg-gray-100"
-                          aria-label="Open menu"
-                        >
-                          <Menu size={24} />
-                        </button>
+                    <div className="flex h-screen overflow-hidden relative">
+                      <Sidebar isOpen={sidebarOpen} onClose={handleCloseSidebar} />
+                      <main className="flex-1 bg-gray-50 overflow-y-auto lg:ml-64 w-full">
                         <Routes>
                           {renderProtectedRoutes()}
                         </Routes>
@@ -119,7 +113,9 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <SidebarProvider>
+        <AppContent />
+      </SidebarProvider>
     </AuthProvider>
   );
 }
