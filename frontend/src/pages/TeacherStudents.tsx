@@ -152,7 +152,8 @@ export default function TeacherStudents() {
                 </Button>
             </div>
 
-            <div className="mt-6 bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+            {/* Desktop: Table view */}
+            <div className="hidden md:block mt-6 bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
                 <table className="w-full">
                     <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500 tracking-wide">
                         <tr>
@@ -188,6 +189,105 @@ export default function TeacherStudents() {
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile: Card view */}
+            <div className="md:hidden mt-6 space-y-4">
+                {filteredStudents.length === 0 ? (
+                    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+                        <EmptyState
+                            message={students.length === 0
+                                ? 'You have not assigned any students yet.'
+                                : 'No students match your search.'}
+                            icon={Users}
+                        />
+                    </div>
+                ) : (
+                    filteredStudents.map((student) => {
+                        const lastAchievement = studentLastAchievements[student.id] || null;
+                        return (
+                            <div
+                                key={student.id}
+                                className="bg-white border border-gray-100 rounded-xl shadow-sm p-4 space-y-3"
+                            >
+                                {/* Student Info */}
+                                <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                        <h3 className="font-semibold text-gray-900 text-base">
+                                            {student.firstName} {student.lastName}
+                                        </h3>
+                                        <p className="text-sm text-gray-500 mt-0.5">{student.email}</p>
+                                    </div>
+                                    <button
+                                        onClick={() => handleOpenManageModal(student)}
+                                        className="text-blue-600 hover:text-blue-700 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+                                    >
+                                        Manage
+                                    </button>
+                                </div>
+
+                                {/* Guardian */}
+                                <div className="pt-2 border-t border-gray-100">
+                                    <p className="text-xs font-medium text-gray-500 mb-1">Guardian</p>
+                                    {student.guardian ? (
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-900">
+                                                {student.guardian.firstName} {student.guardian.lastName}
+                                            </p>
+                                            <p className="text-xs text-gray-500 mt-0.5">
+                                                {student.guardian.relationship} • {student.guardian.email}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-400 italic">No guardian info</p>
+                                    )}
+                                </div>
+
+                                {/* Group */}
+                                <div>
+                                    <p className="text-xs font-medium text-gray-500 mb-1">Group</p>
+                                    {student.groupName ? (
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-900">{student.groupName}</p>
+                                            <p className="text-xs text-gray-500 mt-0.5">
+                                                Code: {student.groupCode || '—'}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-400 italic">Unassigned</p>
+                                    )}
+                                </div>
+
+                                {/* Last Achievement */}
+                                <div>
+                                    <p className="text-xs font-medium text-gray-500 mb-1">Last Achievement</p>
+                                    {lastAchievement ? (
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-900">
+                                                {lastAchievement.name}
+                                            </p>
+                                            <p className="text-xs text-gray-500 mt-0.5">
+                                                {new Date(lastAchievement.earnedAt).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-400 italic">No achievement</p>
+                                    )}
+                                </div>
+
+                                {/* Enrollment Date */}
+                                <div className="pt-2 border-t border-gray-100">
+                                    <p className="text-xs font-medium text-gray-500 mb-1">Enrollment Date</p>
+                                    <p className="text-sm font-medium text-gray-900">
+                                        {student.enrollmentDate
+                                            ? new Date(student.enrollmentDate).toLocaleDateString()
+                                            : '—'}
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
             </div>
 
             <AssignStudentModal
