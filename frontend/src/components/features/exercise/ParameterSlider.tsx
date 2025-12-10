@@ -62,17 +62,18 @@ const ParameterSlider: React.FC<ParameterSliderProps> = ({
   const displayValue = formatValue ? formatValue(value) : value.toString();
 
   return (
-    <div className={`bg-gradient-to-br ${colors.bg} rounded-2xl p-6 border-2 ${colors.border}`}>
-      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-        {icon} {label}
+    <div className={`bg-gradient-to-br ${colors.bg} rounded-2xl p-4 sm:p-6 border-2 ${colors.border}`}>
+      <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
+        <span className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0">{icon}</span>
+        <span className="break-words">{label}</span>
       </h3>
-      <div className={`bg-white rounded-xl p-4 border-2 ${colors.border}`}>
+      <div className={`bg-white rounded-xl p-3 sm:p-4 border-2 ${colors.border}`}>
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <p className="text-base font-semibold text-gray-800 mb-1">{label}</p>
-            {description && <p className="text-sm text-gray-600">{description}</p>}
+            <p className="text-sm sm:text-base font-semibold text-gray-800 mb-1">{label}</p>
+            {description && <p className="text-xs sm:text-sm text-gray-600">{description}</p>}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <input
               type="range"
               min={min}
@@ -80,10 +81,10 @@ const ParameterSlider: React.FC<ParameterSliderProps> = ({
               step={step}
               value={value}
               onChange={(e) => onChange(Number(e.target.value))}
-              className={`w-40 ${colors.accent}`}
+              className={`w-32 sm:w-40 ${colors.accent}`}
             />
-            <div className={`flex items-center gap-2 ${colors.text} font-bold text-lg`}>
-              {icon}
+            <div className={`flex items-center gap-2 ${colors.text} font-bold text-base sm:text-lg`}>
+              <span className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0">{icon}</span>
               <span>{displayValue}</span>
             </div>
           </div>
