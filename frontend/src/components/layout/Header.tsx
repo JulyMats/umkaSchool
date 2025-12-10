@@ -1,28 +1,44 @@
-import { Globe, Sun } from 'lucide-react';
+import { Globe, Sun, Menu } from 'lucide-react';
 
 interface HeaderProps {
   title: string;
   subtitle?: string;
+  onMenuClick?: () => void;
+  showMenuButton?: boolean;
 }
 
-export default function Header({ title, subtitle }: HeaderProps) {
+export default function Header({ title, subtitle, onMenuClick, showMenuButton }: HeaderProps) {
   return (
     <div className="flex flex-col pb-4">
-      <div className="flex items-center justify-between">
-      <div className="text-left">
-        <h1 className="text-2xl font-bold">{title}</h1>
-        {subtitle && <p className="text-gray-500">{subtitle}</p>}
+      <div className="flex items-start sm:items-center justify-between gap-4">
+        <div className="text-left flex-1 min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold break-words">{title}</h1>
+          {subtitle && <p className="text-sm sm:text-base text-gray-500 mt-1 break-words">{subtitle}</p>}
+        </div>
+        <div className="flex gap-2 sm:gap-4 flex-shrink-0 items-center">
+          {showMenuButton && onMenuClick && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onMenuClick();
+              }}
+              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg active:bg-gray-200 transition-colors"
+              aria-label="Open menu"
+              type="button"
+            >
+              <Menu className="w-5 h-5 text-gray-600" />
+            </button>
+          )}
+          <button className="p-2 hover:bg-gray-100 rounded-lg active:bg-gray-200 transition-colors" aria-label="Language">
+            <Globe className="w-5 h-5 text-gray-600" />
+          </button>
+          <button className="p-2 hover:bg-gray-100 rounded-lg active:bg-gray-200 transition-colors" aria-label="Theme">
+            <Sun className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
       </div>
-      <div className="flex gap-4">
-        <button className="p-2 hover:bg-gray-100 rounded-lg">
-        <Globe className="w-5 h-5 text-gray-600" />
-        </button>
-        <button className="p-2 hover:bg-gray-100 rounded-lg">
-        <Sun className="w-5 h-5 text-gray-600" />
-        </button>
-      </div>
-      </div>
-      <hr className="border-t border-gray-200 -mx-6 mt-6" />
+      <hr className="border-t border-gray-200 mt-4 sm:mt-6" />
     </div>
   );
 }

@@ -17,7 +17,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import avatar from "../../assets/avatar.png";
 import NavMenuItem from "./NavMenuItem";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -34,7 +34,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     navigate('/register', { replace: true });
   };
 
-  // Determine menu items based on role
   const menuItems = user?.role === 'TEACHER'
     ? [
         { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
@@ -52,14 +51,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         { icon: Settings, label: "Settings", path: "/settings" },
       ];
 
-  // Get user's full name - prefer role-specific data, fallback to user data
   const firstName = teacher?.firstName || student?.firstName || user?.firstName || '';
   const lastName = teacher?.lastName || student?.lastName || user?.lastName || '';
   const fullName = `${firstName} ${lastName}`.trim() || 'User';
 
   const avatarUrl = student?.avatarUrl || teacher?.avatarUrl || user?.avatarUrl || avatar;
 
-  // Get role display name
   const getRoleDisplayName = () => {
     const role = user?.role;
     if (!role) return 'User';
@@ -75,39 +72,69 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     }
   };
 
-  // Close sidebar on mobile when route changes
+  const prevPathnameRef = useRef(location.pathname);
   useEffect(() => {
-    if (isOpen && onClose) {
-      onClose();
+    if (isOpen && onClose && prevPathnameRef.current !== location.pathname) {
+      prevPathnameRef.current = location.pathname;
+      const timer = setTimeout(() => {
+        onClose();
+      }, 100);
+      return () => clearTimeout(timer);
+    } else {
+      prevPathnameRef.current = location.pathname;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, [location.pathname, isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   return (
     <>
       {/* Mobile backdrop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={onClose}
+          className="fixed inset-0 bg-black bg-opacity-50 z-[55] lg:hidden"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onClose) onClose();
+          }}
+          onTouchStart={(e) => {
+            e.stopPropagation();
+            if (onClose) onClose();
+          }}
+          aria-hidden="true"
         />
       )}
 
       {/* Sidebar */}
-      <div className={`
-        flex flex-col justify-between w-64 h-screen border-r border-gray-200 p-6 bg-white 
-        fixed left-0 top-0 overflow-y-auto z-50
-        transform transition-transform duration-300 ease-in-out
-        lg:translate-x-0
-        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
+      <div 
+        className={`
+          flex flex-col justify-between w-64 h-screen border-r border-gray-200 p-6 bg-white 
+          fixed left-0 top-0 overflow-y-auto z-[60]
+          transform transition-transform duration-300 ease-in-out
+          lg:translate-x-0 lg:z-50
+          ${isOpen ? '!translate-x-0' : '-translate-x-full lg:!translate-x-0'}
+        `}
+      >
         {/* Mobile close button */}
         <button
-          onClick={onClose}
-          className="lg:hidden absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-lg"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onClose) onClose();
+          }}
+          className="lg:hidden absolute top-4 right-4 p-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors z-10"
           aria-label="Close menu"
+          type="button"
         >
-          <X size={20} />
+          <X size={20} className="text-gray-700" />
         </button>
 
         <div>
