@@ -7,9 +7,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Map;
 
 @Service
 public class EmailServiceImpl implements EmailService {
@@ -18,21 +26,96 @@ public class EmailServiceImpl implements EmailService {
     private final JavaMailSender mailSender;
     private final String fromEmail;
     private final String appName;
+    private final String brevoApiKey;
+    private final RestTemplate restTemplate;
+    private final boolean useBrevo;
 
     @Autowired
     public EmailServiceImpl(JavaMailSender mailSender,
                             @Value("${spring.mail.username}") String fromEmail,
-                            @Value("${app.name:UmkaSchool}") String appName) {
+                            @Value("${app.name:UmkaSchool}") String appName,
+                            @Value("${brevo.api.key:}") String brevoApiKey) {
         this.mailSender = mailSender;
         this.fromEmail = fromEmail;
         this.appName = appName;
+        this.brevoApiKey = brevoApiKey;
+        this.restTemplate = new RestTemplate();
+        this.useBrevo = brevoApiKey != null && !brevoApiKey.trim().isEmpty();
+        
+        if (useBrevo) {
+            logger.info("Email service configured to use Brevo API (production mode)");
+        } else {
+            logger.info("Email service configured to use SMTP (development mode)");
+        }
     }
 
     @Override
     public void sendPasswordReset(String toEmail, String resetLink) {
+        String subject = "Password Reset Request - " + appName;
+        String htmlContent = buildPasswordResetEmail(resetLink);
+        
+        if (useBrevo) {
+            sendViaBrevo(toEmail, subject, htmlContent);
+        } else {
+            sendViaSmtp(toEmail, subject, htmlContent);
+        }
+    }
+
+    @Override
+    public void sendWelcomeEmail(String toEmail, String firstName, String lastName) {
+        String subject = "Welcome to " + appName + "!";
+        String htmlContent = buildWelcomeEmail(firstName, lastName);
+        
+        if (useBrevo) {
+            sendViaBrevo(toEmail, subject, htmlContent);
+        } else {
+            sendViaSmtp(toEmail, subject, htmlContent);
+        }
+    }
+
+    private void sendViaBrevo(String toEmail, String subject, String htmlContent) {
         try {
-            logger.info("Attempting to send password reset email to: {}", toEmail);
-            logger.info("Reset link: {}", resetLink);
+            logger.info("Attempting to send email via Brevo API to: {}", toEmail);
+            
+            if (brevoApiKey == null || brevoApiKey.isEmpty()) {
+                logger.error("Brevo API key is not configured!");
+                return;
+            }
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("api-key", brevoApiKey);
+
+            Map<String, Object> sender = Map.of("email", fromEmail);
+            Map<String, Object> to = Map.of("email", toEmail);
+            Map<String, Object> requestBody = Map.of(
+                    "sender", sender,
+                    "to", java.util.List.of(to),
+                    "subject", subject,
+                    "htmlContent", htmlContent
+            );
+
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+            ResponseEntity<String> response = restTemplate.exchange(
+                    "https://api.brevo.com/v3/smtp/email",
+                    HttpMethod.POST,
+                    request,
+                    String.class
+            );
+
+            logger.info("Email sent successfully via Brevo API to: {}. Status: {}", toEmail, response.getStatusCode());
+        } catch (Exception e) {
+            logger.error("Failed to send email via Brevo API to: {}", toEmail, e);
+            logger.warn("=================================================");
+            logger.warn("EMAIL SEND FAILED VIA BREVO API!");
+            logger.warn("Error: {}", e.getMessage());
+            logger.warn("=================================================");
+        }
+    }
+
+    private void sendViaSmtp(String toEmail, String subject, String htmlContent) {
+        try {
+            logger.info("Attempting to send email via SMTP to: {}", toEmail);
             logger.info("From email: {}", fromEmail);
 
             MimeMessage message = mailSender.createMimeMessage();
@@ -40,53 +123,24 @@ public class EmailServiceImpl implements EmailService {
 
             helper.setFrom(fromEmail);
             helper.setTo(toEmail);
-            helper.setSubject("Password Reset Request - " + appName);
-
-            String htmlContent = buildPasswordResetEmail(resetLink);
+            helper.setSubject(subject);
             helper.setText(htmlContent, true);
 
             logger.info("Sending email to SMTP server...");
             mailSender.send(message);
-            logger.info("Password reset email sent successfully to: {}", toEmail);
-            logger.info("If you don't see the email, check:");
-            logger.info("   1. Spam/Junk folder");
-            logger.info("   2. Promotions tab (Gmail)");
-            logger.info("   3. Verify email address is correct: {}", toEmail);
-            logger.info("   4. Check sender email is configured: {}", fromEmail);
+            logger.info("Email sent successfully via SMTP to: {}", toEmail);
         } catch (MessagingException e) {
-            logger.error("MessagingException - Failed to send password reset email to: {}", toEmail, e);
-            // TODO: DON'T FORGET TO REMOVE 
-            // For development: print token to console as fallback
+            logger.error("MessagingException - Failed to send email via SMTP to: {}", toEmail, e);
             logger.warn("=================================================");
-            logger.warn("EMAIL SEND FAILED! Reset link: {}", resetLink);
+            logger.warn("EMAIL SEND FAILED VIA SMTP!");
             logger.warn("Error message: {}", e.getMessage());
             logger.warn("=================================================");
         } catch (Exception e) {
-            logger.error("Unexpected error sending password reset email to: {}", toEmail, e);
+            logger.error("Unexpected error sending email via SMTP to: {}", toEmail, e);
             logger.warn("=================================================");
-            logger.warn("EMAIL SEND FAILED! Reset link: {}", resetLink);
+            logger.warn("EMAIL SEND FAILED VIA SMTP!");
             logger.warn("Error: {}", e.getMessage());
             logger.warn("=================================================");
-        }
-    }
-
-    @Override
-    public void sendWelcomeEmail(String toEmail, String firstName, String lastName) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(fromEmail);
-            helper.setTo(toEmail);
-            helper.setSubject("Welcome to " + appName + "!");
-
-            String htmlContent = buildWelcomeEmail(firstName, lastName);
-            helper.setText(htmlContent, true);
-
-            mailSender.send(message);
-            logger.info("Welcome email sent successfully to: {}", toEmail);
-        } catch (MessagingException e) {
-            logger.error("Failed to send welcome email to: {}", toEmail, e);
         }
     }
 
