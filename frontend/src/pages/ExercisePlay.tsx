@@ -228,7 +228,7 @@ export default function ExercisePlay() {
 
   return (
     <AnimatedBackground>
-      <div className="min-h-screen py-4 sm:py-8 px-3 sm:px-4 lg:px-8">
+      <div className="min-h-screen py-4 sm:py-8 px-3 sm:px-4 lg:px-8 relative z-10">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 mb-4 sm:mb-6">
