@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, RefreshCcw, Eye, EyeOff, X } from 'lucide-react';
+import { ArrowLeft, RefreshCcw, Eye, EyeOff, X, Timer } from 'lucide-react';
 import { ExerciseSessionConfig } from '../types/exercise';
 import { useAuth } from '../contexts/AuthContext';
 import { exerciseService } from '../services/exercise.service';
@@ -104,14 +104,12 @@ export default function ExercisePlay() {
     handleTimeoutRef.current = handleTimeout;
   }, [handleTimeout]);
 
-  // Initialize session on mount
   useEffect(() => {
     if (config && student?.id && !sessionStarted) {
       initializeSession();
     }
   }, [config, student?.id, sessionStarted, initializeSession]);
 
-  // Generate numbers after session starts
   useEffect(() => {
     if (sessionStarted && exerciseId && numbers.length === 0 && !loadingNumbers) {
       generateNewNumbers();
@@ -230,38 +228,76 @@ export default function ExercisePlay() {
 
   return (
     <AnimatedBackground>
-      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen py-4 sm:py-8 px-3 sm:px-4 lg:px-8">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 mb-4 sm:mb-6">
             <Button
               onClick={handleExit}
               variant="outline"
-              className="inline-flex items-center gap-2"
+              className="inline-flex items-center gap-2 text-sm sm:text-base"
+              size="sm"
             >
-              <ArrowLeft className="w-4 h-4" /> Exit
+              <ArrowLeft className="w-4 h-4" /> <span className="hidden xs:inline">Exit</span>
             </Button>
-            <div className="flex items-center gap-4">
-              <div className="bg-white/80 backdrop-blur-sm rounded-full px-6 py-2 shadow-lg">
-                <span className="text-lg font-bold text-pink-600">{totalCorrect}</span>
-                <span className="text-gray-500 mx-2">/</span>
-                <span className="text-lg font-semibold text-gray-700">{totalAttempts}</span>
-                <span className="ml-2 text-green-500">✅</span>
+            {/* Mobile: Info row - feedback, timer, score on same level as Exit button */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full sm:w-auto justify-start sm:justify-start">
+              {/* Feedback message */}
+              {feedback && (
+                <div className={`inline-flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold ${
+                  feedback === 'correct' 
+                    ? 'bg-green-100 text-green-800 border border-green-300' 
+                    : 'bg-red-100 text-red-800 border border-red-300'
+                }`}>
+                  <span className="text-sm sm:text-base">
+                    {feedback === 'correct' ? '🎉' : feedback === 'timeout' ? '⏰' : '😔'}
+                  </span>
+                  <span className="hidden sm:inline">
+                    {feedback === 'correct' 
+                      ? 'You nailed it!' 
+                      : feedback === 'timeout' 
+                      ? `Time's up!` 
+                      : 'Fail!'}
+                  </span>
+                  <span className="sm:hidden">
+                    {feedback === 'correct' 
+                      ? 'Nailed it!' 
+                      : feedback === 'timeout' 
+                      ? 'Time up!' 
+                      : 'Fail!'}
+                  </span>
+                </div>
+              )}
+              
+              {/* Timer */}
+              {showAnswerBox && (
+                <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-yellow-100 px-2 sm:px-3 py-1.5 sm:py-2 rounded-full font-bold text-yellow-700 text-xs sm:text-sm border border-yellow-300">
+                  <Timer className="w-3 h-3 sm:w-4 sm:h-4" />
+                  {feedback === null ? `${countdown}s` : 'Stopped'}
+                </div>
+              )}
+              
+              {/* Score */}
+              <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-white/80 backdrop-blur-sm px-2 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-md border border-gray-200 text-xs sm:text-sm">
+                <span className="font-bold text-pink-600">{totalCorrect}</span>
+                <span className="text-gray-500">/</span>
+                <span className="font-semibold text-gray-700">{totalAttempts}</span>
+                <span className="text-green-500 text-xs sm:text-sm">✅</span>
               </div>
             </div>
           </div>
 
           {/* Title */}
-          <div className="text-center mb-3">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-yellow-500 via-pink-500 to-purple-500 bg-clip-text text-transparent mb-2">
+          <div className="text-center mb-3 sm:mb-4">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-yellow-500 via-pink-500 to-purple-500 bg-clip-text text-transparent mb-1 sm:mb-2 px-2">
               {config.exerciseTypeName} 🎮
             </h1>
-            <p className="text-lg text-gray-700">Watch the cards carefully! 👀</p>
+            <p className="text-sm sm:text-base lg:text-lg text-gray-700">Watch the cards carefully! 👀</p>
           </div>
 
           {/* Main game area */}
-          <section className="bg-white rounded-3xl shadow-2xl border-4 border-pink-300 p-6 md:p-8">
-            <div className="flex flex-col items-center justify-center h-96 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 border-4 border-blue-200 rounded-3xl relative overflow-hidden">
+          <section className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border-2 sm:border-4 border-pink-300 p-4 sm:p-6 md:p-8">
+            <div className="flex flex-col items-center justify-center h-64 sm:h-80 md:h-96 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 border-2 sm:border-4 border-blue-200 rounded-2xl sm:rounded-3xl relative overflow-hidden">
               {!showAnswerBox ? (
                 <ExerciseDisplay number={numbers[displayIndex]} isLoading={loadingNumbers} />
               ) : (
@@ -276,31 +312,37 @@ export default function ExercisePlay() {
               )}
             </div>
 
-            <ExerciseFeedback feedback={feedback} expectedAnswer={expectedAnswer} />
+            {/* Desktop: Full feedback message */}
+            <div className="hidden sm:block">
+              <ExerciseFeedback feedback={feedback} expectedAnswer={expectedAnswer} />
+            </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3 justify-center">
+            <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-3 justify-center">
               <Button
                 onClick={handleRetry}
                 variant="secondary"
-                className="inline-flex items-center gap-2"
+                className="inline-flex items-center justify-center gap-2 w-full sm:w-auto"
+                size="sm"
               >
-                <RefreshCcw className="w-5 h-5" /> Next round 🎯
+                <RefreshCcw className="w-4 h-4 sm:w-5 sm:h-5" /> <span>Next round 🎯</span>
               </Button>
               <Button
                 onClick={handleExit}
                 variant="outline"
-                className="inline-flex items-center gap-2"
+                className="inline-flex items-center justify-center gap-2 w-full sm:w-auto"
+                size="sm"
               >
-                <X className="w-5 h-5" /> End session
+                <X className="w-4 h-4 sm:w-5 sm:h-5" /> <span>End session</span>
               </Button>
               {(feedback || countdown === 0) && (
                 <Button
                   onClick={() => setShowNumbers(!showNumbers)}
                   variant="outline"
-                  className="inline-flex items-center gap-2"
+                  className="inline-flex items-center justify-center gap-2 w-full sm:w-auto"
+                  size="sm"
                 >
-                  {showNumbers ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  {showNumbers ? 'Hide' : 'Show'} Numbers 🔢
+                  {showNumbers ? <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Eye className="w-4 h-4 sm:w-5 sm:h-5" />}
+                  <span>{showNumbers ? 'Hide' : 'Show'} Numbers 🔢</span>
                 </Button>
               )}
             </div>
