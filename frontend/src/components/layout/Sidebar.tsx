@@ -77,9 +77,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   // Close sidebar on mobile when route changes
   useEffect(() => {
-    if (onClose) {
+    if (isOpen && onClose) {
       onClose();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   return (

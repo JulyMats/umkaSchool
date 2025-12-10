@@ -25,20 +25,17 @@ const NavMenuItem: React.FC<NavMenuItemProps> = ({
   const iconClasses = isActive ? 'text-blue-500' : '';
   const textClasses = isActive ? 'text-blue-500' : '';
 
-  if (onClick) {
-    return (
-      <li onClick={onClick} className={`${baseClasses} ${activeClasses} ${className}`}>
-        <Icon size={18} className={iconClasses} />
-        <span className={textClasses}>{label}</span>
-      </li>
-    );
-  }
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+  };
 
   return (
     <li>
       <Link
         to={path}
-        onClick={onClick}
+        onClick={handleClick}
         className={`${baseClasses} ${activeClasses} ${className}`}
       >
         <Icon size={18} className={iconClasses} />
