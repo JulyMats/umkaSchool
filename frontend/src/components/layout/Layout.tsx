@@ -15,7 +15,7 @@ export default function Layout({ children, title, subtitle }: LayoutProps) {
   const onMenuClick = sidebarContext && !sidebarContext.isOpen ? sidebarContext.openSidebar : undefined;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 min-h-screen">
+    <div className="p-4 sm:p-6 lg:px-6 lg:pt-6 lg:pb-8 min-h-screen">
       <Header 
         title={title} 
         subtitle={subtitle} 
