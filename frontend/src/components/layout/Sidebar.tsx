@@ -168,7 +168,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
 
           {/* Bottom section - Profile and Logout */}
-          <div className="p-6 pt-4 flex-shrink-0 border-t border-gray-200 mt-auto">
+          <div className="p-6 pt-4 flex-shrink-0 mt-auto">
+            <hr className="border-t border-gray-200 -mx-6 mb-4" />
             <div className="flex items-center gap-3 mb-4">
               <img
                 src={avatarUrl}

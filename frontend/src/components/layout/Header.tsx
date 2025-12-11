@@ -10,10 +10,10 @@ interface HeaderProps {
 export default function Header({ title, subtitle, onMenuClick, showMenuButton }: HeaderProps) {
   return (
     <div className="flex flex-col pb-4">
-      <div className="flex items-start sm:items-center justify-between gap-4">
+      <div className="flex items-start sm:items-center justify-between gap-4 px-4 sm:px-6 lg:px-6">
         <div className="text-left flex-1 min-w-0">
           <h1 className="text-xl sm:text-2xl font-bold break-words">{title}</h1>
-          {subtitle && <p className="text-sm sm:text-base text-gray-500 mt-1 break-words">{subtitle}</p>}
+          {subtitle && <p className="text-sm sm:text-base text-gray-500 break-words">{subtitle}</p>}
         </div>
         <div className="flex gap-2 sm:gap-4 flex-shrink-0 items-center">
           {showMenuButton && onMenuClick && (
@@ -38,7 +38,7 @@ export default function Header({ title, subtitle, onMenuClick, showMenuButton }:
           </button>
         </div>
       </div>
-      <hr className="border-t border-gray-200 mt-4 sm:mt-6" />
+      <hr className="border-t border-gray-200 mt-6 -mx-4 sm:-mx-6 lg:-mx-6" />
     </div>
   );
 }

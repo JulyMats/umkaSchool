@@ -141,7 +141,7 @@ export default function Register() {
 
   return (
     <AnimatedBackground className="bg-gradient-to-br from-yellow-50 via-pink-50 to-purple-50">
-      <div className="w-full max-w-md relative z-10">
+      <div className="w-full max-w-md relative z-10 mx-auto">
         <div className="text-center mb-8">
         <span className="text-6xl" role="img" aria-label="Graduation cap">🎓</span>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-yellow-500 via-pink-500 to-purple-500 bg-clip-text text-transparent">
@@ -419,7 +419,7 @@ export default function Register() {
               Already have an account?{' '}
               <Link
                 to="/login"
-                className="font-bold text-pink-600 hover:text-pink-800 transition-colors focus:outline-none focus:ring-2 focus:ring-pink-400 rounded"
+                className="font-bold text-pink-600 hover:text-pink-800 transition-colors focus:outline-none rounded"
                 tabIndex={form.isSubmitting ? -1 : 0}
               >
                 Sign in here! ✨
