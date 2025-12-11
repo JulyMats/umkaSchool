@@ -81,7 +81,7 @@ export default function Login() {
 
   return (
     <AnimatedBackground>
-      <div className="w-full max-w-md relative z-10">
+      <div className="w-full max-w-md relative z-10 mx-auto">
         {/* Logo and Title */}
         <div className="text-center mb-8">
           <div className="inline-block mb-4">
@@ -166,7 +166,7 @@ export default function Login() {
               </div>
               <Link
                 to="/forgot-password"
-                className="text-sm text-purple-600 hover:text-purple-800 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 rounded"
+                className="text-sm text-purple-600 hover:text-purple-800 font-medium transition-colors focus:outline-none rounded"
                 tabIndex={form.isSubmitting ? -1 : 0}
               >
                 Forgot password?
@@ -195,7 +195,7 @@ export default function Login() {
               Don't have an account?{' '}
               <Link
                 to="/register"
-                className="text-purple-600 hover:text-purple-800 font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 rounded"
+                className="text-purple-600 hover:text-purple-800 font-bold transition-colors focus:outline-none rounded"
                 tabIndex={form.isSubmitting ? -1 : 0}
               >
                 Sign up now! ✨
