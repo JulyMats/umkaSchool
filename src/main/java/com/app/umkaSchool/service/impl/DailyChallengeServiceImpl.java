@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -103,9 +104,22 @@ public class DailyChallengeServiceImpl implements DailyChallengeService {
     @Transactional(readOnly = true)
     public DailyChallengeResponse getTodayChallenge() {
         LocalDate today = LocalDate.now();
-        return dailyChallengeRepository.findByChallengeDate(today)
-                .map(this::mapToResponse)
-                .orElseThrow(() -> new ResourceNotFoundException("No daily challenge found for today: " + today));
+        Optional<DailyChallenge> todayChallenge = dailyChallengeRepository.findByChallengeDate(today);
+        
+        if (todayChallenge.isPresent()) {
+            logger.info("Found daily challenge for today: {}", today);
+            return mapToResponse(todayChallenge.get());
+        }
+        
+        // If no challenge for today, get the most recent one
+        Optional<DailyChallenge> latestChallenge = dailyChallengeRepository.findFirstByOrderByChallengeDateDesc();
+        if (latestChallenge.isPresent()) {
+            logger.info("No challenge found for today ({}), returning latest challenge from: {}", 
+                    today, latestChallenge.get().getChallengeDate());
+            return mapToResponse(latestChallenge.get());
+        }
+        
+        throw new ResourceNotFoundException("No daily challenge found for today: " + today + " and no previous challenges available");
     }
 
     @Override
