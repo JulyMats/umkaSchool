@@ -236,17 +236,17 @@ export default function DailyChallenge() {
       subtitle={dailyChallenge.title}
     >
       {/* Featured Challenge Header */}
-      <Card variant="blue" className="mb-8">
+      <Card variant="blue" className="mb-8 bg-pink-50">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-3 bg-white/20 rounded-xl">
-            <Trophy className="w-8 h-8 text-white" />
+          <div className="p-3 bg-pink-100 rounded-xl">
+            <Trophy className="w-8 h-8 text-pink-600" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-white">Today's Challenge</h2>
-            <p className="text-blue-100">{dailyChallenge.description || 'Complete all exercises to earn bonus points!'}</p>
+            <h2 className="text-2xl font-bold text-pink-600">Today's Challenge</h2>
+            <p className="text-pink-600">{dailyChallenge.description || 'Complete all exercises to earn bonus points!'}</p>
           </div>
         </div>
-        <div className="flex items-center gap-6 text-white">
+        <div className="flex items-center gap-6 text-gray-600">
           <div className="flex items-center gap-2">
             <Target className="w-5 h-5" />
             <span>{remainingCount} exercises remaining</span>

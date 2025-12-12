@@ -18,5 +18,8 @@ public interface DailyChallengeRepository extends JpaRepository<DailyChallenge, 
     Optional<DailyChallenge> findById(UUID id);
     
     boolean existsByChallengeDate(LocalDate challengeDate);
+    
+    @EntityGraph(attributePaths = {"exercises", "exercises.exercise", "exercises.exercise.exerciseType"})
+    Optional<DailyChallenge> findFirstByOrderByChallengeDateDesc();
 }
 
