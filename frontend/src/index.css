@@ -19,41 +19,6 @@ button {
   @apply outline-none transition;
 }
 
-/* Remove focus outline and ring for all elements on click/tap 
-*:focus:not(:focus-visible) {
-  outline: none !important;
-  box-shadow: none !important;
-  --tw-ring-shadow: 0 0 #0000 !important;
-  --tw-ring-offset-shadow: 0 0 #0000 !important;
-  --tw-ring-offset-width: 0px !important;
-  --tw-ring-width: 0px !important;
-}
-
-/* Remove focus ring for links specifically 
-a:focus:not(:focus-visible) {
-  outline: none !important;
-  box-shadow: none !important;
-  --tw-ring-shadow: 0 0 #0000 !important;
-  --tw-ring-offset-shadow: 0 0 #0000 !important;
-}
-
-/* Keep focus visible for keyboard navigation 
-*:focus-visible {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-/* Keep focus visible for keyboard navigation 
-a:focus-visible,
-button:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-*/
-
 /* --- Scrollbar cleanup (optional aesthetic improvement) --- */
 ::-webkit-scrollbar {
   width: 6px;
