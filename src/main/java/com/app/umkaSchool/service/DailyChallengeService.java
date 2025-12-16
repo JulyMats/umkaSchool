@@ -19,5 +19,7 @@ public interface DailyChallengeService {
     List<DailyChallengeResponse> getAllDailyChallenges();
 
     void deleteDailyChallenge(UUID challengeId);
+
+    void createTodayChallengeIfNotExists();
 }
 

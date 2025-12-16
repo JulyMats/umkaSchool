@@ -1,5 +1,6 @@
 package com.app.umkaSchool.config;
 
+import com.app.umkaSchool.service.DailyChallengeService;
 import com.app.umkaSchool.service.HomeworkAssignmentService;
 import com.app.umkaSchool.service.ProgressSnapshotService;
 import org.slf4j.Logger;
@@ -12,11 +13,14 @@ public class ScheduledTasks {
     private static final Logger logger = LoggerFactory.getLogger(ScheduledTasks.class);
     private final ProgressSnapshotService progressSnapshotService;
     private final HomeworkAssignmentService homeworkAssignmentService;
+    private final DailyChallengeService dailyChallengeService;
 
     public ScheduledTasks(ProgressSnapshotService progressSnapshotService,
-                         HomeworkAssignmentService homeworkAssignmentService) {
+                         HomeworkAssignmentService homeworkAssignmentService,
+                         DailyChallengeService dailyChallengeService) {
         this.progressSnapshotService = progressSnapshotService;
         this.homeworkAssignmentService = homeworkAssignmentService;
+        this.dailyChallengeService = dailyChallengeService;
     }
 
     /**
@@ -36,11 +40,11 @@ public class ScheduledTasks {
     }
 
     /**
-     * Runs daily at 2:00 AM to check and update overdue homework assignments.
-     * Updates assignments with due date in the past from PENDING to OVERDUE.
+     * Runs daily at 00:00 (midnight) to check and update overdue homework assignments.
+     * Updates assignments with due date = today from PENDING to OVERDUE.
      * Cron format: second, minute, hour, day of month, month, day of week
      */
-    @Scheduled(cron = "0 0 2 * * ?")
+    @Scheduled(cron = "0 0 0 * * ?")
     public void updateOverdueAssignments() {
         logger.info("Starting scheduled update of overdue homework assignments");
         try {
@@ -48,6 +52,22 @@ public class ScheduledTasks {
             logger.info("Update of overdue assignments completed successfully");
         } catch (Exception e) {
             logger.error("Error during scheduled overdue assignments update: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Runs daily at 00:00 (midnight) to automatically create a daily challenge for today
+     * if it doesn't exist. Copies the most recent challenge and creates a new one with today's date.
+     * Cron format: second, minute, hour, day of month, month, day of week
+     */
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void createTodayChallengeIfNotExists() {
+        logger.info("Starting scheduled creation of today's daily challenge");
+        try {
+            dailyChallengeService.createTodayChallengeIfNotExists();
+            logger.info("Daily challenge creation check completed successfully");
+        } catch (Exception e) {
+            logger.error("Error during scheduled daily challenge creation: {}", e.getMessage(), e);
         }
     }
 }
