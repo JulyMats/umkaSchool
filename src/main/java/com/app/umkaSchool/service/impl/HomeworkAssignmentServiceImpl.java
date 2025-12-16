@@ -15,8 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -31,6 +33,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
     private final StudentRepository studentRepository;
     private final StudentGroupRepository studentGroupRepository;
     private final ExerciseAttemptRepository exerciseAttemptRepository;
+    private final HomeworkAssignmentStudentRepository homeworkAssignmentStudentRepository;
 
     @Autowired
     public HomeworkAssignmentServiceImpl(HomeworkAssignmentRepository homeworkAssignmentRepository,
@@ -38,13 +41,15 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
                                          TeacherRepository teacherRepository,
                                          StudentRepository studentRepository,
                                          StudentGroupRepository studentGroupRepository,
-                                         ExerciseAttemptRepository exerciseAttemptRepository) {
+                                         ExerciseAttemptRepository exerciseAttemptRepository,
+                                         HomeworkAssignmentStudentRepository homeworkAssignmentStudentRepository) {
         this.homeworkAssignmentRepository = homeworkAssignmentRepository;
         this.homeworkRepository = homeworkRepository;
         this.teacherRepository = teacherRepository;
         this.studentRepository = studentRepository;
         this.studentGroupRepository = studentGroupRepository;
         this.exerciseAttemptRepository = exerciseAttemptRepository;
+        this.homeworkAssignmentStudentRepository = homeworkAssignmentStudentRepository;
     }
 
     @Override
@@ -98,6 +103,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
                 assignmentStudent.getId().setStudentId(studentId);
                 assignmentStudent.setHomeworkAssignment(assignment);
                 assignmentStudent.setStudent(student);
+                assignmentStudent.setStatus(HomeworkStatus.PENDING);
 
                 assignment.getAssignedStudents().add(assignmentStudent);
             }
@@ -116,50 +122,87 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
 
         HomeworkAssignment assignment = homeworkAssignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Homework assignment not found"));
+        
+        HomeworkStatus oldStatus = assignment.getStatus();
 
         if (request.getDueDate() != null) {
             assignment.setDueDate(request.getDueDate());
+            
+            if (oldStatus == HomeworkStatus.OVERDUE) {
+                assignment.setStatus(HomeworkStatus.PENDING);
+                
+                int updatedCount = 0;
+                
+                for (HomeworkAssignmentStudent assignmentStudent : assignment.getAssignedStudents()) {
+                    if (assignmentStudent.getStatus() == HomeworkStatus.OVERDUE) {
+                        assignmentStudent.setStatus(HomeworkStatus.PENDING);
+                        updatedCount++;
+                    }
+                }
+                
+                for (HomeworkAssignmentStudentGroup ag : assignment.getAssignedGroups()) {
+                    UUID groupId = ag.getStudentGroup().getId();
+                    List<Student> groupStudents = studentRepository.findByGroup_Id(groupId);
+                    for (Student s : groupStudents) {
+                        HomeworkAssignmentStudent assignmentStudent = homeworkAssignmentStudentRepository
+                                .findById_HomeworkAssignmentIdAndId_StudentId(assignment.getId(), s.getId())
+                                .orElse(null);
+                        
+                        if (assignmentStudent != null && assignmentStudent.getStatus() == HomeworkStatus.OVERDUE) {
+                            assignmentStudent.setStatus(HomeworkStatus.PENDING);
+                            homeworkAssignmentStudentRepository.save(assignmentStudent);
+                            updatedCount++;
+                        }
+                    }
+                }
+                
+                if (updatedCount > 0) {
+                    logger.info("Updated {} student assignment statuses from OVERDUE to PENDING after due date change", updatedCount);
+                }
+            }
         }
 
-        if (request.getStatus() != null) {
-            assignment.setStatus(request.getStatus());
-        }
-
-        // Update groups if provided
         if (request.getGroupIds() != null) {
-            assignment.getAssignedGroups().clear();
-            for (UUID groupId : request.getGroupIds()) {
-                StudentGroup group = studentGroupRepository.findById(groupId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Student group not found: " + groupId));
-
-                HomeworkAssignmentStudentGroup assignmentGroup = new HomeworkAssignmentStudentGroup();
-                assignmentGroup.getId().setHomeworkAssignmentId(assignment.getId());
-                assignmentGroup.getId().setStudentGroupId(groupId);
-                assignmentGroup.setHomeworkAssignment(assignment);
-                assignmentGroup.setStudentGroup(group);
-
-                assignment.getAssignedGroups().add(assignmentGroup);
+            Set<UUID> oldGroupIds = assignment.getAssignedGroups().stream()
+                    .map(ag -> ag.getStudentGroup().getId())
+                    .collect(Collectors.toSet());
+            Set<UUID> newGroupIds = new HashSet<>(request.getGroupIds());
+            
+            Set<UUID> groupsToRemove = new HashSet<>(oldGroupIds);
+            groupsToRemove.removeAll(newGroupIds);
+            for (UUID groupId : groupsToRemove) {
+                removeGroupFromAssignment(assignmentId, groupId);
+            }
+            
+            Set<UUID> groupsToAdd = new HashSet<>(newGroupIds);
+            groupsToAdd.removeAll(oldGroupIds);
+            if (!groupsToAdd.isEmpty()) {
+                addGroupsToAssignment(assignmentId, new ArrayList<>(groupsToAdd));
             }
         }
 
-        // Update students if provided
         if (request.getStudentIds() != null) {
-            assignment.getAssignedStudents().clear();
-            for (UUID studentId : request.getStudentIds()) {
-                Student student = studentRepository.findById(studentId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Student not found: " + studentId));
-
-                HomeworkAssignmentStudent assignmentStudent = new HomeworkAssignmentStudent();
-                assignmentStudent.getId().setHomeworkAssignmentId(assignment.getId());
-                assignmentStudent.getId().setStudentId(studentId);
-                assignmentStudent.setHomeworkAssignment(assignment);
-                assignmentStudent.setStudent(student);
-
-                assignment.getAssignedStudents().add(assignmentStudent);
+            Set<UUID> oldStudentIds = assignment.getAssignedStudents().stream()
+                    .map(as -> as.getStudent().getId())
+                    .collect(Collectors.toSet());
+            Set<UUID> newStudentIds = new HashSet<>(request.getStudentIds());
+            
+            Set<UUID> studentsToRemove = new HashSet<>(oldStudentIds);
+            studentsToRemove.removeAll(newStudentIds);
+            for (UUID studentId : studentsToRemove) {
+                removeStudentFromAssignment(assignmentId, studentId);
+            }
+            
+            Set<UUID> studentsToAdd = new HashSet<>(newStudentIds);
+            studentsToAdd.removeAll(oldStudentIds);
+            if (!studentsToAdd.isEmpty()) {
+                addStudentsToAssignment(assignmentId, new ArrayList<>(studentsToAdd));
             }
         }
 
-        assignment = homeworkAssignmentRepository.save(assignment);
+        assignment = homeworkAssignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Homework assignment not found"));
+
         logger.info("Homework assignment updated successfully: {}", assignmentId);
 
         return mapToResponse(assignment);
@@ -210,7 +253,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
     @Override
     public List<HomeworkAssignmentResponse> getHomeworkAssignmentsByStudent(UUID studentId) {
         return homeworkAssignmentRepository.findAllByStudentIdIncludingGroup(studentId).stream()
-                .map(this::mapToResponse)
+                .map(assignment -> mapToResponseForStudent(assignment, studentId))
                 .collect(Collectors.toList());
     }
 
@@ -243,11 +286,15 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
             assignmentStudent.getId().setStudentId(studentId);
             assignmentStudent.setHomeworkAssignment(assignment);
             assignmentStudent.setStudent(student);
+            assignmentStudent.setStatus(HomeworkStatus.PENDING); 
 
             assignment.getAssignedStudents().add(assignmentStudent);
         }
 
         homeworkAssignmentRepository.save(assignment);
+
+        updateGlobalAssignmentStatus(assignment);
+        
         logger.info("Students added to assignment successfully");
     }
 
@@ -273,6 +320,9 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
         }
 
         homeworkAssignmentRepository.save(assignment);
+        
+        updateGlobalAssignmentStatus(assignment);
+
         logger.info("Groups added to assignment successfully");
     }
 
@@ -286,6 +336,8 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
 
         assignment.getAssignedStudents().removeIf(as -> as.getId().getStudentId().equals(studentId));
         homeworkAssignmentRepository.save(assignment);
+
+        updateGlobalAssignmentStatus(assignment);
 
         logger.info("Student removed from assignment successfully");
     }
@@ -301,6 +353,8 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
         assignment.getAssignedGroups().removeIf(ag -> ag.getId().getStudentGroupId().equals(groupId));
         homeworkAssignmentRepository.save(assignment);
 
+        updateGlobalAssignmentStatus(assignment);
+
         logger.info("Group removed from assignment successfully");
     }
 
@@ -311,24 +365,35 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
 
         ZonedDateTime now = ZonedDateTime.now();
         
-        // Find assignments that are past due date and still PENDING (not COMPLETED)
-        List<HomeworkAssignment> overdueAssignments = homeworkAssignmentRepository
-                .findByDueDateBeforeAndStatus(now, HomeworkStatus.PENDING);
+        List<HomeworkAssignment> assignmentsDueToday = homeworkAssignmentRepository
+                .findByDueDateOnDate(now);
 
-        int updatedCount = 0;
-        for (HomeworkAssignment assignment : overdueAssignments) {
-            // Only update if status is still PENDING (not already COMPLETED)
-            if (assignment.getStatus() == HomeworkStatus.PENDING) {
+        int updatedStudentCount = 0;
+        int updatedAssignmentCount = 0;
+        
+        for (HomeworkAssignment assignment : assignmentsDueToday) {
+            boolean assignmentUpdated = false;
+            
+            for (HomeworkAssignmentStudent assignmentStudent : assignment.getAssignedStudents()) {
+                if (assignmentStudent.getStatus() == HomeworkStatus.PENDING) {
+                    assignmentStudent.setStatus(HomeworkStatus.OVERDUE);
+                    updatedStudentCount++;
+                }
+            }
+
+            if (assignment.getStatus() != HomeworkStatus.COMPLETED) {
                 assignment.setStatus(HomeworkStatus.OVERDUE);
-                updatedCount++;
+                assignmentUpdated = true;
+                updatedAssignmentCount++;
+            }
+            
+            if (assignmentUpdated || updatedStudentCount > 0) {
+                homeworkAssignmentRepository.save(assignment);
             }
         }
-
-        if (updatedCount > 0) {
-            homeworkAssignmentRepository.saveAll(overdueAssignments);
-        }
         
-        logger.info("Updated {} overdue assignments (out of {} checked)", updatedCount, overdueAssignments.size());
+        logger.info("Updated {} overdue student assignments and {} global assignments (out of {} checked)", 
+                updatedStudentCount, updatedAssignmentCount, assignmentsDueToday.size());
     }
 
     @Override
@@ -339,8 +404,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
         HomeworkAssignment assignment = homeworkAssignmentRepository.findById(homeworkAssignmentId)
                 .orElseThrow(() -> new IllegalArgumentException("Homework assignment not found"));
 
-        // Get all exercises from the homework
-        Homework homework = assignment.getHomework();
+       Homework homework = assignment.getHomework();
         Set<HomeworkExercise> homeworkExercises = homework.getExercises();
 
         if (homeworkExercises.isEmpty()) {
@@ -348,42 +412,76 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
             return;
         }
 
-        // Count how many exercises the student has completed using JOIN queries
         Long completedCount = exerciseAttemptRepository.countCompletedExercises(homeworkAssignmentId, studentId);
         int totalExercises = homeworkExercises.size();
 
         logger.info("Student {} has completed {}/{} exercises in assignment {}",
             studentId, completedCount, totalExercises, homeworkAssignmentId);
 
-        // If all exercises are completed and status is not already COMPLETED, update it
-        if (completedCount >= totalExercises && assignment.getStatus() != HomeworkStatus.COMPLETED) {
-            assignment.setStatus(HomeworkStatus.COMPLETED);
-            homeworkAssignmentRepository.save(assignment);
+        HomeworkAssignmentStudent assignmentStudent = homeworkAssignmentStudentRepository
+                .findById_HomeworkAssignmentIdAndId_StudentId(homeworkAssignmentId, studentId)
+                .orElse(null);
+
+        
+        if (assignmentStudent == null) {
+            Student student = studentRepository.findById(studentId)
+                    .orElseThrow(() -> new IllegalArgumentException("Student not found: " + studentId));
+            
+            assignmentStudent = new HomeworkAssignmentStudent();
+            assignmentStudent.getId().setHomeworkAssignmentId(homeworkAssignmentId);
+            assignmentStudent.getId().setStudentId(studentId);
+            assignmentStudent.setHomeworkAssignment(assignment);
+            assignmentStudent.setStudent(student);
+            assignmentStudent.setStatus(HomeworkStatus.PENDING); 
+            
+            assignmentStudent = homeworkAssignmentStudentRepository.save(assignmentStudent);
+            logger.info("Created individual assignment record for student {} (assigned via group)", studentId);
+        }
+
+        if (completedCount >= totalExercises && assignmentStudent.getStatus() != HomeworkStatus.COMPLETED) {
+            assignmentStudent.setStatus(HomeworkStatus.COMPLETED);
+            homeworkAssignmentStudentRepository.save(assignmentStudent);
             logger.info("Assignment {} marked as COMPLETED for student {}", homeworkAssignmentId, studentId);
+
+            updateGlobalAssignmentStatus(assignment);
         }
     }
 
-    @Override
-    @Transactional
-    public void checkAndUpdateAssignmentStatusForExercise(UUID exerciseId, UUID studentId) {
-        logger.info("Checking assignment status for exercise: {}, student: {}", exerciseId, studentId);
 
-        // Find all homework assignments that contain this exercise and are assigned to this student
-        List<HomeworkAssignment> assignments = homeworkAssignmentRepository.findByExerciseIdAndStudentId(exerciseId, studentId);
 
-        if (assignments.isEmpty()) {
-            logger.debug("No homework assignments found for exercise: {}, student: {}", exerciseId, studentId);
+    
+    private void updateGlobalAssignmentStatus(HomeworkAssignment assignment) {
+        Set<UUID> allStudentIds = new HashSet<>();
+
+        assignment.getAssignedStudents().forEach(as ->
+                allStudentIds.add(as.getStudent().getId())
+        );
+
+        assignment.getAssignedGroups().forEach(ag -> {
+            UUID groupId = ag.getStudentGroup().getId();
+            List<Student> groupStudents = studentRepository.findByGroup_Id(groupId);
+            groupStudents.forEach(s -> allStudentIds.add(s.getId()));
+        });
+
+        if (allStudentIds.isEmpty()) {
             return;
         }
 
-        // Check each assignment
-        for (HomeworkAssignment assignment : assignments) {
-            try {
-                checkAndUpdateAssignmentStatus(assignment.getId(), studentId);
-            } catch (Exception e) {
-                logger.error("Error checking assignment {} for student {}: {}",
-                    assignment.getId(), studentId, e.getMessage());
+        for (UUID studentId : allStudentIds) {
+            HomeworkAssignmentStudent assignmentStudent = homeworkAssignmentStudentRepository
+                    .findById_HomeworkAssignmentIdAndId_StudentId(assignment.getId(), studentId)
+                    .orElse(null);
+
+            if (assignmentStudent == null || assignmentStudent.getStatus() != HomeworkStatus.COMPLETED) {
+                assignment.setStatus(HomeworkStatus.PENDING);
+                return;
             }
+        }
+
+        if (assignment.getStatus() != HomeworkStatus.COMPLETED) {
+            assignment.setStatus(HomeworkStatus.COMPLETED);
+            homeworkAssignmentRepository.save(assignment);
+            logger.info("All students completed assignment {}. Marking main assignment as COMPLETED.", assignment.getId());
         }
     }
 
@@ -413,6 +511,46 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
                 .assignedAt(assignment.getAssignedAt())
                 .dueDate(assignment.getDueDate())
                 .status(assignment.getStatus())
+                .assignedGroupIds(groupIds)
+                .assignedStudentIds(studentIds)
+                .build();
+    }
+
+    private HomeworkAssignmentResponse mapToResponseForStudent(HomeworkAssignment assignment, UUID studentId) {
+        List<UUID> groupIds = assignment.getAssignedGroups().stream()
+                .map(ag -> ag.getStudentGroup().getId())
+                .collect(Collectors.toList());
+
+        List<UUID> studentIds = assignment.getAssignedStudents().stream()
+                .map(as -> as.getStudent().getId())
+                .collect(Collectors.toList());
+
+        String teacherName = null;
+        UUID teacherId = null;
+        if (assignment.getTeacher() != null) {
+            teacherId = assignment.getTeacher().getId();
+            teacherName = assignment.getTeacher().getUser().getFirstName() + " " +
+                    assignment.getTeacher().getUser().getLastName();
+        }
+
+        HomeworkStatus studentStatus = HomeworkStatus.PENDING;
+        HomeworkAssignmentStudent assignmentStudent = homeworkAssignmentStudentRepository
+                .findById_HomeworkAssignmentIdAndId_StudentId(assignment.getId(), studentId)
+                .orElse(null);
+        
+        if (assignmentStudent != null) {
+            studentStatus = assignmentStudent.getStatus();
+        }
+
+        return HomeworkAssignmentResponse.builder()
+                .id(assignment.getId())
+                .homeworkId(assignment.getHomework().getId())
+                .homeworkTitle(assignment.getHomework().getTitle())
+                .teacherId(teacherId)
+                .teacherName(teacherName)
+                .assignedAt(assignment.getAssignedAt())
+                .dueDate(assignment.getDueDate())
+                .status(studentStatus)
                 .assignedGroupIds(groupIds)
                 .assignedStudentIds(studentIds)
                 .build();
