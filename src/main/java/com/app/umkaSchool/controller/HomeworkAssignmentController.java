@@ -42,14 +42,12 @@ public class HomeworkAssignmentController {
 
     @GetMapping("/{assignmentId}")
     public ResponseEntity<HomeworkAssignmentResponse> getHomeworkAssignmentById(@PathVariable UUID assignmentId) {
-        homeworkAssignmentService.updateOverdueAssignments();
         HomeworkAssignmentResponse response = homeworkAssignmentService.getHomeworkAssignmentById(assignmentId);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping
     public ResponseEntity<List<HomeworkAssignmentResponse>> getAllHomeworkAssignments() {
-        homeworkAssignmentService.updateOverdueAssignments();
         List<HomeworkAssignmentResponse> assignments = homeworkAssignmentService.getAllHomeworkAssignments();
         return ResponseEntity.ok(assignments);
     }
@@ -57,7 +55,6 @@ public class HomeworkAssignmentController {
     @GetMapping("/homework/{homeworkId}")
     public ResponseEntity<List<HomeworkAssignmentResponse>> getHomeworkAssignmentsByHomework(
             @PathVariable UUID homeworkId) {
-        homeworkAssignmentService.updateOverdueAssignments();
         List<HomeworkAssignmentResponse> assignments = homeworkAssignmentService.getHomeworkAssignmentsByHomework(homeworkId);
         return ResponseEntity.ok(assignments);
     }
@@ -65,7 +62,6 @@ public class HomeworkAssignmentController {
     @GetMapping("/teacher/{teacherId}")
     public ResponseEntity<List<HomeworkAssignmentResponse>> getHomeworkAssignmentsByTeacher(
             @PathVariable UUID teacherId) {
-        homeworkAssignmentService.updateOverdueAssignments();
         List<HomeworkAssignmentResponse> assignments = homeworkAssignmentService.getHomeworkAssignmentsByTeacher(teacherId);
         return ResponseEntity.ok(assignments);
     }
@@ -73,7 +69,6 @@ public class HomeworkAssignmentController {
     @GetMapping("/status/{status}")
     public ResponseEntity<List<HomeworkAssignmentResponse>> getHomeworkAssignmentsByStatus(
             @PathVariable HomeworkStatus status) {
-        homeworkAssignmentService.updateOverdueAssignments();
         List<HomeworkAssignmentResponse> assignments = homeworkAssignmentService.getHomeworkAssignmentsByStatus(status);
         return ResponseEntity.ok(assignments);
     }
@@ -81,7 +76,6 @@ public class HomeworkAssignmentController {
     @GetMapping("/group/{groupId}")
     public ResponseEntity<List<HomeworkAssignmentResponse>> getHomeworkAssignmentsByGroup(
             @PathVariable UUID groupId) {
-        homeworkAssignmentService.updateOverdueAssignments();
         List<HomeworkAssignmentResponse> assignments = homeworkAssignmentService.getHomeworkAssignmentsByGroup(groupId);
         return ResponseEntity.ok(assignments);
     }
@@ -89,7 +83,6 @@ public class HomeworkAssignmentController {
     @GetMapping("/student/{studentId}")
     public ResponseEntity<List<HomeworkAssignmentResponse>> getHomeworkAssignmentsByStudent(
             @PathVariable UUID studentId) {
-        homeworkAssignmentService.updateOverdueAssignments();
         List<HomeworkAssignmentResponse> assignments = homeworkAssignmentService.getHomeworkAssignmentsByStudent(studentId);
         return ResponseEntity.ok(assignments);
     }
