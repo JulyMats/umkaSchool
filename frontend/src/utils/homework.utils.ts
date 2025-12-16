@@ -18,6 +18,7 @@ export const convertExerciseToConfig = (exercise: Exercise): ExerciseSessionConf
   const config: ExerciseSessionConfig = {
     exerciseTypeId: exercise.exerciseTypeId,
     exerciseTypeName: exercise.exerciseTypeName,
+    exerciseId: exercise.id,
   };
 
   if (params.timePerQuestion) config.timePerQuestion = params.timePerQuestion;
