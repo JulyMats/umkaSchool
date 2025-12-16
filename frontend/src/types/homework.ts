@@ -1,4 +1,4 @@
-export type HomeworkStatus = 'ASSIGNED' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE';
+export type HomeworkStatus = 'PENDING' | 'COMPLETED' | 'OVERDUE';
 
 export interface HomeworkAssignment {
     id: string;
