@@ -61,28 +61,38 @@ export const useExerciseSession = ({
     isInitializingRef.current = true;
 
     try {
-      const exerciseParams: Record<string, unknown> = {
-        cardCount: config.cardCount,
-        digitLength: config.digitLength,
-        displaySpeed: config.displaySpeed,
-        timePerQuestion: config.timePerQuestion
-      };
-      
-      if (config.min !== undefined) {
-        exerciseParams.min = config.min;
-      }
-      if (config.max !== undefined) {
-        exerciseParams.max = config.max;
-      }
-      
-      const exerciseParamsJson = JSON.stringify(exerciseParams);
+      let exerciseIdToUse: string;
 
-      const exercise = await exerciseService.createExercise({
-        exerciseTypeId: config.exerciseTypeId,
-        parameters: exerciseParamsJson
-      });
+      if (config.exerciseId) {
+        exerciseIdToUse = config.exerciseId;
+        console.log('Using existing exercise ID from config:', exerciseIdToUse);
+      } else {
+        const exerciseParams: Record<string, unknown> = {
+          cardCount: config.cardCount,
+          digitLength: config.digitLength,
+          displaySpeed: config.displaySpeed,
+          timePerQuestion: config.timePerQuestion
+        };
+        
+        if (config.min !== undefined) {
+          exerciseParams.min = config.min;
+        }
+        if (config.max !== undefined) {
+          exerciseParams.max = config.max;
+        }
+        
+        const exerciseParamsJson = JSON.stringify(exerciseParams);
 
-      setExerciseId(exercise.id);
+        const exercise = await exerciseService.createExercise({
+          exerciseTypeId: config.exerciseTypeId,
+          parameters: exerciseParamsJson
+        });
+
+        exerciseIdToUse = exercise.id;
+        console.log('Created new exercise:', exerciseIdToUse);
+      }
+
+      setExerciseId(exerciseIdToUse);
 
       const settings = JSON.stringify({
         timePerQuestion: config.timePerQuestion,
@@ -93,7 +103,7 @@ export const useExerciseSession = ({
 
       const attempt = await exerciseAttemptService.createAttempt({
         studentId: studentId,
-        exerciseId: exercise.id,
+        exerciseId: exerciseIdToUse,
         startedAt: new Date().toISOString(),
         settings: settings
       });

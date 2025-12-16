@@ -7,6 +7,7 @@ export type FlashCardTheme = '0-20' | '0-9' | '10-90' | '10-19' | '10-99' | '100
 export interface ExerciseSessionConfig {
   exerciseTypeId: string;
   exerciseTypeName: string;
+  exerciseId?: string;
   
   timePerQuestion?: number; // in seconds
   displaySpeed?: number; // in seconds per card
