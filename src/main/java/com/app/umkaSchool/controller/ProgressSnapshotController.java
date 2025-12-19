@@ -3,9 +3,8 @@ package com.app.umkaSchool.controller;
 import com.app.umkaSchool.dto.progresssnapshot.ProgressSnapshotResponse;
 import com.app.umkaSchool.exception.ResourceNotFoundException;
 import com.app.umkaSchool.model.Student;
-import com.app.umkaSchool.repository.StudentRepository;
 import com.app.umkaSchool.service.ProgressSnapshotService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.app.umkaSchool.service.StudentService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,13 +18,12 @@ import java.util.UUID;
 public class ProgressSnapshotController {
 
     private final ProgressSnapshotService progressSnapshotService;
-    private final StudentRepository studentRepository;
+    private final StudentService studentService;
 
-    @Autowired
     public ProgressSnapshotController(ProgressSnapshotService progressSnapshotService,
-                                      StudentRepository studentRepository) {
+                                      StudentService studentService) {
         this.progressSnapshotService = progressSnapshotService;
-        this.studentRepository = studentRepository;
+        this.studentService = studentService;
     }
 
     @GetMapping("/student/{studentId}")
@@ -58,27 +56,27 @@ public class ProgressSnapshotController {
     public ResponseEntity<ProgressSnapshotResponse> getSnapshotByDate(
             @PathVariable UUID studentId,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return studentRepository.findById(studentId)
-                .map(student -> progressSnapshotService.getSnapshotForDate(student, date)
-                        .map(snapshot -> {
-                            Student studentEntity = snapshot.getStudent();
-                            String studentName = studentEntity.getUser().getFirstName() + " " + studentEntity.getUser().getLastName();
-                            
-                            ProgressSnapshotResponse response = ProgressSnapshotResponse.builder()
-                                    .snapshotId(snapshot.getId())
-                                    .studentId(studentEntity.getId())
-                                    .studentName(studentName)
-                                    .snapshotDate(snapshot.getSnapshotDate())
-                                    .totalAttempts(snapshot.getTotalAttempts())
-                                    .totalCorrect(snapshot.getTotalCorrect())
-                                    .totalPracticeSeconds(snapshot.getTotalPracticeSeconds())
-                                    .currentStreak(snapshot.getCurrentStreak())
-                                    .createdAt(snapshot.getCreatedAt())
-                                    .build();
-                            
-                            return ResponseEntity.ok(response);
-                        })
-                        .orElse(ResponseEntity.notFound().build()))
+        Student student = studentService.getStudentEntity(studentId);
+        
+        return progressSnapshotService.getSnapshotForDate(student, date)
+                .map(snapshot -> {
+                    Student studentEntity = snapshot.getStudent();
+                    String studentName = studentEntity.getUser().getFirstName() + " " + studentEntity.getUser().getLastName();
+                    
+                    ProgressSnapshotResponse response = ProgressSnapshotResponse.builder()
+                            .snapshotId(snapshot.getId())
+                            .studentId(studentEntity.getId())
+                            .studentName(studentName)
+                            .snapshotDate(snapshot.getSnapshotDate())
+                            .totalAttempts(snapshot.getTotalAttempts())
+                            .totalCorrect(snapshot.getTotalCorrect())
+                            .totalPracticeSeconds(snapshot.getTotalPracticeSeconds())
+                            .currentStreak(snapshot.getCurrentStreak())
+                            .createdAt(snapshot.getCreatedAt())
+                            .build();
+                    
+                    return ResponseEntity.ok(response);
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -87,8 +85,7 @@ public class ProgressSnapshotController {
             @PathVariable UUID studentId,
             @RequestParam(defaultValue = "all") String period) {
         
-        Student student = studentRepository.findById(studentId)
-            .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
+        Student student = studentService.getStudentEntity(studentId);
 
         if (!isValidPeriod(period)) {
             return ResponseEntity.badRequest().build();

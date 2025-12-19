@@ -36,15 +36,19 @@ export const useProgress = (studentId: string | undefined, selectedPeriod: TimeP
       }
 
       try {
+        console.log('[useProgress] Fetching achievements for studentId:', studentId);
         const [earnedAchievements, allAchievementsList] = await Promise.all([
           achievementService.getStudentAchievements(studentId),
           achievementService.getAllAchievements()
         ]);
+        console.log('[useProgress] Earned achievements:', earnedAchievements);
+        console.log('[useProgress] All achievements:', allAchievementsList);
         setStudentAchievements(earnedAchievements);
         setAllAchievements(allAchievementsList);
         achievementsFetched.current = true;
       } catch (err: unknown) {
-        console.error('Error fetching achievements:', err);
+        console.error('[useProgress] Error fetching achievements:', err);
+        setError(extractErrorMessage(err, 'Failed to load achievements'));
       }
     };
 

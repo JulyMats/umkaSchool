@@ -31,8 +31,9 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request, @RequestHeader(value = "Origin", required = false) String origin) {
-        // origin used as base URL for reset link; fallback to empty
+    public ResponseEntity<?> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request,
+            @RequestHeader(value = "Origin", required = false) String origin) {
         String base = origin != null ? origin : "";
         authService.forgotPassword(request.getEmail(), base);
         return ResponseEntity.ok().build();

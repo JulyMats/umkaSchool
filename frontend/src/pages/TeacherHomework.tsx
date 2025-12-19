@@ -118,7 +118,7 @@ export default function TeacherHomework() {
             dueDate: assignment.dueDate ? assignment.dueDate.split('T')[0] : '',
             selectedGroupIds: assignment.assignedGroupIds,
             selectedStudentIds: assignment.assignedStudentIds,
-            status: 'PENDING' 
+            status: assignment.status 
         });
         openAssignmentModal();
     };

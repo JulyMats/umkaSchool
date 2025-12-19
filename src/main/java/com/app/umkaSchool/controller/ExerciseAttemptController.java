@@ -3,9 +3,8 @@ package com.app.umkaSchool.controller;
 import com.app.umkaSchool.dto.exerciseattempt.CreateExerciseAttemptRequest;
 import com.app.umkaSchool.dto.exerciseattempt.ExerciseAttemptResponse;
 import com.app.umkaSchool.dto.exerciseattempt.UpdateExerciseAttemptRequest;
-import com.app.umkaSchool.service.impl.ExerciseAttemptServiceImpl;
+import com.app.umkaSchool.service.ExerciseAttemptService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,10 +16,9 @@ import java.util.UUID;
 @RequestMapping("/api/exercise-attempts")
 public class ExerciseAttemptController {
 
-    private final ExerciseAttemptServiceImpl exerciseAttemptService;
+    private final ExerciseAttemptService exerciseAttemptService;
 
-    @Autowired
-    public ExerciseAttemptController(ExerciseAttemptServiceImpl exerciseAttemptService) {
+    public ExerciseAttemptController(ExerciseAttemptService exerciseAttemptService) {
         this.exerciseAttemptService = exerciseAttemptService;
     }
 

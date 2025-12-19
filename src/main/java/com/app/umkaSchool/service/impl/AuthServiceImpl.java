@@ -8,7 +8,6 @@ import com.app.umkaSchool.dto.student.CreateStudentRequest;
 import com.app.umkaSchool.dto.teacher.CreateTeacherRequest;
 import com.app.umkaSchool.model.AppUser;
 import com.app.umkaSchool.model.UserToken;
-import com.app.umkaSchool.repository.AppUserRepository;
 import com.app.umkaSchool.repository.UserTokenRepository;
 import com.app.umkaSchool.service.AuthService;
 import com.app.umkaSchool.service.EmailService;
@@ -33,7 +32,6 @@ public class AuthServiceImpl implements AuthService {
     private static final Logger logger = LoggerFactory.getLogger(AuthServiceImpl.class);
 
     private final UserService userService;
-    private final AppUserRepository userRepository;
     private final UserTokenRepository userTokenRepository;
     private final TokenService tokenService;
     private final EmailService emailService;
@@ -45,9 +43,14 @@ public class AuthServiceImpl implements AuthService {
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
+    @Value("${auth.refresh-token.expiration-days:30}")
+    private Integer refreshTokenExpirationDays;
+
+    @Value("${auth.password-reset.expiration-hours:2}")
+    private Integer passwordResetExpirationHours;
+
     @Autowired
     public AuthServiceImpl(UserService userService,
-                           AppUserRepository userRepository,
                            UserTokenRepository userTokenRepository,
                            TokenService tokenService,
                            EmailService emailService,
@@ -56,7 +59,6 @@ public class AuthServiceImpl implements AuthService {
                            StudentService studentService,
                            TeacherService teacherService) {
         this.userService = userService;
-        this.userRepository = userRepository;
         this.userTokenRepository = userTokenRepository;
         this.tokenService = tokenService;
         this.emailService = emailService;
@@ -69,17 +71,15 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public SignupResponse signup(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userService.findByEmail(request.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email already in use");
         }
         
         // Create user account
         AppUser user = userService.createUser(request);
         
-        // Update avatar if provided
         if (request.getAvatarUrl() != null && !request.getAvatarUrl().isEmpty()) {
             user.setAvatarUrl(request.getAvatarUrl());
-            user = userRepository.save(user);
         }
 
         // Create profile based on role
@@ -144,24 +144,18 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public LoginResponse signin(LoginRequest request) {
-        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
-            throw new IllegalArgumentException("Email required");
+        Optional<AppUser> userOpt = userService.findByEmail(request.getEmail());
+        
+        if (userOpt.isEmpty() || !passwordEncoder.matches(request.getPassword(), userOpt.get().getPasswordHash())) {
+            throw new IllegalArgumentException("Invalid email or password");
         }
-        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
-            throw new IllegalArgumentException("Password required");
-        }
-
-        var userOpt = userRepository.findByEmail(request.getEmail());
-        if (userOpt.isEmpty()) throw new IllegalArgumentException("Invalid credentials");
-        var user = userOpt.get();
+        
+        AppUser user = userOpt.get();
         
         if (!user.isActive()) {
-            throw new IllegalArgumentException("Account is inactive");
-        }
-        
-        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new IllegalArgumentException("Invalid credentials");
+            throw new IllegalArgumentException("Account is inactive. Please contact support.");
         }
 
         // Generate JWT access token
@@ -179,13 +173,11 @@ public class AuthServiceImpl implements AuthService {
         refreshTokenEntity.setTokenHash(refreshTokenHash);
         refreshTokenEntity.setTokenType(UserToken.TokenType.REFRESH_TOKEN);
         refreshTokenEntity.setCreatedAt(ZonedDateTime.now());
-        refreshTokenEntity.setExpiresAt(ZonedDateTime.now().plusDays(30));
+        refreshTokenEntity.setExpiresAt(ZonedDateTime.now().plusDays(refreshTokenExpirationDays));
         refreshTokenEntity.setUsed(false);
         userTokenRepository.save(refreshTokenEntity);
 
-        // Update last login
         user.setLastLoginAt(ZonedDateTime.now());
-        userRepository.save(user);
 
         // Build response with user info
         LoginResponse.UserInfo userInfo = LoginResponse.UserInfo.builder()
@@ -204,18 +196,19 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public void forgotPassword(String email, String appBaseUrl) {
         logger.info("Password reset requested for email: {}", email);
-        logger.info("App base URL: {}", appBaseUrl);
 
-        var userOpt = userRepository.findByEmail(email);
+        Optional<AppUser> userOpt = userService.findByEmail(email);
+        
         if (userOpt.isEmpty()) {
-            logger.info("User not found with email: {}", email);
+            logger.info("Password reset requested for non-existent email: {}", email);
             return;
         }
 
-        var user = userOpt.get();
-        logger.info("User found: {} {}", user.getFirstName(), user.getLastName());
+        AppUser user = userOpt.get();
+        logger.debug("Processing password reset for user: {}", user.getId());
 
         String rawToken = tokenService.generateToken();
         String hash = tokenService.hashToken(rawToken);
@@ -231,53 +224,60 @@ public class AuthServiceImpl implements AuthService {
         token.setTokenHash(hash);
         token.setTokenType(UserToken.TokenType.PASSWORD_RESET);
         token.setCreatedAt(ZonedDateTime.now());
-        token.setExpiresAt(ZonedDateTime.now().plusHours(2));
+        token.setExpiresAt(ZonedDateTime.now().plusHours(passwordResetExpirationHours));
         token.setUsed(false);
         userTokenRepository.save(token);
         
-        logger.info("Token saved to database");
+        logger.debug("Password reset token created for user: {}", user.getId());
 
-        // Use configured frontend URL if appBaseUrl is empty or null
         String baseUrl = (appBaseUrl == null || appBaseUrl.trim().isEmpty())
             ? frontendUrl
             : appBaseUrl;
 
         String resetLink = baseUrl + "/reset-password?token=" + rawToken;
-        logger.info("Sending email with reset link: {}", resetLink);
+        logger.debug("Sending password reset email to: {}", email);
 
         emailService.sendPasswordReset(user.getEmail(), resetLink);
-        logger.info("Email service call completed");
+        logger.info("Password reset email sent successfully");
     }
 
     @Override
+    @Transactional
     public void resetPassword(String token, String newPassword) {
         String hash = tokenService.hashToken(token);
-        var opt = userTokenRepository.findByTokenHashAndTokenTypeAndUsedFalseAndExpiresAtAfter(
+        Optional<UserToken> tokenOpt = userTokenRepository.findByTokenHashAndTokenTypeAndUsedFalseAndExpiresAtAfter(
                 hash,
                 UserToken.TokenType.PASSWORD_RESET,
                 ZonedDateTime.now()
         );
-        var ut = opt.orElseThrow(() -> new IllegalArgumentException("Invalid or expired token"));
-        var user = ut.getUser();
-        userService.updatePassword(user, newPassword);
-        ut.setUsed(true);
-        userTokenRepository.save(ut);
+        
+        UserToken userToken = tokenOpt.orElseThrow(() -> 
+            new IllegalArgumentException("Invalid or expired password reset token"));
+        
+        AppUser user = userToken.getUser();
+        userService.updatePassword(user.getId(), newPassword);
+        
+        userToken.setUsed(true);
+        userTokenRepository.save(userToken);
+        
+        logger.info("Password reset completed for user: {}", user.getId());
     }
 
     @Override
+    @Transactional
     public LoginResponse refreshToken(String refreshToken) {
         String hash = tokenService.hashToken(refreshToken);
-        var opt = userTokenRepository.findByTokenHashAndTokenTypeAndUsedFalseAndExpiresAtAfter(
+        Optional<UserToken> tokenOpt = userTokenRepository.findByTokenHashAndTokenTypeAndUsedFalseAndExpiresAtAfter(
                 hash,
                 UserToken.TokenType.REFRESH_TOKEN,
                 ZonedDateTime.now()
         );
 
-        if (opt.isEmpty()) {
+        if (tokenOpt.isEmpty()) {
             throw new IllegalArgumentException("Invalid or expired refresh token");
         }
 
-        var userToken = opt.get();
+        UserToken userToken = tokenOpt.get();
         AppUser user = userToken.getUser();
 
         if (!user.isActive()) {
@@ -308,23 +308,23 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public void logout(String refreshToken) {
-        logger.info("Logout requested");
+        logger.debug("Logout requested");
 
         String hash = tokenService.hashToken(refreshToken);
-        var opt = userTokenRepository.findByTokenHashAndTokenTypeAndUsedFalseAndExpiresAtAfter(
+        Optional<UserToken> tokenOpt = userTokenRepository.findByTokenHashAndTokenTypeAndUsedFalseAndExpiresAtAfter(
                 hash,
                 UserToken.TokenType.REFRESH_TOKEN,
                 ZonedDateTime.now()
         );
 
-        if (opt.isEmpty()) {
-            logger.warn("Refresh token not found or already expired");
-            // Don't throw error - token might already be invalid
+        if (tokenOpt.isEmpty()) {
+            logger.debug("Refresh token not found or already expired - logout ignored");
             return;
         }
 
-        var userToken = opt.get();
+        UserToken userToken = tokenOpt.get();
         userToken.setUsed(true);
         userTokenRepository.save(userToken);
         logger.info("User logged out successfully - refresh token revoked");

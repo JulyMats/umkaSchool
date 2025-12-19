@@ -1,5 +1,6 @@
 package com.app.umkaSchool.service.impl;
 
+import com.app.umkaSchool.dto.achievement.AchievementResponse;
 import com.app.umkaSchool.model.Achievement;
 import com.app.umkaSchool.model.ExerciseAttempt;
 import com.app.umkaSchool.model.ProgressSnapshot;
@@ -16,12 +17,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class AchievementServiceImpl implements AchievementService {
@@ -147,5 +152,86 @@ public class AchievementServiceImpl implements AchievementService {
         studentAchievement.setAchievement(achievement);
         
         studentAchievementRepository.save(studentAchievement);
+    }
+
+    @Override
+    @Cacheable(value = "achievements")
+    public List<AchievementResponse> getAllAchievements() {
+        List<Achievement> achievements = achievementRepository.findAll();
+        return achievements.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<AchievementResponse> getStudentAchievements(UUID studentId) {
+        logger.info("Fetching achievements for student: {}", studentId);
+        List<StudentAchievement> studentAchievements = studentAchievementRepository.findByStudent_Id(studentId);
+        logger.info("Found {} student achievements for student: {}", studentAchievements.size(), studentId);
+        
+        List<AchievementResponse> responses = studentAchievements.stream()
+                .map(this::mapToStudentAchievementResponse)
+                .collect(Collectors.toList());
+        
+        logger.info("Mapped to {} achievement responses for student: {}", responses.size(), studentId);
+        return responses;
+    }
+
+    @Override
+    public List<AchievementResponse> getRecentStudentAchievements(UUID studentId, int hours) {
+        ZonedDateTime cutoffTime = ZonedDateTime.now().minusHours(hours);
+        List<StudentAchievement> studentAchievements = studentAchievementRepository.findByStudent_Id(studentId);
+        
+        return studentAchievements.stream()
+                .filter(sa -> sa.getEarnedAt() != null && sa.getEarnedAt().isAfter(cutoffTime))
+                .map(sa -> {
+                    AchievementResponse response = mapToStudentAchievementResponse(sa);
+                    return AchievementResponse.builder()
+                            .id(response.getId())
+                            .name(response.getName())
+                            .description(response.getDescription())
+                            .iconUrl(response.getIconUrl())
+                            .requiredCriteria(response.getRequiredCriteria())
+                            .points(response.getPoints())
+                            .createdAt(response.getCreatedAt())
+                            .earnedAt(response.getEarnedAt())
+                            .isNew(true)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    private AchievementResponse mapToResponse(Achievement achievement) {
+        return AchievementResponse.builder()
+                .id(achievement.getId())
+                .name(achievement.getName())
+                .description(achievement.getDescription())
+                .iconUrl(achievement.getIconUrl())
+                .requiredCriteria(achievement.getRequiredCriteria())
+                .points(achievement.getPoints())
+                .createdAt(achievement.getCreatedAt())
+                .earnedAt(null)
+                .isNew(null)
+                .build();
+    }
+
+    private AchievementResponse mapToStudentAchievementResponse(StudentAchievement studentAchievement) {
+        Achievement achievement = studentAchievement.getAchievement();
+        if (achievement == null) {
+            logger.error("Achievement is null for StudentAchievement with studentId: {}, achievementId: {}", 
+                    studentAchievement.getId().getStudentId(), studentAchievement.getId().getAchievementId());
+            throw new IllegalStateException("Achievement not loaded for StudentAchievement");
+        }
+        return AchievementResponse.builder()
+                .id(achievement.getId())
+                .name(achievement.getName())
+                .description(achievement.getDescription())
+                .iconUrl(achievement.getIconUrl())
+                .requiredCriteria(achievement.getRequiredCriteria())
+                .points(achievement.getPoints())
+                .createdAt(achievement.getCreatedAt())
+                .earnedAt(studentAchievement.getEarnedAt())
+                .isNew(false)
+                .build();
     }
 }

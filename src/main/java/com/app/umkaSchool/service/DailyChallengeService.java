@@ -9,17 +9,11 @@ import java.util.UUID;
 
 public interface DailyChallengeService {
     DailyChallengeResponse createDailyChallenge(CreateDailyChallengeRequest request);
-
     DailyChallengeResponse getDailyChallengeById(UUID challengeId);
-
     DailyChallengeResponse getDailyChallengeByDate(LocalDate date);
-
     DailyChallengeResponse getTodayChallenge();
-
     List<DailyChallengeResponse> getAllDailyChallenges();
-
     void deleteDailyChallenge(UUID challengeId);
-
     void createTodayChallengeIfNotExists();
 }
 
