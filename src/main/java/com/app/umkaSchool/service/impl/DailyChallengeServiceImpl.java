@@ -8,6 +8,7 @@ import com.app.umkaSchool.repository.DailyChallengeRepository;
 import com.app.umkaSchool.repository.ExerciseRepository;
 import com.app.umkaSchool.repository.TeacherRepository;
 import com.app.umkaSchool.service.DailyChallengeService;
+import com.app.umkaSchool.service.ExerciseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,14 +31,17 @@ public class DailyChallengeServiceImpl implements DailyChallengeService {
     private final DailyChallengeRepository dailyChallengeRepository;
     private final ExerciseRepository exerciseRepository;
     private final TeacherRepository teacherRepository;
+    private final ExerciseService exerciseService;
 
     @Autowired
     public DailyChallengeServiceImpl(DailyChallengeRepository dailyChallengeRepository,
                                      ExerciseRepository exerciseRepository,
-                                     TeacherRepository teacherRepository) {
+                                     TeacherRepository teacherRepository,
+                                     ExerciseService exerciseService) {
         this.dailyChallengeRepository = dailyChallengeRepository;
         this.exerciseRepository = exerciseRepository;
         this.teacherRepository = teacherRepository;
+        this.exerciseService = exerciseService;
     }
 
     @Override
@@ -64,16 +68,15 @@ public class DailyChallengeServiceImpl implements DailyChallengeService {
 
         Set<DailyChallengeExercise> challengeExercises = new HashSet<>();
         for (CreateDailyChallengeRequest.ExerciseRequest exerciseRequest : request.getExercises()) {
-            Exercise exercise = exerciseRepository.findById(exerciseRequest.getExerciseId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Exercise not found with id: " + exerciseRequest.getExerciseId()));
+            Exercise clonedExercise = exerciseService.cloneExercise(exerciseRequest.getExerciseId());
 
             DailyChallengeExercise challengeExercise = new DailyChallengeExercise();
             DailyChallengeExerciseId id = new DailyChallengeExerciseId();
             id.setDailyChallengeId(savedChallenge.getId());
-            id.setExerciseId(exercise.getId());
+            id.setExerciseId(clonedExercise.getId());
             challengeExercise.setId(id);
             challengeExercise.setDailyChallenge(savedChallenge);
-            challengeExercise.setExercise(exercise);
+            challengeExercise.setExercise(clonedExercise);
             challengeExercise.setOrderIndex(exerciseRequest.getOrderIndex() != null ? exerciseRequest.getOrderIndex() : 0);
             challengeExercises.add(challengeExercise);
         }
@@ -138,6 +141,59 @@ public class DailyChallengeServiceImpl implements DailyChallengeService {
         }
         dailyChallengeRepository.deleteById(challengeId);
         logger.info("Deleted daily challenge with id: {}", challengeId);
+    }
+
+    @Override
+    @Transactional
+    public void createTodayChallengeIfNotExists() {
+        LocalDate today = LocalDate.now();
+        
+        if (dailyChallengeRepository.existsByChallengeDate(today)) {
+            logger.info("Daily challenge for today ({}) already exists, skipping creation", today);
+            return;
+        }
+        
+        Optional<DailyChallenge> latestChallengeOpt = dailyChallengeRepository.findFirstByOrderByChallengeDateDesc();
+        
+        if (latestChallengeOpt.isEmpty()) {
+            logger.warn("No previous daily challenge found to copy from. Cannot create challenge for today: {}", today);
+            return;
+        }
+        
+        DailyChallenge latestChallenge = latestChallengeOpt.get();
+        logger.info("Creating new daily challenge for today ({}) by copying from challenge dated: {}", 
+                today, latestChallenge.getChallengeDate());
+        
+        DailyChallenge newChallenge = new DailyChallenge();
+        newChallenge.setChallengeDate(today);
+        newChallenge.setTitle(latestChallenge.getTitle());
+        newChallenge.setDescription(latestChallenge.getDescription());
+        newChallenge.setCreatedBy(latestChallenge.getCreatedBy()); // Keep the same creator
+        
+        DailyChallenge savedChallenge = dailyChallengeRepository.save(newChallenge);
+        
+        Set<DailyChallengeExercise> newChallengeExercises = new HashSet<>();
+        int orderIndex = 0;
+        for (DailyChallengeExercise originalExercise : latestChallenge.getExercises()) {
+            Exercise clonedExercise = exerciseService.cloneExercise(originalExercise.getExercise().getId());
+            
+            DailyChallengeExercise newChallengeExercise = new DailyChallengeExercise();
+            DailyChallengeExerciseId id = new DailyChallengeExerciseId();
+            id.setDailyChallengeId(savedChallenge.getId());
+            id.setExerciseId(clonedExercise.getId());
+            newChallengeExercise.setId(id);
+            newChallengeExercise.setDailyChallenge(savedChallenge);
+            newChallengeExercise.setExercise(clonedExercise);
+            newChallengeExercise.setOrderIndex(originalExercise.getOrderIndex() != null ? originalExercise.getOrderIndex() : orderIndex++);
+            
+            newChallengeExercises.add(newChallengeExercise);
+        }
+        
+        savedChallenge.setExercises(newChallengeExercises);
+        dailyChallengeRepository.save(savedChallenge);
+        
+        logger.info("Successfully created daily challenge for today ({}) with {} exercises", 
+                today, newChallengeExercises.size());
     }
 
     private DailyChallengeResponse mapToResponse(DailyChallenge challenge) {

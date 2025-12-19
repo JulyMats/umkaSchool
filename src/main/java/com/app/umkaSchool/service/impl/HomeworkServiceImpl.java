@@ -8,6 +8,7 @@ import com.app.umkaSchool.model.*;
 import com.app.umkaSchool.repository.ExerciseRepository;
 import com.app.umkaSchool.repository.HomeworkRepository;
 import com.app.umkaSchool.repository.TeacherRepository;
+import com.app.umkaSchool.service.ExerciseService;
 import com.app.umkaSchool.service.HomeworkService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,14 +29,17 @@ public class HomeworkServiceImpl implements HomeworkService {
     private final HomeworkRepository homeworkRepository;
     private final TeacherRepository teacherRepository;
     private final ExerciseRepository exerciseRepository;
+    private final ExerciseService exerciseService;
 
     @Autowired
     public HomeworkServiceImpl(HomeworkRepository homeworkRepository,
                                TeacherRepository teacherRepository,
-                               ExerciseRepository exerciseRepository) {
+                               ExerciseRepository exerciseRepository,
+                               ExerciseService exerciseService) {
         this.homeworkRepository = homeworkRepository;
         this.teacherRepository = teacherRepository;
         this.exerciseRepository = exerciseRepository;
+        this.exerciseService = exerciseService;
     }
 
     @Override
@@ -58,18 +62,16 @@ public class HomeworkServiceImpl implements HomeworkService {
         homework.setExercises(new HashSet<>());
         homework = homeworkRepository.saveAndFlush(homework);
 
-        // Add exercises if provided
         if (request.getExerciseIds() != null && !request.getExerciseIds().isEmpty()) {
             int orderIndex = 0;
-            for (UUID exerciseId : request.getExerciseIds()) {
-                Exercise exercise = exerciseRepository.findById(exerciseId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Exercise not found: " + exerciseId));
+            for (UUID originalExerciseId : request.getExerciseIds()) {
+                Exercise clonedExercise = exerciseService.cloneExercise(originalExerciseId);
 
                 HomeworkExercise homeworkExercise = new HomeworkExercise();
                 homeworkExercise.getId().setHomeworkId(homework.getId());
-                homeworkExercise.getId().setExerciseId(exerciseId);
+                homeworkExercise.getId().setExerciseId(clonedExercise.getId());
                 homeworkExercise.setHomework(homework);
-                homeworkExercise.setExercise(exercise);
+                homeworkExercise.setExercise(clonedExercise);
                 homeworkExercise.setOrderIndex(orderIndex++);
                 homeworkExercise.setRequiredAttempts(1);
 
@@ -108,20 +110,18 @@ public class HomeworkServiceImpl implements HomeworkService {
             homework.setTeacher(teacher);
         }
 
-        // Update exercises if provided
         if (request.getExerciseIds() != null) {
             homework.getExercises().clear();
             Set<HomeworkExercise> homeworkExercises = new HashSet<>();
             int orderIndex = 0;
-            for (UUID exerciseId : request.getExerciseIds()) {
-                Exercise exercise = exerciseRepository.findById(exerciseId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Exercise not found: " + exerciseId));
+            for (UUID originalExerciseId : request.getExerciseIds()) {
+                Exercise clonedExercise = exerciseService.cloneExercise(originalExerciseId);
 
                 HomeworkExercise homeworkExercise = new HomeworkExercise();
                 homeworkExercise.getId().setHomeworkId(homework.getId());
-                homeworkExercise.getId().setExerciseId(exerciseId);
+                homeworkExercise.getId().setExerciseId(clonedExercise.getId());
                 homeworkExercise.setHomework(homework);
-                homeworkExercise.setExercise(exercise);
+                homeworkExercise.setExercise(clonedExercise);
                 homeworkExercise.setOrderIndex(orderIndex++);
                 homeworkExercise.setRequiredAttempts(1);
 

@@ -18,6 +18,7 @@ export const convertExerciseToConfig = (exercise: Exercise): ExerciseSessionConf
   const config: ExerciseSessionConfig = {
     exerciseTypeId: exercise.exerciseTypeId,
     exerciseTypeName: exercise.exerciseTypeName,
+    exerciseId: exercise.id,
   };
 
   if (params.timePerQuestion) config.timePerQuestion = params.timePerQuestion;
@@ -41,10 +42,8 @@ export const convertExerciseToConfig = (exercise: Exercise): ExerciseSessionConf
 
 export const formatAssignmentStatus = (status: string): string => {
   switch (status) {
-    case 'ASSIGNED':
-      return 'Assigned';
-    case 'IN_PROGRESS':
-      return 'In Progress';
+    case 'PENDING':
+      return 'Pending';
     case 'COMPLETED':
       return 'Completed';
     case 'OVERDUE':
@@ -57,8 +56,7 @@ export const formatAssignmentStatus = (status: string): string => {
 
 export const getAssignmentStatusColors = (status: string) => {
   switch (status) {
-    case 'ASSIGNED':
-    case 'IN_PROGRESS':
+    case 'PENDING':
       return {
         bg: 'bg-blue-50',
         border: 'border-blue-200',

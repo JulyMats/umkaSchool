@@ -22,6 +22,10 @@ public interface HomeworkAssignmentRepository extends JpaRepository<HomeworkAssi
 
     List<HomeworkAssignment> findByDueDateBeforeAndStatus(ZonedDateTime date, HomeworkStatus status);
 
+    @Query("SELECT ha FROM HomeworkAssignment ha " +
+           "WHERE CAST(ha.dueDate AS date) = CAST(:date AS date)")
+    List<HomeworkAssignment> findByDueDateOnDate(@Param("date") ZonedDateTime date);
+
     List<HomeworkAssignment> findByAssignedGroups_StudentGroup_Id(UUID groupId);
 
     List<HomeworkAssignment> findByAssignedStudents_Student_Id(UUID studentId);

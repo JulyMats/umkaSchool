@@ -242,6 +242,27 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
+    @Transactional
+    public Exercise cloneExercise(UUID exerciseId) {
+        logger.info("Cloning exercise: {}", exerciseId);
+        
+        Exercise originalExercise = exerciseRepository.findById(exerciseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
+        
+        Exercise clonedExercise = new Exercise();
+        clonedExercise.setExerciseType(originalExercise.getExerciseType());
+        clonedExercise.setParameters(originalExercise.getParameters());
+        clonedExercise.setDifficulty(originalExercise.getDifficulty());
+        clonedExercise.setPoints(originalExercise.getPoints());
+        
+        clonedExercise = exerciseRepository.save(clonedExercise);
+        logger.info("Exercise cloned successfully. Original: {}, Clone: {}", 
+                exerciseId, clonedExercise.getId());
+        
+        return clonedExercise;
+    }
+
+    @Override
     public Integer calculateDifficulty(UUID exerciseTypeId, String parametersJson) {
         ExerciseType exerciseType = exerciseTypeRepository.findById(exerciseTypeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Exercise type not found"));

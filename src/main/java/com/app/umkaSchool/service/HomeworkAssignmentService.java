@@ -41,7 +41,5 @@ public interface HomeworkAssignmentService {
     void updateOverdueAssignments();
 
     void checkAndUpdateAssignmentStatus(UUID homeworkAssignmentId, UUID studentId);
-
-    void checkAndUpdateAssignmentStatusForExercise(UUID exerciseId, UUID studentId);
 }
 

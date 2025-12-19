@@ -36,4 +36,6 @@ public interface ExerciseService {
     ValidateAnswerResponse validateAnswer(ValidateAnswerRequest request);
 
     Integer calculateDifficulty(UUID exerciseTypeId, String parametersJson);
+    
+    Exercise cloneExercise(UUID exerciseId);
 }

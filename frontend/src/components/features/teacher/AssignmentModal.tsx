@@ -94,6 +94,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
             <input
               type="date"
               required
+              min={new Date().toISOString().split('T')[0]}
               value={formState.dueDate}
               onChange={(event) =>
                 onChange((prev) => ({ ...prev, dueDate: event.target.value }))
@@ -101,26 +102,6 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-
-          {mode === 'edit' && (
-            <SelectField
-              label="Status"
-              name="status"
-              value={formState.status}
-              onChange={(e) =>
-                onChange((prev) => ({
-                  ...prev,
-                  status: e.target.value as HomeworkStatus
-                }))
-              }
-              options={[
-                { value: 'ASSIGNED', label: 'Assigned' },
-                { value: 'IN_PROGRESS', label: 'In Progress' },
-                { value: 'COMPLETED', label: 'Completed' },
-                { value: 'OVERDUE', label: 'Overdue' }
-              ]}
-            />
-          )}
         </section>
 
         <section className="space-y-4">

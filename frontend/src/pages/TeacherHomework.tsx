@@ -39,7 +39,7 @@ const assignmentInitialState: AssignmentFormState = {
     dueDate: '',
     selectedGroupIds: [],
     selectedStudentIds: [],
-    status: 'ASSIGNED'
+    status: 'PENDING' 
 };
 
 export default function TeacherHomework() {
@@ -118,7 +118,7 @@ export default function TeacherHomework() {
             dueDate: assignment.dueDate ? assignment.dueDate.split('T')[0] : '',
             selectedGroupIds: assignment.assignedGroupIds,
             selectedStudentIds: assignment.assignedStudentIds,
-            status: assignment.status
+            status: 'PENDING' 
         });
         openAssignmentModal();
     };
@@ -213,7 +213,6 @@ export default function TeacherHomework() {
             } else if (assignmentModalMode === 'edit' && assignmentForm.id) {
                 const payload: UpdateHomeworkAssignmentPayload = {
                     dueDate: assignmentForm.dueDate,
-                    status: assignmentForm.status,
                     groupIds: assignmentForm.selectedGroupIds,
                     studentIds: assignmentForm.selectedStudentIds
                 };
