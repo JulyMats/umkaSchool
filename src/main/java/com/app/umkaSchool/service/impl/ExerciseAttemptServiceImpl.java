@@ -1,5 +1,7 @@
 package com.app.umkaSchool.service.impl;
 
+import com.app.umkaSchool.service.ExerciseAttemptService;
+
 import com.app.umkaSchool.dto.exerciseattempt.CreateExerciseAttemptRequest;
 import com.app.umkaSchool.dto.exerciseattempt.ExerciseAttemptResponse;
 import com.app.umkaSchool.dto.exerciseattempt.UpdateExerciseAttemptRequest;
@@ -29,7 +31,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-public class ExerciseAttemptServiceImpl {
+public class ExerciseAttemptServiceImpl implements ExerciseAttemptService {
     private static final Logger logger = LoggerFactory.getLogger(ExerciseAttemptServiceImpl.class);
 
     private final ExerciseAttemptRepository exerciseAttemptRepository;
