@@ -1,7 +1,7 @@
 package com.app.umkaSchool.config.securityConfig;
 
 import com.app.umkaSchool.model.AppUser;
-import com.app.umkaSchool.repository.AppUserRepository;
+import com.app.umkaSchool.service.UserService;
 import com.app.umkaSchool.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -20,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -31,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private JwtUtil jwtUtil;
 
     @Autowired
-    private AppUserRepository userRepository;
+    private UserService userService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -45,11 +46,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String userId = jwtUtil.getUserIdFromToken(jwt);
                 String role = jwtUtil.getRoleFromToken(jwt);
 
-                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    AppUser user = userRepository.findById(UUID.fromString(userId))
-                            .orElse(null);
+                if (email != null && userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    Optional<AppUser> userOpt;
+                    try {
+                        userOpt = userService.findById(UUID.fromString(userId));
+                    } catch (IllegalArgumentException e) {
+                        logger.warn("Invalid user ID format in token: {}", userId);
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
 
-                    if (user != null && user.isActive()) {
+                    if (userOpt.isPresent() && userOpt.get().isActive()) {
+                        AppUser user = userOpt.get();
+                        if (role == null || role.isEmpty()) {
+                            logger.warn("Role not found in token for user: {}", userId);
+                            filterChain.doFilter(request, response);
+                            return;
+                        }
+
                         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                                 user,
                                 null,
@@ -57,6 +71,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         );
                         authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authentication);
+                    } else {
+                        SecurityContextHolder.clearContext();
+                        logger.warn("User not found or inactive: {}", userId);
                     }
                 }
             }

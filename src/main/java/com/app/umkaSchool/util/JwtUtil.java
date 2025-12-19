@@ -1,7 +1,9 @@
 package com.app.umkaSchool.util;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,7 +27,21 @@ public class JwtUtil {
     private Long expiration;
 
     private SecretKey getSigningKey() {
+        if (secret == null || secret.trim().isEmpty()) {
+            throw new IllegalStateException(
+                "JWT secret is not configured. Please set JWT_SECRET environment variable."
+            );
+        }
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException(
+                String.format(
+                    "JWT secret is too short. Current: %d bytes, Required: 32+ bytes (256 bits). " +
+                    "Generate a secure secret with at least 32 characters.",
+                    keyBytes.length
+                )
+            );
+        }
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -43,11 +59,19 @@ public class JwtUtil {
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (ExpiredJwtException e) {
+            throw new IllegalArgumentException("Token has expired", e);
+        } catch (MalformedJwtException e) {
+            throw new IllegalArgumentException("Token is malformed", e);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Token validation failed: " + e.getMessage(), e);
+        }
     }
 
     private Boolean isTokenExpired(String token) {
