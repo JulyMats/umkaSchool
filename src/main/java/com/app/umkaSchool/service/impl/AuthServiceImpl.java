@@ -148,13 +148,22 @@ public class AuthServiceImpl implements AuthService {
     public LoginResponse signin(LoginRequest request) {
         Optional<AppUser> userOpt = userService.findByEmail(request.getEmail());
         
-        if (userOpt.isEmpty() || !passwordEncoder.matches(request.getPassword(), userOpt.get().getPasswordHash())) {
+        if (userOpt.isEmpty()) {
+            logger.warn("User not found for email: {}", request.getEmail());
             throw new IllegalArgumentException("Invalid email or password");
         }
         
         AppUser user = userOpt.get();
+        boolean passwordMatches = passwordEncoder.matches(request.getPassword(), user.getPasswordHash());
+        logger.info("Password match result for user {}: {}", user.getEmail(), passwordMatches);
+        
+        if (!passwordMatches) {
+            logger.warn("Password mismatch for email: {}", request.getEmail());
+            throw new IllegalArgumentException("Invalid email or password");
+        }
         
         if (!user.isActive()) {
+            logger.warn("Inactive account login attempt for email: {}", request.getEmail());
             throw new IllegalArgumentException("Account is inactive. Please contact support.");
         }
 
