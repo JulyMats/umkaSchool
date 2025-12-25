@@ -36,6 +36,14 @@ export const userService = {
     updateUser: async (userId: string, payload: UpdateUserPayload): Promise<User> => {
         const response = await axiosInstance.put<UserResponse>(`/api/users/${userId}`, payload);
         return mapUserResponse(response.data);
+    },
+
+    activateUser: async (userId: string): Promise<void> => {
+        await axiosInstance.put(`/api/users/${userId}/activate`);
+    },
+
+    deactivateUser: async (userId: string): Promise<void> => {
+        await axiosInstance.put(`/api/users/${userId}/deactivate`);
     }
 };
 
