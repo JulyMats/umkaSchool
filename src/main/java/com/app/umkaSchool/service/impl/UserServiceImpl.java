@@ -136,7 +136,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "users", key = "#userId.toString()")
+    @CacheEvict(value = "users", allEntries = true)
     public void activateUser(UUID userId) {
         AppUser user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -146,7 +146,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "users", key = "#userId.toString()")
+    @CacheEvict(value = "users", allEntries = true) 
     public void deactivateUser(UUID userId) {
         AppUser user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
