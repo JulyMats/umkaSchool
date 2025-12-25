@@ -67,7 +67,6 @@ public class AppUser implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "app_theme", nullable = false)
-    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
     private ThemeMode appTheme = ThemeMode.LIGHT;
 
     @JsonIgnore
