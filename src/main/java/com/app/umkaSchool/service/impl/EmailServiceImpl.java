@@ -1,5 +1,6 @@
 package com.app.umkaSchool.service.impl;
 
+import com.app.umkaSchool.dto.weeklyreport.WeeklyReportData;
 import com.app.umkaSchool.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -17,6 +18,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 @Service
@@ -70,6 +72,18 @@ public class EmailServiceImpl implements EmailService {
             sendViaBrevo(toEmail, subject, htmlContent);
         } else {
             sendViaSmtp(toEmail, subject, htmlContent);
+        }
+    }
+
+    @Override
+    public void sendWeeklyReport(String guardianEmail, String guardianFirstName, WeeklyReportData reportData) {
+        String subject = "Weekly Progress Report for " + reportData.getStudentFirstName() + " - " + appName;
+        String htmlContent = buildWeeklyReportEmail(guardianFirstName, reportData);
+        
+        if (useBrevo) {
+            sendViaBrevo(guardianEmail, subject, htmlContent);
+        } else {
+            sendViaSmtp(guardianEmail, subject, htmlContent);
         }
     }
 
@@ -240,5 +254,142 @@ public class EmailServiceImpl implements EmailService {
                 </body>
                 </html>
                 """;
+    }
+
+    private String buildWeeklyReportEmail(String guardianFirstName, WeeklyReportData reportData) {
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+        String weekRange = reportData.getWeekStartDate().format(dateFormatter) + " - " + 
+                          reportData.getWeekEndDate().format(dateFormatter);
+        
+        String practiceTime = formatTime(reportData.getPracticeTimeSeconds());
+        
+        double homeworkCompletionRate = reportData.getTotalHomeworkCount() > 0 
+            ? (double) reportData.getCompletedHomeworkCount() * 100.0 / reportData.getTotalHomeworkCount()
+            : 0.0;
+        
+        StringBuilder subjectProgressHtml = new StringBuilder();
+        if (reportData.getSubjectProgress() != null && !reportData.getSubjectProgress().isEmpty()) {
+            for (WeeklyReportData.SubjectProgress subject : reportData.getSubjectProgress()) {
+                subjectProgressHtml.append("""
+                    <div style="background-color: white; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #4CAF50;">
+                        <h3 style="margin: 0 0 10px 0; color: #333;">%s</h3>
+                        <p style="margin: 5px 0;"><strong>Problems Solved:</strong> %d</p>
+                        <p style="margin: 5px 0;"><strong>Accuracy:</strong> %d%%</p>
+                        <p style="margin: 5px 0;"><strong>Practice Time:</strong> %s</p>
+                    </div>
+                    """.formatted(
+                    subject.getSubjectName(),
+                    subject.getProblemsSolved(),
+                    subject.getAccuracyRate(),
+                    formatTime(subject.getPracticeTimeSeconds())
+                ));
+            }
+        } else {
+            subjectProgressHtml.append("<p style='color: #666;'>No activity in any subjects this week.</p>");
+        }
+        
+        return """
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 700px; margin: 0 auto; padding: 20px; }
+                        .header { background-color: #4CAF50; color: white; padding: 30px; text-align: center; border-radius: 5px 5px 0 0; }
+                        .content { background-color: #f9f9f9; padding: 30px; }
+                        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+                        .stat-card { background-color: white; padding: 20px; border-radius: 5px; text-align: center; }
+                        .stat-value { font-size: 32px; font-weight: bold; color: #4CAF50; margin: 10px 0; }
+                        .stat-label { font-size: 14px; color: #666; }
+                        .section { background-color: white; padding: 20px; margin: 20px 0; border-radius: 5px; }
+                        .section-title { color: #4CAF50; margin-top: 0; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; }
+                        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>Weekly Progress Report</h1>
+                            <p style="margin: 0; font-size: 18px;">%s</p>
+                        </div>
+                        <div class="content">
+                            <p>Hello, %s!</p>
+                            <p>Here is the weekly progress report for your child <strong>%s %s</strong> 
+                            for the period <strong>%s</strong>.</p>
+                            
+                            <div class="section">
+                                <h2 class="section-title">Key Statistics</h2>
+                                <div class="stats-grid">
+                                    <div class="stat-card">
+                                        <div class="stat-value">%d</div>
+                                        <div class="stat-label">Problems Solved</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">%d%%</div>
+                                        <div class="stat-label">Accuracy</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">%s</div>
+                                        <div class="stat-label">Practice Time</div>
+                                    </div>
+                                    <div class="stat-card">
+                                        <div class="stat-value">%d</div>
+                                        <div class="stat-label">Days in a Row</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="section">
+                                <h2 class="section-title">Homework</h2>
+                                <p><strong>Completed:</strong> %d out of %d assignments</p>
+                                <p><strong>Completion Rate:</strong> %.1f%%</p>
+                            </div>
+                            
+                            <div class="section">
+                                <h2 class="section-title">Progress by Subject</h2>
+                                %s
+                            </div>
+                            
+                            <p>Thank you for your support in your child's learning journey!</p>
+                            <p>If you have any questions, please feel free to contact us.</p>
+                        </div>
+                        <div class="footer">
+                            <p>© 2025 %s. All rights reserved.</p>
+                            <p>This is an automated email. Please do not reply.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """.formatted(
+                weekRange,
+                guardianFirstName,
+                reportData.getStudentFirstName(),
+                reportData.getStudentLastName(),
+                weekRange,
+                reportData.getProblemsSolved(),
+                reportData.getAccuracyRate(),
+                practiceTime,
+                reportData.getCurrentStreak(),
+                reportData.getCompletedHomeworkCount(),
+                reportData.getTotalHomeworkCount(),
+                homeworkCompletionRate,
+                subjectProgressHtml.toString(),
+                appName
+        );
+    }
+
+    private String formatTime(Long seconds) {
+        if (seconds == null || seconds == 0) {
+            return "0 min";
+        }
+        long hours = seconds / 3600;
+        long minutes = (seconds % 3600) / 60;
+        
+        if (hours > 0) {
+            return String.format("%dh %dm", hours, minutes);
+        } else {
+            return String.format("%dm", minutes);
+        }
     }
 }
