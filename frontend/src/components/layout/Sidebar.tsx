@@ -34,7 +34,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     navigate('/register', { replace: true });
   };
 
-  const menuItems = user?.role === 'TEACHER'
+  const menuItems = user?.role === 'ADMIN'
+    ? [
+        { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+        { icon: Users, label: "Teachers", path: "/teachers" },
+        { icon: Settings, label: "Settings", path: "/settings" },
+      ]
+    : user?.role === 'TEACHER'
     ? [
         { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
         { icon: Users, label: "Students", path: "/students" },
