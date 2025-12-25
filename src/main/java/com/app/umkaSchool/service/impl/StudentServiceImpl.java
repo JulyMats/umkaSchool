@@ -176,9 +176,16 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public StudentResponse getStudentById(UUID studentId) {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
+        if (student.getUser() != null) {
+            student.getUser().getFirstName();
+        }
+        if (student.getGuardian() != null) {
+            student.getGuardian().getFirstName();
+        }
         return mapToResponse(student);
     }
 
@@ -233,6 +240,16 @@ public class StudentServiceImpl implements StudentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
 
         student.setTeacher(teacher);
+        studentRepository.save(student);
+    }
+
+    @Override
+    @Transactional
+    public void unassignFromTeacher(UUID studentId) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
+        
+        student.setTeacher(null);
         studentRepository.save(student);
     }
 
@@ -294,6 +311,7 @@ public class StudentServiceImpl implements StudentService {
                 .groupCode(student.getGroup() != null ? student.getGroup().getCode() : null)
                 .guardian(guardianInfo)
                 .avatarUrl(user.getAvatarUrl())
+                .isActive(user.isActive())
                 .build();
     }
 }
