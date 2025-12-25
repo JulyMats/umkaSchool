@@ -1,5 +1,6 @@
 package com.app.umkaSchool.dto.teacher;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,5 +25,8 @@ public class TeacherResponse {
     private int totalGroups;
     private ZonedDateTime createdAt;
     private String avatarUrl;
+    
+    @JsonProperty("isActive")
+    private boolean isActive;
 }
 

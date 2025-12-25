@@ -117,9 +117,13 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TeacherResponse getTeacherById(UUID teacherId) {
         Teacher teacher = teacherRepository.findById(teacherId)
                 .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
+        if (teacher.getUser() != null) {
+            teacher.getUser().getFirstName();
+        }
         return mapToResponse(teacher);
     }
 
@@ -175,6 +179,7 @@ public class TeacherServiceImpl implements TeacherService {
                 .totalGroups(totalGroups)
                 .createdAt(user.getCreatedAt())
                 .avatarUrl(user.getAvatarUrl())
+                .isActive(user.isActive())
                 .build();
     }
 }
