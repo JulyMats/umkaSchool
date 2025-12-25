@@ -16,6 +16,8 @@ import TeacherDashboard from "./pages/TeacherDashboard";
 import TeacherStudents from "./pages/TeacherStudents";
 import TeacherGroups from "./pages/TeacherGroups";
 import TeacherHomework from "./pages/TeacherHomework";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminTeachers from "./pages/AdminTeachers";
 import Profile from "./pages/Profile";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { SidebarProvider, useSidebar } from "./contexts/SidebarContext";
@@ -39,7 +41,28 @@ function AppContent() {
     );
   }
 
+  // Wait for user data to load before rendering routes
+  if (isAuthenticated && !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+      </div>
+    );
+  }
+
   const renderProtectedRoutes = () => {
+    if (user?.role === 'ADMIN') {
+      return (
+        <>
+          <Route path="/dashboard" element={<AdminDashboard />} />
+          <Route path="/teachers" element={<AdminTeachers />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </>
+      );
+    }
+
     if (user?.role === 'TEACHER') {
       return (
         <>
