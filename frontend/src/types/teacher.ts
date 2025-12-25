@@ -10,6 +10,7 @@ export interface Teacher {
     totalGroups: number;
     createdAt: string;
     avatarUrl: string;
+    isActive: boolean;
 }
 
 export interface CreateTeacherPayload {
