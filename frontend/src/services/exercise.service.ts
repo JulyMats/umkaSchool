@@ -1,5 +1,6 @@
 import axiosInstance from './axios.config';
 import { Exercise, CreateExercisePayload, UpdateExercisePayload } from '../types/exercise';
+import { PaginatedResponse } from '../types/common';
 
 export interface GenerateExerciseNumbersRequest {
     exerciseId: string;
@@ -29,19 +30,97 @@ export interface ValidateAnswerResponse {
 }
 
 export const exerciseService = {
-    getAllExercises: async (): Promise<Exercise[]> => {
-        const response = await axiosInstance.get('/api/exercises');
+    getAllExercises: async (page: number = 0, size: number = 20, sort?: string): Promise<PaginatedResponse<Exercise>> => {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString()
+        });
+        if (sort) {
+            params.append('sort', sort);
+        }
+        const response = await axiosInstance.get<PaginatedResponse<Exercise>>(`/api/exercises?${params.toString()}`);
         return response.data;
     },
 
-    getExercisesByTeacher: async (teacherId: string): Promise<Exercise[]> => {
-        const response = await axiosInstance.get(`/api/exercises/teacher/${teacherId}`);
+    getExercisesByTeacher: async (teacherId: string, page: number = 0, size: number = 20, sort?: string): Promise<PaginatedResponse<Exercise>> => {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString()
+        });
+        if (sort) {
+            params.append('sort', sort);
+        }
+        const response = await axiosInstance.get<PaginatedResponse<Exercise>>(`/api/exercises/teacher/${teacherId}?${params.toString()}`);
         return response.data;
     },
 
-    getExercisesByType: async (exerciseTypeId: string): Promise<Exercise[]> => {
-        const response = await axiosInstance.get(`/api/exercises/type/${exerciseTypeId}`);
+    getExercisesByType: async (exerciseTypeId: string, page: number = 0, size: number = 20, sort?: string): Promise<PaginatedResponse<Exercise>> => {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString()
+        });
+        if (sort) {
+            params.append('sort', sort);
+        }
+        const response = await axiosInstance.get<PaginatedResponse<Exercise>>(`/api/exercises/type/${exerciseTypeId}?${params.toString()}`);
         return response.data;
+    },
+
+    getExercisesByDifficulty: async (difficulty: number, page: number = 0, size: number = 20, sort?: string): Promise<PaginatedResponse<Exercise>> => {
+        const params = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString()
+        });
+        if (sort) {
+            params.append('sort', sort);
+        }
+        const response = await axiosInstance.get<PaginatedResponse<Exercise>>(`/api/exercises/difficulty/${difficulty}?${params.toString()}`);
+        return response.data;
+    },
+
+    getAllExercisesAll: async (): Promise<Exercise[]> => {
+        const allExercises: Exercise[] = [];
+        let page = 0;
+        let hasMore = true;
+
+        while (hasMore) {
+            const response = await exerciseService.getAllExercises(page, 100);
+            allExercises.push(...response.content);
+            hasMore = !response.last;
+            page++;
+        }
+
+        return allExercises;
+    },
+
+    getExercisesByTeacherAll: async (teacherId: string): Promise<Exercise[]> => {
+        const allExercises: Exercise[] = [];
+        let page = 0;
+        let hasMore = true;
+
+        while (hasMore) {
+            const response = await exerciseService.getExercisesByTeacher(teacherId, page, 100);
+            allExercises.push(...response.content);
+            hasMore = !response.last;
+            page++;
+        }
+
+        return allExercises;
+    },
+
+    getExercisesByTypeAll: async (exerciseTypeId: string): Promise<Exercise[]> => {
+        const allExercises: Exercise[] = [];
+        let page = 0;
+        let hasMore = true;
+
+        while (hasMore) {
+            const response = await exerciseService.getExercisesByType(exerciseTypeId, page, 100);
+            allExercises.push(...response.content);
+            hasMore = !response.last;
+            page++;
+        }
+
+        return allExercises;
     },
 
     getExerciseById: async (exerciseId: string): Promise<Exercise> => {

@@ -20,6 +20,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -135,31 +137,27 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
-    public List<ExerciseResponse> getAllExercises() {
-        return exerciseRepository.findAllByOrderByCreatedAtDesc().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public Page<ExerciseResponse> getAllExercises(Pageable pageable) {
+        return exerciseRepository.findAllByOrderByCreatedAtDesc(pageable)
+                .map(this::mapToResponse);
     }
 
     @Override
-    public List<ExerciseResponse> getExercisesByType(UUID exerciseTypeId) {
-        return exerciseRepository.findByExerciseType_IdOrderByDifficultyAsc(exerciseTypeId).stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public Page<ExerciseResponse> getExercisesByType(UUID exerciseTypeId, Pageable pageable) {
+        return exerciseRepository.findByExerciseType_IdOrderByDifficultyAsc(exerciseTypeId, pageable)
+                .map(this::mapToResponse);
     }
 
     @Override
-    public List<ExerciseResponse> getExercisesByTeacher(UUID teacherId) {
-        return exerciseRepository.findByCreatedBy_IdOrderByCreatedAtDesc(teacherId).stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public Page<ExerciseResponse> getExercisesByTeacher(UUID teacherId, Pageable pageable) {
+        return exerciseRepository.findByCreatedBy_IdOrderByCreatedAtDesc(teacherId, pageable)
+                .map(this::mapToResponse);
     }
 
     @Override
-    public List<ExerciseResponse> getExercisesByDifficulty(Integer difficulty) {
-        return exerciseRepository.findByDifficultyOrderByCreatedAtDesc(difficulty).stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public Page<ExerciseResponse> getExercisesByDifficulty(Integer difficulty, Pageable pageable) {
+        return exerciseRepository.findByDifficultyOrderByCreatedAtDesc(difficulty, pageable)
+                .map(this::mapToResponse);
     }
 
     @Override

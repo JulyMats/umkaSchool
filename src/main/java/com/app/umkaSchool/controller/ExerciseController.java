@@ -10,11 +10,13 @@ import com.app.umkaSchool.dto.exercise.ValidateAnswerResponse;
 import com.app.umkaSchool.service.ExerciseService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -49,26 +51,33 @@ public class ExerciseController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ExerciseResponse>> getAllExercises() {
-        List<ExerciseResponse> exercises = exerciseService.getAllExercises();
+    public ResponseEntity<Page<ExerciseResponse>> getAllExercises(
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+        Page<ExerciseResponse> exercises = exerciseService.getAllExercises(pageable);
         return ResponseEntity.ok(exercises);
     }
 
     @GetMapping("/type/{exerciseTypeId}")
-    public ResponseEntity<List<ExerciseResponse>> getExercisesByType(@PathVariable UUID exerciseTypeId) {
-        List<ExerciseResponse> exercises = exerciseService.getExercisesByType(exerciseTypeId);
+    public ResponseEntity<Page<ExerciseResponse>> getExercisesByType(
+            @PathVariable UUID exerciseTypeId,
+            @PageableDefault(size = 20, sort = "difficulty") Pageable pageable) {
+        Page<ExerciseResponse> exercises = exerciseService.getExercisesByType(exerciseTypeId, pageable);
         return ResponseEntity.ok(exercises);
     }
 
     @GetMapping("/teacher/{teacherId}")
-    public ResponseEntity<List<ExerciseResponse>> getExercisesByTeacher(@PathVariable UUID teacherId) {
-        List<ExerciseResponse> exercises = exerciseService.getExercisesByTeacher(teacherId);
+    public ResponseEntity<Page<ExerciseResponse>> getExercisesByTeacher(
+            @PathVariable UUID teacherId,
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+        Page<ExerciseResponse> exercises = exerciseService.getExercisesByTeacher(teacherId, pageable);
         return ResponseEntity.ok(exercises);
     }
 
     @GetMapping("/difficulty/{difficulty}")
-    public ResponseEntity<List<ExerciseResponse>> getExercisesByDifficulty(@PathVariable Integer difficulty) {
-        List<ExerciseResponse> exercises = exerciseService.getExercisesByDifficulty(difficulty);
+    public ResponseEntity<Page<ExerciseResponse>> getExercisesByDifficulty(
+            @PathVariable Integer difficulty,
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+        Page<ExerciseResponse> exercises = exerciseService.getExercisesByDifficulty(difficulty, pageable);
         return ResponseEntity.ok(exercises);
     }
 
