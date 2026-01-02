@@ -21,6 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@org.springframework.test.context.ActiveProfiles("test")
 @Transactional
 @WithMockUser(roles = "TEACHER")
 class GuardianControllerTest {
@@ -62,7 +63,6 @@ class GuardianControllerTest {
 
     @Test
     void updateGuardian_ShouldReturnUpdatedGuardian() throws Exception {
-        // Create guardian first
         CreateGuardianRequest createRequest = new CreateGuardianRequest();
         createRequest.setFirstName("Jane");
         createRequest.setLastName("Doe");
@@ -77,7 +77,6 @@ class GuardianControllerTest {
 
         GuardianResponse created = objectMapper.readValue(createResponse, GuardianResponse.class);
 
-        // Update guardian
         UpdateGuardianRequest updateRequest = new UpdateGuardianRequest();
         updateRequest.setFirstName("Jane Updated");
         updateRequest.setPhone("+9876543210");
@@ -93,7 +92,6 @@ class GuardianControllerTest {
 
     @Test
     void getGuardianById_ShouldReturnGuardian() throws Exception {
-        // Create guardian first
         CreateGuardianRequest createRequest = new CreateGuardianRequest();
         createRequest.setFirstName("Jane");
         createRequest.setLastName("Doe");
@@ -108,7 +106,6 @@ class GuardianControllerTest {
 
         GuardianResponse created = objectMapper.readValue(createResponse, GuardianResponse.class);
 
-        // Get guardian by ID
         mockMvc.perform(get("/api/guardians/{guardianId}", created.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -118,7 +115,6 @@ class GuardianControllerTest {
 
     @Test
     void getGuardianByEmail_ShouldReturnGuardian() throws Exception {
-        // Create guardian first
         CreateGuardianRequest createRequest = new CreateGuardianRequest();
         createRequest.setFirstName("Jane");
         createRequest.setLastName("Doe");
@@ -130,7 +126,6 @@ class GuardianControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createRequest)));
 
-        // Get guardian by email
         mockMvc.perform(get("/api/guardians/email/{email}", "jane.email@test.com"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -140,7 +135,6 @@ class GuardianControllerTest {
 
     @Test
     void getAllGuardians_ShouldReturnListOfGuardians() throws Exception {
-        // Create a guardian
         CreateGuardianRequest createRequest = new CreateGuardianRequest();
         createRequest.setFirstName("Jane");
         createRequest.setLastName("Doe");
@@ -152,7 +146,6 @@ class GuardianControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createRequest)));
 
-        // Get all guardians
         mockMvc.perform(get("/api/guardians"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -162,7 +155,6 @@ class GuardianControllerTest {
 
     @Test
     void deleteGuardian_ShouldReturnNoContent() throws Exception {
-        // Create guardian first
         CreateGuardianRequest createRequest = new CreateGuardianRequest();
         createRequest.setFirstName("Jane");
         createRequest.setLastName("Doe");
@@ -177,7 +169,6 @@ class GuardianControllerTest {
 
         GuardianResponse created = objectMapper.readValue(createResponse, GuardianResponse.class);
 
-        // Delete guardian
         mockMvc.perform(delete("/api/guardians/{guardianId}", created.getId()))
                 .andDo(print())
                 .andExpect(status().isNoContent());
@@ -200,8 +191,7 @@ class GuardianControllerTest {
     }
 
     @Test
-    void createGuardian_WithDuplicateEmail_ShouldReturnBadRequest() throws Exception {
-        // Create first guardian
+    void createGuardian_WithDuplicateEmail_ShouldReturnConflict() throws Exception {
         CreateGuardianRequest request1 = new CreateGuardianRequest();
         request1.setFirstName("Jane");
         request1.setLastName("Doe");
@@ -213,7 +203,6 @@ class GuardianControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request1)));
 
-        // Try to create second guardian with same email
         CreateGuardianRequest request2 = new CreateGuardianRequest();
         request2.setFirstName("John");
         request2.setLastName("Smith");
@@ -225,7 +214,7 @@ class GuardianControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request2)))
                 .andDo(print())
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isConflict());
     }
 }
 

@@ -26,8 +26,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@org.springframework.test.context.ActiveProfiles("test")
 @Transactional
-@WithMockUser(roles = "TEACHER")  // Добавляем мок-пользователя с ролью TEACHER
+@WithMockUser(roles = "TEACHER") 
 class GroupControllerTest {
 
     @Autowired
@@ -53,7 +54,6 @@ class GroupControllerTest {
     }
 
     private TeacherResponse createTestTeacher(String email) throws Exception {
-        // First, create user via signup
         RegisterRequest signupRequest = new RegisterRequest();
         signupRequest.setEmail(email);
         signupRequest.setFirstName("Test");
@@ -66,7 +66,6 @@ class GroupControllerTest {
                         .content(objectMapper.writeValueAsString(signupRequest)))
                 .andExpect(status().isOk());
 
-        // Then create teacher profile
         CreateTeacherRequest teacherRequest = new CreateTeacherRequest();
         teacherRequest.setFirstName("Test");
         teacherRequest.setLastName("Teacher");
@@ -106,7 +105,6 @@ class GroupControllerTest {
     void updateGroup_ShouldReturnUpdatedGroup() throws Exception {
         TeacherResponse teacher = createTestTeacher("teacher.update@test.com");
 
-        // Create group first
         CreateGroupRequest createRequest = new CreateGroupRequest();
         createRequest.setName("Math Group A");
         createRequest.setCode("MATH2");
@@ -120,7 +118,6 @@ class GroupControllerTest {
 
         GroupResponse created = objectMapper.readValue(createResponse, GroupResponse.class);
 
-        // Update group
         UpdateGroupRequest updateRequest = new UpdateGroupRequest();
         updateRequest.setName("Math Group A Updated");
         updateRequest.setDescription("Updated description");
@@ -138,7 +135,6 @@ class GroupControllerTest {
     void getGroupById_ShouldReturnGroup() throws Exception {
         TeacherResponse teacher = createTestTeacher("teacher.get@test.com");
 
-        // Create group first
         CreateGroupRequest createRequest = new CreateGroupRequest();
         createRequest.setName("Math Group A");
         createRequest.setCode("MATH3");
@@ -152,7 +148,6 @@ class GroupControllerTest {
 
         GroupResponse created = objectMapper.readValue(createResponse, GroupResponse.class);
 
-        // Get group by ID
         mockMvc.perform(get("/api/groups/{groupId}", created.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -164,7 +159,6 @@ class GroupControllerTest {
     void getGroupByCode_ShouldReturnGroup() throws Exception {
         TeacherResponse teacher = createTestTeacher("teacher.getcode@test.com");
 
-        // Create group first
         CreateGroupRequest createRequest = new CreateGroupRequest();
         createRequest.setName("Math Group A");
         createRequest.setCode("MATH4");
@@ -175,7 +169,6 @@ class GroupControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createRequest)));
 
-        // Get group by code
         mockMvc.perform(get("/api/groups/code/{code}", "MATH4"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -186,7 +179,6 @@ class GroupControllerTest {
     void getAllGroups_ShouldReturnListOfGroups() throws Exception {
         TeacherResponse teacher = createTestTeacher("teacher.all@test.com");
 
-        // Create a group
         CreateGroupRequest createRequest = new CreateGroupRequest();
         createRequest.setName("Math Group A");
         createRequest.setCode("MATH5");
@@ -197,7 +189,6 @@ class GroupControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createRequest)));
 
-        // Get all groups
         mockMvc.perform(get("/api/groups"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -208,7 +199,6 @@ class GroupControllerTest {
     void deleteGroup_ShouldReturnNoContent() throws Exception {
         TeacherResponse teacher = createTestTeacher("teacher.delete@test.com");
 
-        // Create group first
         CreateGroupRequest createRequest = new CreateGroupRequest();
         createRequest.setName("Math Group A");
         createRequest.setCode("MATH6");
@@ -222,7 +212,6 @@ class GroupControllerTest {
 
         GroupResponse created = objectMapper.readValue(createResponse, GroupResponse.class);
 
-        // Delete group
         mockMvc.perform(delete("/api/groups/{groupId}", created.getId()))
                 .andDo(print())
                 .andExpect(status().isNoContent());

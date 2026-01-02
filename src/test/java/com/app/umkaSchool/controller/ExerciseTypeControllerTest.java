@@ -28,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@org.springframework.test.context.ActiveProfiles("test")
 @Transactional
 @WithMockUser(roles = "TEACHER")
 class ExerciseTypeControllerTest {
@@ -67,7 +68,6 @@ class ExerciseTypeControllerTest {
 
     @Test
     void updateExerciseType_ShouldReturnUpdatedExerciseType() throws Exception {
-        // Create exercise type first
         CreateExerciseTypeRequest createRequest = new CreateExerciseTypeRequest();
         createRequest.setName("Arithmetic Update");
         createRequest.setDescription("Update test");
@@ -81,7 +81,6 @@ class ExerciseTypeControllerTest {
 
         ExerciseTypeResponse created = objectMapper.readValue(createResponse, ExerciseTypeResponse.class);
 
-        // Update exercise type
         UpdateExerciseTypeRequest updateRequest = new UpdateExerciseTypeRequest();
         updateRequest.setDescription("Updated description");
         updateRequest.setBaseDifficulty(5);
@@ -97,7 +96,6 @@ class ExerciseTypeControllerTest {
 
     @Test
     void getExerciseTypeById_ShouldReturnExerciseType() throws Exception {
-        // Create exercise type first
         CreateExerciseTypeRequest createRequest = new CreateExerciseTypeRequest();
         createRequest.setName("Arithmetic Get");
         createRequest.setDescription("Get test");
@@ -111,7 +109,6 @@ class ExerciseTypeControllerTest {
 
         ExerciseTypeResponse created = objectMapper.readValue(createResponse, ExerciseTypeResponse.class);
 
-        // Get exercise type by ID
         mockMvc.perform(get("/api/exercise-types/{exerciseTypeId}", created.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -121,7 +118,6 @@ class ExerciseTypeControllerTest {
 
     @Test
     void getExerciseTypeByName_ShouldReturnExerciseType() throws Exception {
-        // Create exercise type first
         CreateExerciseTypeRequest createRequest = new CreateExerciseTypeRequest();
         createRequest.setName("Arithmetic ByName");
         createRequest.setDescription("ByName test");
@@ -132,7 +128,6 @@ class ExerciseTypeControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createRequest)));
 
-        // Get exercise type by name
         mockMvc.perform(get("/api/exercise-types/name/{name}", "Arithmetic ByName"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -141,7 +136,6 @@ class ExerciseTypeControllerTest {
 
     @Test
     void getAllExerciseTypes_ShouldReturnListOfExerciseTypes() throws Exception {
-        // Create an exercise type
         CreateExerciseTypeRequest createRequest = new CreateExerciseTypeRequest();
         createRequest.setName("Arithmetic All");
         createRequest.setDescription("All test");
@@ -152,7 +146,6 @@ class ExerciseTypeControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createRequest)));
 
-        // Get all exercise types
         mockMvc.perform(get("/api/exercise-types"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -161,7 +154,6 @@ class ExerciseTypeControllerTest {
 
     @Test
     void deleteExerciseType_ShouldReturnNoContent() throws Exception {
-        // Create exercise type first
         CreateExerciseTypeRequest createRequest = new CreateExerciseTypeRequest();
         createRequest.setName("Arithmetic Delete");
         createRequest.setDescription("Delete test");
@@ -175,7 +167,6 @@ class ExerciseTypeControllerTest {
 
         ExerciseTypeResponse created = objectMapper.readValue(createResponse, ExerciseTypeResponse.class);
 
-        // Delete exercise type
         mockMvc.perform(delete("/api/exercise-types/{exerciseTypeId}", created.getId()))
                 .andDo(print())
                 .andExpect(status().isNoContent());
@@ -186,7 +177,7 @@ class ExerciseTypeControllerTest {
         CreateExerciseTypeRequest request = new CreateExerciseTypeRequest();
         request.setName("Arithmetic Invalid");
         request.setDescription("Invalid test");
-        request.setBaseDifficulty(15); // Invalid: must be between 1 and 10
+        request.setBaseDifficulty(15); 
         request.setAvgTimeSeconds(120);
 
         mockMvc.perform(post("/api/exercise-types")
@@ -198,7 +189,6 @@ class ExerciseTypeControllerTest {
 
     @Test
     void createExerciseType_WithDuplicateName_ShouldReturnBadRequest() throws Exception {
-        // Create first exercise type
         CreateExerciseTypeRequest request1 = new CreateExerciseTypeRequest();
         request1.setName("Duplicate Name");
         request1.setDescription("First");
@@ -209,7 +199,6 @@ class ExerciseTypeControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request1)));
 
-        // Try to create second exercise type with same name
         CreateExerciseTypeRequest request2 = new CreateExerciseTypeRequest();
         request2.setName("Duplicate Name");
         request2.setDescription("Second");
