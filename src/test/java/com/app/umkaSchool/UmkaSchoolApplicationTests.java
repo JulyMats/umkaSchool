@@ -22,6 +22,6 @@ class UmkaSchoolApplicationTests {
     @Test
     void testDatabaseConnection() {
         long userCount = appUserRepository.count();
-        System.out.println("Number of users in database: " + userCount);
+        assertNotNull(userCount);
     }
 }
