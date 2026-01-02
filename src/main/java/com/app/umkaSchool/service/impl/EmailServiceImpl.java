@@ -29,6 +29,7 @@ public class EmailServiceImpl implements EmailService {
     private final String fromEmail;
     private final String appName;
     private final String brevoApiKey;
+    private final String brevoApiUrl;
     private final RestTemplate restTemplate;
     private final boolean useBrevo;
 
@@ -36,16 +37,18 @@ public class EmailServiceImpl implements EmailService {
     public EmailServiceImpl(JavaMailSender mailSender,
                             @Value("${spring.mail.username}") String fromEmail,
                             @Value("${app.name:UmkaSchool}") String appName,
-                            @Value("${brevo.api.key:}") String brevoApiKey) {
+                            @Value("${brevo.api.key:}") String brevoApiKey,
+                            @Value("${app.brevo.api.url:https://api.brevo.com/v3/smtp/email}") String brevoApiUrl) {
         this.mailSender = mailSender;
         this.fromEmail = fromEmail;
         this.appName = appName;
         this.brevoApiKey = brevoApiKey;
+        this.brevoApiUrl = brevoApiUrl;
         this.restTemplate = new RestTemplate();
         this.useBrevo = brevoApiKey != null && !brevoApiKey.trim().isEmpty();
         
         if (useBrevo) {
-            logger.info("Email service configured to use Brevo API (production mode)");
+            logger.info("Email service configured to use Brevo API (production mode) at: {}", brevoApiUrl);
         } else {
             logger.info("Email service configured to use SMTP (development mode)");
         }
@@ -111,7 +114,7 @@ public class EmailServiceImpl implements EmailService {
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
             ResponseEntity<String> response = restTemplate.exchange(
-                    "https://api.brevo.com/v3/smtp/email",
+                    brevoApiUrl,
                     HttpMethod.POST,
                     request,
                     String.class
