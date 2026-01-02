@@ -11,16 +11,16 @@ export default {
       },
       colors: {
         primary: {
-          light: "#fbcfe8", // light pink background
+          light: "#fbcfe8", // light pink for background
           DEFAULT: "#f472b6", // pink accent
-          dark: "#ec4899", // stronger pink
+          dark: "#ec4899", // strong pink for text 
         },
         secondary: {
-          light: "#bfdbfe", // light blue
-          DEFAULT: "#60a5fa", // medium blue
-          dark: "#2563eb", // strong blue
+          light: "#bfdbfe", // light blue for background
+          DEFAULT: "#60a5fa", //  blue accent
+          dark: "#2563eb", // strong blue for text 
         },
-        grayLight: "#f9fafb", // used for cards and layout background
+        grayLight: "#f9fafb", // for cards and layout background
         grayText: "#6b7280", // neutral gray for text
       },
       borderRadius: {
