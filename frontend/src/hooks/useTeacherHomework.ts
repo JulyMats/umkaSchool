@@ -55,7 +55,7 @@ export const useTeacherHomework = (teacherId: string | undefined): UseTeacherHom
         homeworkService.getAssignmentsByTeacher(teacherId),
         groupService.getGroupsByTeacher(teacherId),
         studentService.getStudentsByTeacher(teacherId),
-        exerciseService.getExercisesByTeacher(teacherId),
+        exerciseService.getExercisesByTeacherAll(teacherId),
         exerciseTypeService.getAllExerciseTypes()
       ]);
 

@@ -137,20 +137,29 @@ public class HomeworkServiceImpl implements HomeworkService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public HomeworkResponse getHomeworkById(UUID homeworkId) {
         Homework homework = homeworkRepository.findById(homeworkId)
                 .orElseThrow(() -> new ResourceNotFoundException("Homework not found"));
+        if (homework.getTeacher() != null && homework.getTeacher().getUser() != null) {
+            homework.getTeacher().getUser().getFirstName();
+        }
         return mapToResponse(homework);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public HomeworkResponse getHomeworkByTitle(String title) {
         Homework homework = homeworkRepository.findByTitle(title)
                 .orElseThrow(() -> new ResourceNotFoundException("Homework not found"));
+        if (homework.getTeacher() != null && homework.getTeacher().getUser() != null) {
+            homework.getTeacher().getUser().getFirstName();
+        }
         return mapToResponse(homework);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<HomeworkResponse> getAllHomework() {
         return homeworkRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(this::mapToResponse)
@@ -158,6 +167,7 @@ public class HomeworkServiceImpl implements HomeworkService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<HomeworkResponse> getHomeworkByTeacher(UUID teacherId) {
         return homeworkRepository.findByTeacher_IdOrderByCreatedAtDesc(teacherId).stream()
                 .map(this::mapToResponse)

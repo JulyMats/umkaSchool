@@ -32,6 +32,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
         logger.warn("Illegal argument exception: {}", ex.getMessage());
+        
+        if (ex.getMessage() != null && ex.getMessage().contains("Email already in use")) {
+            ErrorResponse error = ErrorResponse.builder()
+                    .status(HttpStatus.CONFLICT.value())
+                    .message(ex.getMessage())
+                    .timestamp(ZonedDateTime.now())
+                    .build();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        }
+        
         ErrorResponse error = ErrorResponse.builder()
                 .status(HttpStatus.BAD_REQUEST.value())
                 .message(ex.getMessage())
