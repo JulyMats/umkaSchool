@@ -447,9 +447,33 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
         }
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<HomeworkAssignment> findAssignmentsByExerciseAndStudent(UUID exerciseId, UUID studentId) {
+        return homeworkAssignmentRepository.findByExerciseIdAndStudentId(exerciseId, studentId);
+    }
 
+    @Override
+    @Transactional
+    public void checkAndUpdateAssignmentsByExerciseAndStudent(UUID exerciseId, UUID studentId) {
+        logger.info("Checking homework assignments for exercise: {}, student: {}", exerciseId, studentId);
+        
+        List<HomeworkAssignment> assignments = homeworkAssignmentRepository.findByExerciseIdAndStudentId(exerciseId, studentId);
+        
+        if (!assignments.isEmpty()) {
+            for (HomeworkAssignment assignment : assignments) {
+                try {
+                    checkAndUpdateAssignmentStatus(assignment.getId(), studentId);
+                } catch (Exception e) {
+                    logger.error("Error checking assignment {} for student {}: {}",
+                        assignment.getId(), studentId, e.getMessage());
+                }
+            }
+            logger.info("Checked homework assignment status for exercise: {}, student: {} ({} assignments)",
+                exerciseId, studentId, assignments.size());
+        }
+    }
 
-    
     private void updateGlobalAssignmentStatus(HomeworkAssignment assignment) {
         Set<UUID> allStudentIds = new HashSet<>();
 
