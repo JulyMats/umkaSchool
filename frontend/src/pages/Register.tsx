@@ -114,7 +114,6 @@ export default function Register() {
         registrationData.bio = values.bio.trim();
       }
 
-      console.log('Sending registration data:', registrationData);
       await authService.register(registrationData);
       
       try {

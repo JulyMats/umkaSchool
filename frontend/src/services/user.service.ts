@@ -20,11 +20,8 @@ const mapUserResponse = (response: UserResponse): User => {
 
 export const userService = {
     getUserByEmail: async (email: string): Promise<User> => {
-        console.log('[userService] Getting user by email:', email);
         const response = await axiosInstance.get<UserResponse>(`/api/users/email/${email}`);
-        console.log('[userService] Raw user response:', response.data);
         const mappedUser = mapUserResponse(response.data);
-        console.log('[userService] Mapped user:', mappedUser);
         return mappedUser;
     },
 

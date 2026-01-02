@@ -66,18 +66,9 @@ export const homeworkService = {
     // Get homework assignments for the current student
     getCurrentStudentHomework: async (studentId: string): Promise<Homework[]> => {
         try {
-            console.log('[homeworkService] getCurrentStudentHomework called with studentId:', studentId);
             const url = `/api/homework-assignments/student/${studentId}`;
-            console.log('[homeworkService] Making request to:', url);
-            console.log('[homeworkService] Axios instance baseURL:', axiosInstance.defaults.baseURL);
-            console.log('[homeworkService] Authorization header:', axiosInstance.defaults.headers.common['Authorization'] ? 'Present' : 'Missing');
             
             const response = await axiosInstance.get<HomeworkAssignment[]>(url);
-            console.log('[homeworkService] Response received:', {
-                status: response.status,
-                dataLength: response.data?.length,
-                data: response.data
-            });
             
             const mappedData = response.data.map(assignment => ({
                 id: assignment.homeworkId,
@@ -89,7 +80,6 @@ export const homeworkService = {
                 timeEstimate: calculateTimeEstimate(assignment.dueDate, assignment.assignedAt)
             }));
             
-            console.log('[homeworkService] Mapped homework data:', mappedData);
             return mappedData;
         } catch (error: unknown) {
             console.error('[homeworkService] Error fetching homework assignments:', error);

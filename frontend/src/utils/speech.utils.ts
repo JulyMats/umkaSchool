@@ -62,7 +62,6 @@ export const getTTSLanguage = (appLanguage: string | undefined): string => {
 
 export const calculateSpeechRate = (displaySpeed: number): number => {
   if (displaySpeed <= 0.5) {
-    console.log('Very fast card flips');
     return 10.0; 
   }
   if (displaySpeed <= 1.0) {

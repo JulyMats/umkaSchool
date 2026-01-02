@@ -38,7 +38,6 @@ export default function Settings() {
 
       await userService.updateUser(user.id, payload);
       await refreshUserData();
-      console.log('Settings saved successfully');
     } catch (error) {
       console.error('Failed to save settings:', error);
       setSettings(prev => ({
@@ -68,7 +67,6 @@ export default function Settings() {
 
       await userService.updateUser(user.id, payload);
       await refreshUserData();
-      console.log('Settings saved successfully');
     } catch (error) {
       console.error('Failed to save settings:', error);
       setSettings(prev => ({
