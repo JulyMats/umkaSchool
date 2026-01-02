@@ -3,7 +3,8 @@ package com.app.umkaSchool.model;
 import com.app.umkaSchool.model.enums.GuardianRelationship;
 import jakarta.persistence.*;
 import lombok.Data;
-
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.util.UUID;
 
 @Data
@@ -27,7 +28,8 @@ public class Guardian {
     @Column(nullable = false)
     private String phone;
 
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "guardian_relationship")
     private GuardianRelationship relationship;
 }
