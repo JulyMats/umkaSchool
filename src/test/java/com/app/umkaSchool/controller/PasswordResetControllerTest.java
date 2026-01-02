@@ -26,7 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional // Rollback changes after each test
+@org.springframework.test.context.ActiveProfiles("test")
+@Transactional 
 class PasswordResetControllerTest {
 
     @Autowired
@@ -49,20 +50,26 @@ class PasswordResetControllerTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        // Create test user before each test
         RegisterRequest registerRequest = new RegisterRequest();
         registerRequest.setFirstName("Test");
         registerRequest.setLastName("User");
         registerRequest.setEmail(testEmail);
         registerRequest.setPassword(testPassword);
         registerRequest.setRole("STUDENT");
+        registerRequest.setDateOfBirth(java.time.LocalDate.of(2010, 1, 1));
+        registerRequest.setGuardianFirstName("Guardian");
+        registerRequest.setGuardianLastName("Name");
+        registerRequest.setGuardianEmail("guardian.reset@example.com");
+        registerRequest.setGuardianPhone("123456789");
+        registerRequest.setGuardianRelationship("MOTHER");
 
         mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(registerRequest)));
+                .content(objectMapper.writeValueAsString(registerRequest)))
+                .andExpect(status().isOk());
+        
+        
     }
-
-    // ==================== FORGOT PASSWORD TESTS ====================
 
     @Test
     void testForgotPassword_Success() throws Exception {
@@ -75,7 +82,6 @@ class PasswordResetControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk());
 
-        // Verify that token was created in DB
         var tokens = userTokenRepository.findAll();
         var passwordResetTokens = tokens.stream()
                 .filter(t -> t.getTokenType() == UserToken.TokenType.PASSWORD_RESET)
@@ -90,7 +96,6 @@ class PasswordResetControllerTest {
         ForgotPasswordRequest request = new ForgotPasswordRequest();
         request.setEmail("nonexistent@example.com");
 
-        // Even for non-existent email return 200 (don't reveal user existence)
         mockMvc.perform(post("/api/auth/forgot-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -107,7 +112,7 @@ class PasswordResetControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Validation should reject
+                .andExpect(status().isBadRequest()); 
     }
 
     @Test
@@ -119,17 +124,13 @@ class PasswordResetControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Validation should reject
+                .andExpect(status().isBadRequest()); 
     }
-
-    // ==================== RESET PASSWORD TESTS ====================
 
     @Test
     void testResetPassword_Success() throws Exception {
-        // First create password reset token
         String rawToken = createPasswordResetToken(testEmail);
 
-        // Now reset password
         ResetPasswordRequest request = new ResetPasswordRequest();
         request.setToken(rawToken);
         request.setNewPassword("newpassword123");
@@ -140,7 +141,6 @@ class PasswordResetControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk());
 
-        // Verify that token is marked as used
         String hash = tokenService.hashToken(rawToken);
         Optional<UserToken> tokenOpt = userTokenRepository.findByTokenHashAndTokenType(
                 hash,
@@ -160,12 +160,11 @@ class PasswordResetControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Token not found
+                .andExpect(status().isBadRequest()); 
     }
 
     @Test
     void testResetPassword_ExpiredToken() throws Exception {
-        // Create token that has already expired
         String rawToken = createExpiredPasswordResetToken(testEmail);
 
         ResetPasswordRequest request = new ResetPasswordRequest();
@@ -176,15 +175,13 @@ class PasswordResetControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Token expired
+                .andExpect(status().isBadRequest()); 
     }
 
     @Test
     void testResetPassword_AlreadyUsedToken() throws Exception {
-        // Create token
         String rawToken = createPasswordResetToken(testEmail);
 
-        // Use token first time
         ResetPasswordRequest request1 = new ResetPasswordRequest();
         request1.setToken(rawToken);
         request1.setNewPassword("newpassword123");
@@ -194,7 +191,6 @@ class PasswordResetControllerTest {
                         .content(objectMapper.writeValueAsString(request1)))
                 .andExpect(status().isOk());
 
-        // Try to use the same token again
         ResetPasswordRequest request2 = new ResetPasswordRequest();
         request2.setToken(rawToken);
         request2.setNewPassword("anotherpassword456");
@@ -203,7 +199,7 @@ class PasswordResetControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request2)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Token already used
+                .andExpect(status().isBadRequest()); 
     }
 
     @Test
@@ -212,13 +208,13 @@ class PasswordResetControllerTest {
 
         ResetPasswordRequest request = new ResetPasswordRequest();
         request.setToken(rawToken);
-        request.setNewPassword("12345"); // Less than 6 characters
+        request.setNewPassword("12345"); 
 
         mockMvc.perform(post("/api/auth/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Validation should reject
+                .andExpect(status().isBadRequest()); 
     }
 
     @Test
@@ -231,7 +227,7 @@ class PasswordResetControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Validation should reject
+                .andExpect(status().isBadRequest()); 
     }
 
     @Test
@@ -246,14 +242,9 @@ class PasswordResetControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Validation should reject
+                .andExpect(status().isBadRequest()); 
     }
 
-    // ==================== HELPER METHODS ====================
-
-    /**
-     * Creates valid password reset token
-     */
     private String createPasswordResetToken(String email) {
         var user = appUserRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -273,9 +264,6 @@ class PasswordResetControllerTest {
         return rawToken;
     }
 
-    /**
-     * Creates expired password reset token
-     */
     private String createExpiredPasswordResetToken(String email) {
         var user = appUserRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -287,8 +275,8 @@ class PasswordResetControllerTest {
         token.setUser(user);
         token.setTokenHash(hash);
         token.setTokenType(UserToken.TokenType.PASSWORD_RESET);
-        token.setCreatedAt(ZonedDateTime.now().minusHours(3)); // 3 hours ago
-        token.setExpiresAt(ZonedDateTime.now().minusHours(1)); // Expired 1 hour ago
+        token.setCreatedAt(ZonedDateTime.now().minusHours(3)); 
+        token.setExpiresAt(ZonedDateTime.now().minusHours(1)); 
         token.setUsed(false);
         userTokenRepository.save(token);
 

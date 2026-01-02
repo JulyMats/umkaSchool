@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
+@org.springframework.test.context.ActiveProfiles("test")
 class UmkaSchoolApplicationTests {
 
     @Autowired
@@ -20,9 +21,7 @@ class UmkaSchoolApplicationTests {
 
     @Test
     void testDatabaseConnection() {
-        // This will verify database connection by executing a simple query
         long userCount = appUserRepository.count();
-        // If this doesn't throw an exception, the connection is successful
         System.out.println("Number of users in database: " + userCount);
     }
 }

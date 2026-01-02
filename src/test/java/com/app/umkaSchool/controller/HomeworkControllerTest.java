@@ -36,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@org.springframework.test.context.ActiveProfiles("test")
 @Transactional
 @WithMockUser(roles = "TEACHER")
 class HomeworkControllerTest {
@@ -66,7 +67,6 @@ class HomeworkControllerTest {
 
     @BeforeEach
     void setup() throws Exception {
-        // First, create user via signup
         RegisterRequest signupRequest = new RegisterRequest();
         signupRequest.setEmail("test.homework.teacher@test.com");
         signupRequest.setFirstName("Test");
@@ -79,23 +79,10 @@ class HomeworkControllerTest {
                         .content(objectMapper.writeValueAsString(signupRequest)))
                 .andExpect(status().isOk());
 
-        // Create a teacher
-        CreateTeacherRequest teacherRequest = new CreateTeacherRequest();
-        teacherRequest.setFirstName("Test");
-        teacherRequest.setLastName("Teacher");
-        teacherRequest.setEmail("test.homework.teacher@test.com");
-        teacherRequest.setBio("Test teacher");
-        teacherRequest.setPhone("+1234567890");
-
-        String teacherResponse = mockMvc.perform(post("/api/teachers")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(teacherRequest)))
-                .andReturn().getResponse().getContentAsString();
-
-        TeacherResponse teacher = objectMapper.readValue(teacherResponse, TeacherResponse.class);
+        var user = appUserRepository.findByEmail("test.homework.teacher@test.com").orElseThrow();
+        var teacher = teacherRepository.findByUser_Id(user.getId()).orElseThrow();
         teacherId = teacher.getId();
 
-        // Create an exercise type
         CreateExerciseTypeRequest typeRequest = new CreateExerciseTypeRequest();
         typeRequest.setName("Homework Exercise Type");
         typeRequest.setDescription("Test description");
@@ -109,7 +96,6 @@ class HomeworkControllerTest {
 
         ExerciseTypeResponse exerciseType = objectMapper.readValue(typeResponse, ExerciseTypeResponse.class);
 
-        // Create an exercise
         CreateExerciseRequest exerciseRequest = new CreateExerciseRequest();
         exerciseRequest.setExerciseTypeId(exerciseType.getId());
         exerciseRequest.setParameters("{\"operand1\": 5, \"operand2\": 3}");
@@ -154,7 +140,6 @@ class HomeworkControllerTest {
 
     @Test
     void updateHomework_ShouldReturnUpdatedHomework() throws Exception {
-        // Create homework first
         CreateHomeworkRequest createRequest = new CreateHomeworkRequest();
         createRequest.setTitle("Math Homework Update");
         createRequest.setDescription("Original description");
@@ -167,7 +152,6 @@ class HomeworkControllerTest {
 
         HomeworkResponse created = objectMapper.readValue(createResponse, HomeworkResponse.class);
 
-        // Update homework
         UpdateHomeworkRequest updateRequest = new UpdateHomeworkRequest();
         updateRequest.setDescription("Updated description");
 
@@ -181,7 +165,6 @@ class HomeworkControllerTest {
 
     @Test
     void getHomeworkById_ShouldReturnHomework() throws Exception {
-        // Create homework first
         CreateHomeworkRequest createRequest = new CreateHomeworkRequest();
         createRequest.setTitle("Math Homework Get");
         createRequest.setDescription("Get test");
@@ -194,7 +177,6 @@ class HomeworkControllerTest {
 
         HomeworkResponse created = objectMapper.readValue(createResponse, HomeworkResponse.class);
 
-        // Get homework by ID
         mockMvc.perform(get("/api/homework/{homeworkId}", created.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -204,7 +186,6 @@ class HomeworkControllerTest {
 
     @Test
     void getHomeworkByTitle_ShouldReturnHomework() throws Exception {
-        // Create homework first
         CreateHomeworkRequest createRequest = new CreateHomeworkRequest();
         createRequest.setTitle("Math Homework ByTitle");
         createRequest.setDescription("ByTitle test");
@@ -214,7 +195,6 @@ class HomeworkControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createRequest)));
 
-        // Get homework by title
         mockMvc.perform(get("/api/homework/title/{title}", "Math Homework ByTitle"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -223,7 +203,6 @@ class HomeworkControllerTest {
 
     @Test
     void getAllHomework_ShouldReturnListOfHomework() throws Exception {
-        // Create homework
         CreateHomeworkRequest createRequest = new CreateHomeworkRequest();
         createRequest.setTitle("Math Homework All");
         createRequest.setDescription("All test");
@@ -233,7 +212,6 @@ class HomeworkControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createRequest)));
 
-        // Get all homework
         mockMvc.perform(get("/api/homework"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -242,7 +220,6 @@ class HomeworkControllerTest {
 
     @Test
     void getHomeworkByTeacher_ShouldReturnListOfHomework() throws Exception {
-        // Create homework
         CreateHomeworkRequest createRequest = new CreateHomeworkRequest();
         createRequest.setTitle("Math Homework Teacher");
         createRequest.setDescription("Teacher test");
@@ -252,7 +229,6 @@ class HomeworkControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createRequest)));
 
-        // Get homework by teacher
         mockMvc.perform(get("/api/homework/teacher/{teacherId}", teacherId))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -261,7 +237,6 @@ class HomeworkControllerTest {
 
     @Test
     void deleteHomework_ShouldReturnNoContent() throws Exception {
-        // Create homework first
         CreateHomeworkRequest createRequest = new CreateHomeworkRequest();
         createRequest.setTitle("Math Homework Delete");
         createRequest.setDescription("Delete test");
@@ -274,7 +249,6 @@ class HomeworkControllerTest {
 
         HomeworkResponse created = objectMapper.readValue(createResponse, HomeworkResponse.class);
 
-        // Delete homework
         mockMvc.perform(delete("/api/homework/{homeworkId}", created.getId()))
                 .andDo(print())
                 .andExpect(status().isNoContent());
@@ -282,7 +256,6 @@ class HomeworkControllerTest {
 
     @Test
     void createHomework_WithDuplicateTitle_ShouldReturnBadRequest() throws Exception {
-        // Create first homework
         CreateHomeworkRequest request1 = new CreateHomeworkRequest();
         request1.setTitle("Duplicate Homework");
         request1.setDescription("First");
@@ -292,7 +265,6 @@ class HomeworkControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request1)));
 
-        // Try to create second homework with same title
         CreateHomeworkRequest request2 = new CreateHomeworkRequest();
         request2.setTitle("Duplicate Homework");
         request2.setDescription("Second");

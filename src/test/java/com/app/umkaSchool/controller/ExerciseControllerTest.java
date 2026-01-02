@@ -27,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@org.springframework.test.context.ActiveProfiles("test")
 @Transactional
 @WithMockUser(roles = "TEACHER")
 class ExerciseControllerTest {
@@ -47,7 +48,6 @@ class ExerciseControllerTest {
 
     @BeforeEach
     void setup() throws Exception {
-        // Create an exercise type to use in tests
         CreateExerciseTypeRequest typeRequest = new CreateExerciseTypeRequest();
         typeRequest.setName("Test Exercise Type");
         typeRequest.setDescription("Test description");
@@ -89,7 +89,6 @@ class ExerciseControllerTest {
 
     @Test
     void updateExercise_ShouldReturnUpdatedExercise() throws Exception {
-        // Create exercise first
         CreateExerciseRequest createRequest = new CreateExerciseRequest();
         createRequest.setExerciseTypeId(exerciseTypeId);
         createRequest.setParameters("{\"operand1\": 5, \"operand2\": 3}");
@@ -103,7 +102,6 @@ class ExerciseControllerTest {
 
         ExerciseResponse created = objectMapper.readValue(createResponse, ExerciseResponse.class);
 
-        // Update exercise
         UpdateExerciseRequest updateRequest = new UpdateExerciseRequest();
         updateRequest.setDifficulty(5);
         updateRequest.setPoints(20);
@@ -119,7 +117,6 @@ class ExerciseControllerTest {
 
     @Test
     void getExerciseById_ShouldReturnExercise() throws Exception {
-        // Create exercise first
         CreateExerciseRequest createRequest = new CreateExerciseRequest();
         createRequest.setExerciseTypeId(exerciseTypeId);
         createRequest.setParameters("{\"operand1\": 5, \"operand2\": 3}");
@@ -133,7 +130,6 @@ class ExerciseControllerTest {
 
         ExerciseResponse created = objectMapper.readValue(createResponse, ExerciseResponse.class);
 
-        // Get exercise by ID
         mockMvc.perform(get("/api/exercises/{exerciseId}", created.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -143,7 +139,6 @@ class ExerciseControllerTest {
 
     @Test
     void getAllExercises_ShouldReturnListOfExercises() throws Exception {
-        // Create an exercise
         CreateExerciseRequest createRequest = new CreateExerciseRequest();
         createRequest.setExerciseTypeId(exerciseTypeId);
         createRequest.setParameters("{\"operand1\": 5, \"operand2\": 3}");
@@ -154,17 +149,17 @@ class ExerciseControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createRequest)));
 
-        // Get all exercises
-        mockMvc.perform(get("/api/exercises"))
+        mockMvc.perform(get("/api/exercises?page=0&size=20"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].difficulty").value(3))
-                .andExpect(jsonPath("$[0].points").value(10));
+                .andExpect(jsonPath("$.content[0].difficulty").value(3))
+                .andExpect(jsonPath("$.content[0].points").value(10))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1));
     }
 
     @Test
     void getExercisesByType_ShouldReturnListOfExercises() throws Exception {
-        // Create an exercise
         CreateExerciseRequest createRequest = new CreateExerciseRequest();
         createRequest.setExerciseTypeId(exerciseTypeId);
         createRequest.setParameters("{\"operand1\": 5, \"operand2\": 3}");
@@ -175,16 +170,15 @@ class ExerciseControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createRequest)));
 
-        // Get exercises by type
-        mockMvc.perform(get("/api/exercises/type/{exerciseTypeId}", exerciseTypeId))
+        mockMvc.perform(get("/api/exercises/type/{exerciseTypeId}?page=0&size=20", exerciseTypeId))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].exerciseTypeId").value(exerciseTypeId.toString()));
+                .andExpect(jsonPath("$.content[0].exerciseTypeId").value(exerciseTypeId.toString()))
+                .andExpect(jsonPath("$.totalElements").value(1));
     }
 
     @Test
     void getExercisesByDifficulty_ShouldReturnListOfExercises() throws Exception {
-        // Create an exercise
         CreateExerciseRequest createRequest = new CreateExerciseRequest();
         createRequest.setExerciseTypeId(exerciseTypeId);
         createRequest.setParameters("{\"operand1\": 5, \"operand2\": 3}");
@@ -195,16 +189,15 @@ class ExerciseControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createRequest)));
 
-        // Get exercises by difficulty
-        mockMvc.perform(get("/api/exercises/difficulty/{difficulty}", 5))
+        mockMvc.perform(get("/api/exercises/difficulty/{difficulty}?page=0&size=20", 5))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].difficulty").value(5));
+                .andExpect(jsonPath("$.content[0].difficulty").value(5))
+                .andExpect(jsonPath("$.totalElements").value(1));
     }
 
     @Test
     void deleteExercise_ShouldReturnNoContent() throws Exception {
-        // Create exercise first
         CreateExerciseRequest createRequest = new CreateExerciseRequest();
         createRequest.setExerciseTypeId(exerciseTypeId);
         createRequest.setParameters("{\"operand1\": 5, \"operand2\": 3}");
@@ -218,7 +211,6 @@ class ExerciseControllerTest {
 
         ExerciseResponse created = objectMapper.readValue(createResponse, ExerciseResponse.class);
 
-        // Delete exercise
         mockMvc.perform(delete("/api/exercises/{exerciseId}", created.getId()))
                 .andDo(print())
                 .andExpect(status().isNoContent());
@@ -229,7 +221,7 @@ class ExerciseControllerTest {
         CreateExerciseRequest request = new CreateExerciseRequest();
         request.setExerciseTypeId(exerciseTypeId);
         request.setParameters("{\"operand1\": 5, \"operand2\": 3}");
-        request.setDifficulty(15); // Invalid: must be between 1 and 10
+        request.setDifficulty(15); 
         request.setPoints(10);
 
         mockMvc.perform(post("/api/exercises")
@@ -240,9 +232,9 @@ class ExerciseControllerTest {
     }
 
     @Test
-    void createExercise_WithInvalidExerciseTypeId_ShouldReturnBadRequest() throws Exception {
+    void createExercise_WithInvalidExerciseTypeId_ShouldReturnNotFound() throws Exception {
         CreateExerciseRequest request = new CreateExerciseRequest();
-        request.setExerciseTypeId(UUID.randomUUID()); // Non-existent exercise type
+        request.setExerciseTypeId(UUID.randomUUID()); 
         request.setParameters("{\"operand1\": 5, \"operand2\": 3}");
         request.setDifficulty(3);
         request.setPoints(10);
@@ -251,7 +243,7 @@ class ExerciseControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 }
 
