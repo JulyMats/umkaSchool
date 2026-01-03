@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Sidebar } from "./components/layout";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 import Dashboard from "./pages/Dashboard";
 import Exercises from "./pages/Exercises";
 import ExerciseSetup from "./pages/ExerciseSetup";
@@ -135,11 +136,13 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <SidebarProvider>
-        <AppContent />
-      </SidebarProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <SidebarProvider>
+          <AppContent />
+        </SidebarProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
