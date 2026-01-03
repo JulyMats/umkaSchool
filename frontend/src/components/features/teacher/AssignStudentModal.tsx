@@ -52,13 +52,13 @@ const AssignStudentModal: React.FC<AssignStudentModalProps> = ({
       title="Assign Existing Student"
       size="xl"
     >
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
         Choose a student who already has an account in the system.
       </p>
       <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <section className="space-y-4">
           <div className="space-y-2">
-            <label className="text-xs uppercase text-gray-500">
+            <label className="text-xs uppercase text-gray-500 dark:text-gray-400">
               Search student
             </label>
             <SearchInput
@@ -68,17 +68,17 @@ const AssignStudentModal: React.FC<AssignStudentModalProps> = ({
             />
           </div>
 
-          <div className="max-h-64 overflow-y-auto border border-gray-100 rounded-xl divide-y divide-gray-100">
+          <div className="max-h-64 overflow-y-auto border border-gray-100 dark:border-gray-700 rounded-xl divide-y divide-gray-100 dark:divide-gray-700">
             {filteredOptions.map((student) => (
               <label
                 key={student.id}
-                className="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-gray-50 cursor-pointer"
+                className="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer bg-white dark:bg-gray-800"
               >
                 <div>
-                  <p className="font-medium text-gray-900">
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
                     {student.firstName} {student.lastName}
                   </p>
-                  <p className="text-xs text-gray-500">{student.email}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{student.email}</p>
                 </div>
                 <input
                   type="radio"
@@ -90,13 +90,13 @@ const AssignStudentModal: React.FC<AssignStudentModalProps> = ({
                       studentId: student.id
                     }))
                   }
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
                 />
               </label>
             ))}
 
             {filteredOptions.length === 0 && (
-              <div className="px-4 py-6 text-center text-gray-400 text-sm">
+              <div className="px-4 py-6 text-center text-gray-400 dark:text-gray-500 text-sm">
                 No students found. Try a different search term.
               </div>
             )}
@@ -124,30 +124,30 @@ const AssignStudentModal: React.FC<AssignStudentModalProps> = ({
           />
 
           {selectedStudent && (
-            <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 space-y-2 text-sm text-gray-600">
+            <div className="bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700 rounded-xl p-4 space-y-2 text-sm text-gray-600 dark:text-gray-300">
               <div>
-                <p className="text-xs uppercase text-gray-500 tracking-wide">
+                <p className="text-xs uppercase text-gray-500 dark:text-gray-400 tracking-wide">
                   Guardian
                 </p>
                 {selectedStudent.guardian ? (
                   <div>
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-gray-900 dark:text-gray-100">
                       {selectedStudent.guardian.firstName}{' '}
                       {selectedStudent.guardian.lastName}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {selectedStudent.guardian.relationship} •{' '}
                       {selectedStudent.guardian.email}
                     </p>
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-500 italic">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 italic">
                     No guardian information on file.
                   </p>
                 )}
               </div>
               <div>
-                <p className="text-xs uppercase text-gray-500 tracking-wide">
+                <p className="text-xs uppercase text-gray-500 dark:text-gray-400 tracking-wide">
                   Current status
                 </p>
                 <p>
@@ -157,7 +157,7 @@ const AssignStudentModal: React.FC<AssignStudentModalProps> = ({
                     : 'No achievement'}
                 </p>
                 {studentLastAchievements[selectedStudent.id] && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Achieved: <DateDisplay date={studentLastAchievements[selectedStudent.id]!.earnedAt} format="short" />
                   </p>
                 )}
@@ -166,7 +166,7 @@ const AssignStudentModal: React.FC<AssignStudentModalProps> = ({
           )}
         </section>
 
-        <div className="md:col-span-2 flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
+        <div className="md:col-span-2 flex items-center justify-end gap-3 border-t border-gray-100 dark:border-gray-700 pt-4">
           <Button
             type="button"
             onClick={onClose}

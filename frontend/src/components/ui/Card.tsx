@@ -14,12 +14,12 @@ const Card: React.FC<CardProps> = ({
   padding = 'md'
 }) => {
   const variantClasses = {
-    pink: 'bg-pink-50',
-    blue: 'bg-blue-50',
-    purple: 'bg-purple-50',
-    yellow: 'bg-yellow-50',
-    gray: 'bg-gray-50',
-    white: 'bg-white'
+    pink: 'bg-pink-50 dark:bg-pink-900/20',
+    blue: 'bg-blue-50 dark:bg-blue-900/20',
+    purple: 'bg-purple-50 dark:bg-purple-900/20',
+    yellow: 'bg-yellow-50 dark:bg-yellow-900/20',
+    gray: 'bg-gray-50 dark:bg-gray-800/50',
+    white: 'bg-white dark:bg-gray-800'
   };
 
   const paddingClasses = {
