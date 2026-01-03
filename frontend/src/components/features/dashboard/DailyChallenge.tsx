@@ -95,12 +95,12 @@ export default function DailyChallenge() {
         <LoadingState message="Loading challenge..." size="sm" />
       ) : dailyChallenge && hasAvailableExercise ? (
         <>
-          <div className="bg-blue-100 p-4 rounded-xl mb-4">
-            <h4 className="font-semibold mb-2">{dailyChallenge.title}</h4>
-            <p className="text-sm text-gray-600 mb-3">
+          <div className="bg-blue-100 dark:bg-blue-900/30 p-4 rounded-xl mb-4">
+            <h4 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">{dailyChallenge.title}</h4>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
               {dailyChallenge.description || 'Complete this exercise to earn bonus points!'}
             </p>
-            <div className="flex justify-between text-xs text-gray-500">
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
               <p className="flex items-center gap-1">
                 <Target className="w-4 h-4" /> {dailyChallenge.exercises.length} exercises
               </p>
