@@ -2,7 +2,6 @@ import React from 'react';
 import { HomeworkDetail } from '../../../types/homework';
 import { Exercise } from '../../../types/exercise';
 import { ExerciseCard } from '../exercise';
-import { Button } from '../../ui';
 import Modal from '../../ui/Modal';
 
 interface HomeworkDetailsModalProps {
@@ -10,17 +9,13 @@ interface HomeworkDetailsModalProps {
   onClose: () => void;
   homework: HomeworkDetail | null;
   exercises: Exercise[];
-  onStart: () => void;
-  isLoading?: boolean;
 }
 
 const HomeworkDetailsModal: React.FC<HomeworkDetailsModalProps> = ({
   isOpen,
   onClose,
   homework,
-  exercises,
-  onStart,
-  isLoading = false
+  exercises
 }) => {
   if (!homework) return null;
 
@@ -54,7 +49,7 @@ const HomeworkDetailsModal: React.FC<HomeworkDetailsModalProps> = ({
                 key={exercise.exerciseId}
                 exercise={fullExercise}
                 showDetails={true}
-                variant="default"
+                variant="info"
               />
             ) : (
               <div key={exercise.exerciseId} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
@@ -65,17 +60,6 @@ const HomeworkDetailsModal: React.FC<HomeworkDetailsModalProps> = ({
             );
           })}
         </div>
-      </div>
-      
-      <div className="mt-6 flex justify-end">
-        <Button
-          onClick={onStart}
-          disabled={isLoading}
-          variant="primary"
-          size="md"
-        >
-          {isLoading ? 'Loading...' : 'Start Now'}
-        </Button>
       </div>
     </Modal>
   );

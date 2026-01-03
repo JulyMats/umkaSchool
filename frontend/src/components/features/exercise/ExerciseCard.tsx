@@ -5,9 +5,10 @@ interface ExerciseCardProps {
   exercise: Exercise;
   onClick?: (exerciseId: string) => void;
   showDetails?: boolean;
-  variant?: 'default' | 'compact' | 'selectable';
+  variant?: 'default' | 'compact' | 'selectable' | 'info';
   selected?: boolean;
   onSelect?: (exerciseId: string) => void;
+  disabled?: boolean;
 }
 
 const ExerciseCard: React.FC<ExerciseCardProps> = ({
@@ -16,10 +17,11 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
   showDetails = true,
   variant = 'default',
   selected = false,
-  onSelect
+  onSelect,
+  disabled = false
 }) => {
   const handleClick = () => {
-    if (onClick) {
+    if (!disabled && onClick) {
       onClick(exercise.id);
     }
   };
@@ -64,12 +66,9 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
     );
   }
 
-  return (
-    <button
-      onClick={handleClick}
-      className="w-full text-left bg-gray-50 hover:bg-blue-50 rounded-lg p-4 border-2 border-gray-200 hover:border-blue-300 transition-all"
-    >
-      <div className="flex items-center justify-between">
+  if (variant === 'info') {
+    return (
+      <div className="w-full text-left bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
         <div className="flex-1">
           <p className="font-medium text-gray-900">{exercise.exerciseTypeName}</p>
           {showDetails && (
@@ -78,7 +77,36 @@ const ExerciseCard: React.FC<ExerciseCardProps> = ({
             </p>
           )}
         </div>
-        <div className="text-blue-600 font-medium">Start →</div>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={disabled}
+      className={`w-full text-left rounded-lg p-4 border-2 transition-all ${
+        disabled
+          ? 'bg-gray-100 border-gray-200 cursor-not-allowed opacity-60'
+          : 'bg-gray-50 hover:bg-blue-50 border-gray-200 hover:border-blue-300'
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <p className={`font-medium ${disabled ? 'text-gray-500' : 'text-gray-900'}`}>
+            {exercise.exerciseTypeName}
+          </p>
+          {showDetails && (
+            <p className="text-xs text-gray-500 mt-1">
+              {formatExerciseParameters(exercise.parameters)}
+            </p>
+          )}
+        </div>
+        {disabled ? (
+          <div className="text-green-600 font-medium text-sm">✓ Completed</div>
+        ) : (
+          <div className="text-blue-600 font-medium">Start →</div>
+        )}
       </div>
     </button>
   );

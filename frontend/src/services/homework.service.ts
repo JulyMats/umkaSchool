@@ -178,5 +178,18 @@ export const homeworkService = {
 
     deleteHomeworkAssignment: async (assignmentId: string): Promise<void> => {
         await axiosInstance.delete(`/api/homework-assignments/${assignmentId}`);
+    },
+
+    getCompletedExerciseIds: async (assignmentId: string, studentId: string): Promise<string[]> => {
+        try {
+            const response = await axiosInstance.get<string[]>(
+                `/api/homework-assignments/${assignmentId}/student/${studentId}/completed-exercises`
+            );
+            return response.data;
+        } catch (error: unknown) {
+            console.error(`Error fetching completed exercises for assignment ${assignmentId}:`, error);
+            const errorMessage = extractErrorMessage(error, 'Failed to load completed exercises');
+            throw new Error(errorMessage);
+        }
     }
 };

@@ -10,6 +10,7 @@ interface ExerciseSelectionModalProps {
   homework: HomeworkDetail | null;
   exercises: Exercise[];
   onSelectExercise: (exerciseId: string) => void;
+  completedExerciseIds?: string[];
 }
 
 const ExerciseSelectionModal: React.FC<ExerciseSelectionModalProps> = ({
@@ -17,7 +18,8 @@ const ExerciseSelectionModal: React.FC<ExerciseSelectionModalProps> = ({
   onClose,
   homework,
   exercises,
-  onSelectExercise
+  onSelectExercise,
+  completedExerciseIds = []
 }) => {
   if (!homework) return null;
 
@@ -34,6 +36,7 @@ const ExerciseSelectionModal: React.FC<ExerciseSelectionModalProps> = ({
       <div className="space-y-3">
         {homework.exercises.map((exercise) => {
           const fullExercise = exercises.find(ex => ex.id === exercise.exerciseId);
+          const isCompleted = completedExerciseIds.includes(exercise.exerciseId);
           return fullExercise ? (
             <ExerciseCard
               key={exercise.exerciseId}
@@ -41,6 +44,7 @@ const ExerciseSelectionModal: React.FC<ExerciseSelectionModalProps> = ({
               onClick={() => onSelectExercise(exercise.exerciseId)}
               showDetails={true}
               variant="default"
+              disabled={isCompleted}
             />
           ) : null;
         })}
