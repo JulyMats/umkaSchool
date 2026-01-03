@@ -112,7 +112,7 @@ export default function Settings() {
   if (!user) {
     return (
       <Layout title="Settings" subtitle="Loading...">
-        <div className="text-center py-8 text-gray-500">Loading settings...</div>
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">Loading settings...</div>
       </Layout>
     );
   }
@@ -132,7 +132,7 @@ export default function Settings() {
           />
         ))}
         
-        <div className="mt-8 text-sm text-gray-500">
+        <div className="mt-8 text-sm text-gray-500 dark:text-gray-400">
           Version 1.0.0
         </div>
       </div>

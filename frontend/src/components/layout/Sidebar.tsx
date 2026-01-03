@@ -123,7 +123,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div 
         className={`
-          flex flex-col w-64 h-screen border-r border-gray-200 bg-white 
+          flex flex-col w-64 h-screen border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800
           fixed left-0 top-0 z-[60]
           transform transition-transform duration-300 ease-in-out
           lg:translate-x-0 lg:z-50
@@ -136,11 +136,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             e.stopPropagation();
             if (onClose) onClose();
           }}
-          className="lg:hidden absolute top-4 right-4 p-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors z-10 bg-white shadow-sm"
+          className="lg:hidden absolute top-4 right-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 rounded-lg transition-colors z-10 bg-white dark:bg-gray-800 shadow-sm"
           aria-label="Close menu"
           type="button"
         >
-          <X size={20} className="text-gray-700" />
+          <X size={20} className="text-gray-700 dark:text-gray-300" />
         </button>
 
         {/* Scrollable content container */}
@@ -155,11 +155,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           {/* Top section - Menu items */}
           <div className="p-6 pb-4 flex-shrink-0">
             <div className="mb-6 text-left">
-              <h1 className="text-2xl font-bold">UmkaSchool</h1>
-              <p className="text-gray-500">Mental Arithmetic</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">UmkaSchool</h1>
+              <p className="text-gray-500 dark:text-gray-400">Mental Arithmetic</p>
             </div>
-            <hr className="border-t border-gray-200 -mx-6 mb-4" />
-            <p className="text-sm text-left text-gray-500 mb-2">MENU</p>
+            <hr className="border-t border-gray-200 dark:border-gray-700 -mx-6 mb-4" />
+            <p className="text-sm text-left text-gray-500 dark:text-gray-400 mb-2">MENU</p>
             <ul>
               {menuItems.map((item) => (
                 <NavMenuItem
@@ -175,20 +175,20 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           {/* Bottom section - Profile and Logout */}
           <div className="p-6 pt-4 flex-shrink-0 mt-auto">
-            <hr className="border-t border-gray-200 -mx-6 mb-4" />
+            <hr className="border-t border-gray-200 dark:border-gray-700 -mx-6 mb-4" />
             <div className="flex items-center gap-3 mb-4">
               <img
                 src={avatarUrl}
                 alt="profile"
-                className="w-10 h-10 rounded-full bg-gray-100 object-cover flex-shrink-0"
+                className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 object-cover flex-shrink-0"
                 onError={(e) => {
                   // Fallback to default avatar if image fails to load
                   (e.target as HTMLImageElement).src = avatar;
                 }}
               />
               <div className="text-left flex-1 min-w-0">
-                <p className="font-semibold truncate">{fullName}</p>
-                <p className="text-sm text-gray-500">{getRoleDisplayName()}</p>
+                <p className="font-semibold truncate text-gray-900 dark:text-gray-100">{fullName}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{getRoleDisplayName()}</p>
               </div>
             </div>
             <ul>
@@ -197,7 +197,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   to="/profile"
                   onClick={onClose}
                   className={`flex items-center gap-2 py-2 px-3 rounded-lg cursor-pointer mb-1 ${
-                    location.pathname === '/profile' ? "bg-gray-100 font-semibold" : "hover:bg-gray-50"
+                    location.pathname === '/profile' 
+                      ? "bg-gray-100 dark:bg-gray-700 font-semibold" 
+                      : "hover:bg-gray-50 dark:hover:bg-gray-700"
                   }`}
                 >
                   <User size={18} className={location.pathname === '/profile' ? "text-blue-500" : ""} />
@@ -209,7 +211,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   handleLogout();
                   if (onClose) onClose();
                 }}
-                className="flex items-center gap-2 py-2 cursor-pointer hover:bg-gray-50 px-3 rounded-lg"
+                className="flex items-center gap-2 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-3 rounded-lg text-gray-900 dark:text-gray-100"
               >
                 <LogOut size={18} /> Logout
               </li>

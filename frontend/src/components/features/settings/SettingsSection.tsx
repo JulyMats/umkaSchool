@@ -19,8 +19,8 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
 
   return (
     <div className={`mb-8 ${className}`}>
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">{title}</h2>
-      <Card variant="white" className="divide-y divide-gray-100 overflow-hidden">
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">{title}</h2>
+      <Card variant="white" className="divide-y divide-gray-100 dark:divide-gray-700 overflow-hidden">
         {settings.map((setting, index) => (
           <SettingItem key={setting.id} setting={setting} />
         ))}

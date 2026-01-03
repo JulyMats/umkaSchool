@@ -25,12 +25,12 @@ const SectionCard: React.FC<SectionCardProps> = ({
   const IconComponent = isReactNode ? null : (icon as LucideIcon);
 
   return (
-    <div className={`bg-white border border-gray-100 rounded-2xl p-6 ${className}`}>
+    <div className={`bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-6 ${className}`}>
       <div className="flex items-center gap-4 mb-4">
-        <div className="bg-gray-50 rounded-xl p-3 flex-shrink-0">
+        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 flex-shrink-0">
           {isReactNode ? icon : IconComponent && <IconComponent className="w-6 h-6" />}
         </div>
-        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
       </div>
 
       {hasContent && children ? (
