@@ -130,4 +130,12 @@ public class HomeworkAssignmentController {
         homeworkAssignmentService.updateOverdueAssignments();
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/{assignmentId}/student/{studentId}/completed-exercises")
+    public ResponseEntity<List<UUID>> getCompletedExercises(
+            @PathVariable UUID assignmentId,
+            @PathVariable UUID studentId) {
+        List<UUID> completedExerciseIds = homeworkAssignmentService.getCompletedExerciseIds(assignmentId, studentId);
+        return ResponseEntity.ok(completedExerciseIds);
+    }
 }

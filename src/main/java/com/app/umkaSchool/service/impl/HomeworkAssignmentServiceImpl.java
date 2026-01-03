@@ -8,6 +8,7 @@ import com.app.umkaSchool.model.*;
 import com.app.umkaSchool.model.enums.HomeworkStatus;
 import com.app.umkaSchool.repository.*;
 import com.app.umkaSchool.service.HomeworkAssignmentService;
+import com.app.umkaSchool.service.HomeworkService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
 
     private final HomeworkAssignmentRepository homeworkAssignmentRepository;
     private final HomeworkRepository homeworkRepository;
+    private final HomeworkService homeworkService;
     private final TeacherRepository teacherRepository;
     private final StudentRepository studentRepository;
     private final StudentGroupRepository studentGroupRepository;
@@ -38,6 +40,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
     @Autowired
     public HomeworkAssignmentServiceImpl(HomeworkAssignmentRepository homeworkAssignmentRepository,
                                          HomeworkRepository homeworkRepository,
+                                         HomeworkService homeworkService,
                                          TeacherRepository teacherRepository,
                                          StudentRepository studentRepository,
                                          StudentGroupRepository studentGroupRepository,
@@ -45,6 +48,7 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
                                          HomeworkAssignmentStudentRepository homeworkAssignmentStudentRepository) {
         this.homeworkAssignmentRepository = homeworkAssignmentRepository;
         this.homeworkRepository = homeworkRepository;
+        this.homeworkService = homeworkService;
         this.teacherRepository = teacherRepository;
         this.studentRepository = studentRepository;
         this.studentGroupRepository = studentGroupRepository;
@@ -57,11 +61,10 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
     public HomeworkAssignmentResponse createHomeworkAssignment(CreateHomeworkAssignmentRequest request) {
         logger.info("Creating new homework assignment for homework: {}", request.getHomeworkId());
 
-        Homework homework = homeworkRepository.findById(request.getHomeworkId())
-                .orElseThrow(() -> new ResourceNotFoundException("Homework not found"));
+        Homework clonedHomework = homeworkService.cloneHomework(request.getHomeworkId());
 
         HomeworkAssignment assignment = new HomeworkAssignment();
-        assignment.setHomework(homework);
+        assignment.setHomework(clonedHomework);
         assignment.setDueDate(request.getDueDate());
         assignment.setStatus(HomeworkStatus.PENDING);
 
@@ -472,6 +475,13 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
             logger.info("Checked homework assignment status for exercise: {}, student: {} ({} assignments)",
                 exerciseId, studentId, assignments.size());
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UUID> getCompletedExerciseIds(UUID homeworkAssignmentId, UUID studentId) {
+        logger.info("Getting completed exercise IDs for assignment: {}, student: {}", homeworkAssignmentId, studentId);
+        return exerciseAttemptRepository.findCompletedExerciseIds(homeworkAssignmentId, studentId);
     }
 
     private void updateGlobalAssignmentStatus(HomeworkAssignment assignment) {

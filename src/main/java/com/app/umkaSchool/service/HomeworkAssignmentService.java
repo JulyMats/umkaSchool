@@ -46,5 +46,7 @@ public interface HomeworkAssignmentService {
     List<HomeworkAssignment> findAssignmentsByExerciseAndStudent(UUID exerciseId, UUID studentId);
 
     void checkAndUpdateAssignmentsByExerciseAndStudent(UUID exerciseId, UUID studentId);
+
+    List<UUID> getCompletedExerciseIds(UUID homeworkAssignmentId, UUID studentId);
 }
 
