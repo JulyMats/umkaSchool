@@ -23,8 +23,8 @@ export interface SignInRequest {
 }
 
 export interface LoginResponse {
-    jwtToken: string;
-    refreshToken: string;
+    jwtToken: string | null;
+    refreshToken: string | null;
     user: {
         id: string;
         firstName: string;

@@ -37,4 +37,16 @@ public interface ExerciseAttemptRepository extends JpaRepository<ExerciseAttempt
            "AND ea.completedAt IS NOT NULL " +
            "AND (has.student.id = :studentId OR hasg.studentGroup.id = s.group.id)")
     Long countCompletedExercises(@Param("homeworkAssignmentId") UUID homeworkAssignmentId, @Param("studentId") UUID studentId);
+
+    @Query("SELECT DISTINCT ea.exercise.id FROM ExerciseAttempt ea " +
+           "JOIN HomeworkExercise he ON ea.exercise.id = he.exercise.id " +
+           "JOIN HomeworkAssignment ha ON he.homework.id = ha.homework.id " +
+           "LEFT JOIN HomeworkAssignmentStudent has ON ha.id = has.homeworkAssignment.id " +
+           "LEFT JOIN HomeworkAssignmentStudentGroup hasg ON ha.id = hasg.homeworkAssignment.id " +
+           "LEFT JOIN Student s ON s.id = :studentId " +
+           "WHERE ha.id = :homeworkAssignmentId " +
+           "AND ea.student.id = :studentId " +
+           "AND ea.completedAt IS NOT NULL " +
+           "AND (has.student.id = :studentId OR hasg.studentGroup.id = s.group.id)")
+    List<UUID> findCompletedExerciseIds(@Param("homeworkAssignmentId") UUID homeworkAssignmentId, @Param("studentId") UUID studentId);
 }

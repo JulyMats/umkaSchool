@@ -4,10 +4,13 @@ import com.app.umkaSchool.dto.auth.*;
 import com.app.umkaSchool.dto.student.CreateStudentRequest;
 import com.app.umkaSchool.dto.teacher.CreateTeacherRequest;
 import com.app.umkaSchool.service.AuthService;
+import com.app.umkaSchool.service.CookieService;
 import com.app.umkaSchool.service.EmailService;
 import com.app.umkaSchool.service.StudentService;
 import com.app.umkaSchool.service.TeacherService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,16 +24,19 @@ public class AuthController {
     private final StudentService studentService;
     private final TeacherService teacherService;
     private final EmailService emailService;
+    private final CookieService cookieService;
 
     @Autowired
     public AuthController(AuthService authService, 
                          StudentService studentService,
                          TeacherService teacherService,
-                         EmailService emailService) {
+                         EmailService emailService,
+                         CookieService cookieService) {
         this.authService = authService;
         this.studentService = studentService;
         this.teacherService = teacherService;
         this.emailService = emailService;
+        this.cookieService = cookieService;
     }
 
     @PostMapping("/signup")
@@ -98,9 +104,21 @@ public class AuthController {
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<LoginResponse> signin(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponse> signin(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletResponse httpResponse) {
         LoginResponse response = authService.signin(request);
-        return ResponseEntity.ok(response);
+        
+        cookieService.setJwtCookie(httpResponse, response.getJwtToken());
+        cookieService.setRefreshTokenCookie(httpResponse, response.getRefreshToken());
+        
+        LoginResponse safeResponse = LoginResponse.builder()
+                .jwtToken(null) 
+                .refreshToken(null) 
+                .user(response.getUser())
+                .build();
+        
+        return ResponseEntity.ok(safeResponse);
     }
 
     @PostMapping("/forgot-password")
@@ -119,14 +137,47 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<LoginResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
-        LoginResponse response = authService.refreshToken(request.getRefreshToken());
-        return ResponseEntity.ok(response);
+    public ResponseEntity<LoginResponse> refreshToken(
+            @RequestBody(required = false) RefreshTokenRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
+        String refreshToken = cookieService.getRefreshTokenFromCookie(httpRequest);
+        if (refreshToken == null && request != null) {
+            refreshToken = request.getRefreshToken();
+        }
+        
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            throw new IllegalArgumentException("Refresh token is required");
+        }
+        
+        LoginResponse response = authService.refreshToken(refreshToken);
+        cookieService.setJwtCookie(httpResponse, response.getJwtToken());
+        cookieService.setRefreshTokenCookie(httpResponse, response.getRefreshToken());
+        
+        LoginResponse safeResponse = LoginResponse.builder()
+                .jwtToken(null)
+                .refreshToken(null)
+                .user(response.getUser())
+                .build();
+        
+        return ResponseEntity.ok(safeResponse);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@Valid @RequestBody LogoutRequest request) {
-        authService.logout(request.getRefreshToken());
+    public ResponseEntity<?> logout(
+            @RequestBody(required = false) LogoutRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
+        String refreshToken = cookieService.getRefreshTokenFromCookie(httpRequest);
+        if (refreshToken == null && request != null) {
+            refreshToken = request.getRefreshToken();
+        }
+        
+        if (refreshToken != null && !refreshToken.isEmpty()) {
+            authService.logout(refreshToken);
+        }
+        
+        cookieService.clearAuthCookies(httpResponse);
         return ResponseEntity.ok().build();
     }
 }

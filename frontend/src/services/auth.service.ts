@@ -7,10 +7,8 @@ export const authService = {
         return response.data;
     },
 
-    async refreshToken(refreshToken: string): Promise<LoginResponse> {
-        const response = await axiosInstance.post<LoginResponse>('/api/auth/refresh', {
-            refreshToken
-        });
+    async refreshToken(): Promise<LoginResponse> {
+        const response = await axiosInstance.post<LoginResponse>('/api/auth/refresh', {});
         return response.data;
     },
 
@@ -30,15 +28,7 @@ export const authService = {
         });
     },
 
-    async logout(refreshToken: string): Promise<void> {
-        await axiosInstance.post('/api/auth/logout', { refreshToken });
-    },
-
-    setAuthToken(token: string | null) {
-        if (token) {
-            axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        } else {
-            delete axiosInstance.defaults.headers.common['Authorization'];
-        }
+    async logout(): Promise<void> {
+        await axiosInstance.post('/api/auth/logout', {});
     }
 };
