@@ -153,9 +153,9 @@ export default function TeacherStudents() {
             </div>
 
             {/* Desktop: Table view */}
-            <div className="hidden md:block mt-6 bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+            <div className="hidden md:block mt-6 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden">
                 <table className="w-full">
-                    <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500 tracking-wide">
+                    <thead className="bg-gray-50 dark:bg-gray-700/50 text-left text-xs uppercase text-gray-500 dark:text-gray-400 tracking-wide">
                         <tr>
                             <th className="px-6 py-3">Student</th>
                             <th className="px-6 py-3">Guardian</th>
@@ -165,7 +165,7 @@ export default function TeacherStudents() {
                             <th className="px-6 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 text-sm">
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700 text-sm">
                         {filteredStudents.map((student) => (
                             <StudentTableRow
                                 key={student.id}
@@ -194,7 +194,7 @@ export default function TeacherStudents() {
             {/* Mobile: Card view */}
             <div className="md:hidden mt-6 space-y-4">
                 {filteredStudents.length === 0 ? (
-                    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+                    <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm p-6">
                         <EmptyState
                             message={students.length === 0
                                 ? 'You have not assigned any students yet.'
@@ -208,77 +208,77 @@ export default function TeacherStudents() {
                         return (
                             <div
                                 key={student.id}
-                                className="bg-white border border-gray-100 rounded-xl shadow-sm p-4 space-y-3"
+                                className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-sm p-4 space-y-3"
                             >
                                 {/* Student Info */}
                                 <div className="flex items-start justify-between">
                                     <div className="flex-1">
-                                        <h3 className="font-semibold text-gray-900 text-base">
+                                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-base">
                                             {student.firstName} {student.lastName}
                                         </h3>
-                                        <p className="text-sm text-gray-500 mt-0.5">{student.email}</p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{student.email}</p>
                                     </div>
                                     <button
                                         onClick={() => handleOpenManageModal(student)}
-                                        className="text-blue-600 hover:text-blue-700 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+                                        className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium px-3 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
                                     >
                                         Manage
                                     </button>
                                 </div>
 
                                 {/* Guardian */}
-                                <div className="pt-2 border-t border-gray-100">
-                                    <p className="text-xs font-medium text-gray-500 mb-1">Guardian</p>
+                                <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Guardian</p>
                                     {student.guardian ? (
                                         <div>
-                                            <p className="text-sm font-medium text-gray-900">
+                                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                                 {student.guardian.firstName} {student.guardian.lastName}
                                             </p>
-                                            <p className="text-xs text-gray-500 mt-0.5">
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                                                 {student.guardian.relationship} • {student.guardian.email}
                                             </p>
                                         </div>
                                     ) : (
-                                        <p className="text-sm text-gray-400 italic">No guardian info</p>
+                                        <p className="text-sm text-gray-400 dark:text-gray-500 italic">No guardian info</p>
                                     )}
                                 </div>
 
                                 {/* Group */}
                                 <div>
-                                    <p className="text-xs font-medium text-gray-500 mb-1">Group</p>
+                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Group</p>
                                     {student.groupName ? (
                                         <div>
-                                            <p className="text-sm font-medium text-gray-900">{student.groupName}</p>
-                                            <p className="text-xs text-gray-500 mt-0.5">
+                                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{student.groupName}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                                                 Code: {student.groupCode || '—'}
                                             </p>
                                         </div>
                                     ) : (
-                                        <p className="text-sm text-gray-400 italic">Unassigned</p>
+                                        <p className="text-sm text-gray-400 dark:text-gray-500 italic">Unassigned</p>
                                     )}
                                 </div>
 
                                 {/* Last Achievement */}
                                 <div>
-                                    <p className="text-xs font-medium text-gray-500 mb-1">Last Achievement</p>
+                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Last Achievement</p>
                                     {lastAchievement ? (
                                         <div>
-                                            <p className="text-sm font-medium text-gray-900">
+                                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                                 {lastAchievement.name}
                                             </p>
-                                            <p className="text-xs text-gray-500 mt-0.5">
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                                                 {new Date(lastAchievement.earnedAt).toLocaleDateString()}
                                             </p>
                                         </div>
                                     ) : (
-                                        <p className="text-sm text-gray-400 italic">No achievement</p>
+                                        <p className="text-sm text-gray-400 dark:text-gray-500 italic">No achievement</p>
                                     )}
                                 </div>
 
                                 {/* Enrollment Date */}
-                                <div className="pt-2 border-t border-gray-100">
-                                    <p className="text-xs font-medium text-gray-500 mb-1">Enrollment Date</p>
-                                    <p className="text-sm font-medium text-gray-900">
+                                <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Enrollment Date</p>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                         {student.enrollmentDate
                                             ? new Date(student.enrollmentDate).toLocaleDateString()
                                             : '—'}

@@ -128,22 +128,22 @@ export default function TeacherDashboard() {
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                     {data.groups.map((group) => (
-                        <Card key={group.id} variant="white" className="p-5">
+                        <Card key={group.id} variant="white" className="p-5 border border-gray-200 dark:border-gray-700">
                             <div className="flex items-center justify-between mb-3">
                                 <div>
-                                    <h3 className="text-lg font-semibold text-gray-900">
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                                         {group.name}
                                     </h3>
-                                    <p className="text-sm text-gray-500">
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
                                         Code: {group.code}
                                     </p>
                                 </div>
-                                <span className="inline-flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-full px-3 py-1">
+                                <span className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 rounded-full px-3 py-1">
                                     <Users className="w-4 h-4" />
                                     {group.studentCount} students
                                 </span>
                             </div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
                                 {group.description || 'No description provided.'}
                             </p>
                         </Card>

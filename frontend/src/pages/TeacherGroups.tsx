@@ -154,7 +154,7 @@ export default function TeacherGroups() {
 
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 <div>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                         {groups.length} group{groups.length === 1 ? '' : 's'} •{' '}
                         {unassignedStudents.length} student
                         {unassignedStudents.length === 1 ? '' : 's'} without a group
