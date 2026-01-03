@@ -72,7 +72,7 @@ export const useProgress = (studentId: string | undefined, selectedPeriod: TimeP
         // Still fetch previous period stats for comparison
         let previousPeriod: TimePeriod = 'all';
         if (selectedPeriod === 'week') {
-          previousPeriod = 'month';
+          previousPeriod = 'all';
         } else if (selectedPeriod === 'month') {
           previousPeriod = 'all';
         }
@@ -104,7 +104,7 @@ export const useProgress = (studentId: string | undefined, selectedPeriod: TimeP
         // Fetch previous period for comparison
         let previousPeriod: TimePeriod = 'all';
         if (selectedPeriod === 'week') {
-          previousPeriod = 'month';
+          previousPeriod = 'all';
         } else if (selectedPeriod === 'month') {
           previousPeriod = 'all';
         }

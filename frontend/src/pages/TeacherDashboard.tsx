@@ -80,7 +80,7 @@ export default function TeacherDashboard() {
                 <StatCard
                     icon={<Clock className="w-6 h-6 text-amber-500" />}
                     label="Upcoming Deadlines"
-                    value={metrics.upcomingAssignments.length}
+                    value={metrics.upcomingDeadlinesCount}
                     helperText="Due within the next week"
                 />
             </div>

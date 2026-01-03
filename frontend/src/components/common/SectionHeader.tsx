@@ -10,6 +10,7 @@ interface SectionHeaderProps {
     href?: string;
   };
   badge?: string;
+  badgeOnClick?: () => void;
   color?: 'pink' | 'blue' | 'purple' | 'yellow' | 'green';
   iconPosition?: 'left' | 'right';
   className?: string;
@@ -20,6 +21,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   title,
   action,
   badge,
+  badgeOnClick,
   color = 'pink',
   iconPosition = 'left',
   className = ''
@@ -88,9 +90,18 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
             {action.label}
           </a>
         ) : badge ? (
-          <span className={`text-sm ${colors.badge} font-medium`}>
-            {badge}
-          </span>
+          badgeOnClick ? (
+            <button
+              onClick={badgeOnClick}
+              className={`text-sm ${colors.badge} font-medium hover:underline cursor-pointer transition-colors`}
+            >
+              {badge}
+            </button>
+          ) : (
+            <span className={`text-sm ${colors.badge} font-medium`}>
+              {badge}
+            </span>
+          )
         ) : null}
         {iconPosition === 'right' && iconElement}
       </div>
