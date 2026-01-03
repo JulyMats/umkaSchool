@@ -27,18 +27,18 @@ const HomeworkDetailsModal: React.FC<HomeworkDetailsModalProps> = ({
       size="lg"
     >
       <div className="mb-4">
-        <p className="text-sm text-gray-500">by {homework.teacherName}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">by {homework.teacherName}</p>
       </div>
       
       {homework.description && (
         <div className="mb-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">Description</h3>
-          <p className="text-gray-600">{homework.description}</p>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Description</h3>
+          <p className="text-gray-600 dark:text-gray-400">{homework.description}</p>
         </div>
       )}
       
       <div>
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
           Exercises ({homework.exercises.length})
         </h3>
         <div className="space-y-2">
@@ -52,8 +52,8 @@ const HomeworkDetailsModal: React.FC<HomeworkDetailsModalProps> = ({
                 variant="info"
               />
             ) : (
-              <div key={exercise.exerciseId} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                <p className="font-medium text-gray-900">
+              <div key={exercise.exerciseId} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+                <p className="font-medium text-gray-900 dark:text-gray-100">
                   {index + 1}. {exercise.exerciseTypeName}
                 </p>
               </div>

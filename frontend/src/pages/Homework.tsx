@@ -179,7 +179,7 @@ export default function Homework() {
         ))}
 
         {filteredHomework.length === 0 && (
-          <div className="col-span-full bg-white rounded-2xl py-12">
+          <div className="col-span-full bg-white dark:bg-gray-800 rounded-2xl py-12">
             <EmptyState
               icon={Book}
               message={
