@@ -34,7 +34,7 @@ const ManageStudentModal: React.FC<ManageStudentModalProps> = ({
       title="Manage Student Placement"
       size="md"
     >
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
         Update the student's group assignment.
       </p>
       <form onSubmit={onSubmit} className="space-y-4">
@@ -57,7 +57,7 @@ const ManageStudentModal: React.FC<ManageStudentModalProps> = ({
           ]}
         />
 
-        <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
+        <div className="flex items-center justify-end gap-3 border-t border-gray-100 dark:border-gray-700 pt-4">
           <Button
             type="button"
             onClick={onClose}

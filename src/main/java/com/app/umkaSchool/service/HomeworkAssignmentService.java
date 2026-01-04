@@ -3,6 +3,7 @@ package com.app.umkaSchool.service;
 import com.app.umkaSchool.dto.homeworkassignment.CreateHomeworkAssignmentRequest;
 import com.app.umkaSchool.dto.homeworkassignment.HomeworkAssignmentResponse;
 import com.app.umkaSchool.dto.homeworkassignment.UpdateHomeworkAssignmentRequest;
+import com.app.umkaSchool.model.HomeworkAssignment;
 import com.app.umkaSchool.model.enums.HomeworkStatus;
 
 import java.util.List;
@@ -41,5 +42,11 @@ public interface HomeworkAssignmentService {
     void updateOverdueAssignments();
 
     void checkAndUpdateAssignmentStatus(UUID homeworkAssignmentId, UUID studentId);
+
+    List<HomeworkAssignment> findAssignmentsByExerciseAndStudent(UUID exerciseId, UUID studentId);
+
+    void checkAndUpdateAssignmentsByExerciseAndStudent(UUID exerciseId, UUID studentId);
+
+    List<UUID> getCompletedExerciseIds(UUID homeworkAssignmentId, UUID studentId);
 }
 

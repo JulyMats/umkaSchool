@@ -4,15 +4,11 @@ import com.app.umkaSchool.dto.auth.LoginRequest;
 import com.app.umkaSchool.dto.auth.LoginResponse;
 import com.app.umkaSchool.dto.auth.RegisterRequest;
 import com.app.umkaSchool.dto.auth.SignupResponse;
-import com.app.umkaSchool.dto.student.CreateStudentRequest;
-import com.app.umkaSchool.dto.teacher.CreateTeacherRequest;
 import com.app.umkaSchool.model.AppUser;
 import com.app.umkaSchool.model.UserToken;
 import com.app.umkaSchool.repository.UserTokenRepository;
 import com.app.umkaSchool.service.AuthService;
 import com.app.umkaSchool.service.EmailService;
-import com.app.umkaSchool.service.StudentService;
-import com.app.umkaSchool.service.TeacherService;
 import com.app.umkaSchool.service.TokenService;
 import com.app.umkaSchool.service.UserService;
 import com.app.umkaSchool.util.JwtUtil;
@@ -37,8 +33,6 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-    private final StudentService studentService;
-    private final TeacherService teacherService;
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
@@ -55,17 +49,13 @@ public class AuthServiceImpl implements AuthService {
                            TokenService tokenService,
                            EmailService emailService,
                            PasswordEncoder passwordEncoder,
-                           JwtUtil jwtUtil,
-                           StudentService studentService,
-                           TeacherService teacherService) {
+                           JwtUtil jwtUtil) {
         this.userService = userService;
         this.userTokenRepository = userTokenRepository;
         this.tokenService = tokenService;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
-        this.studentService = studentService;
-        this.teacherService = teacherService;
     }
 
     @Override
@@ -75,67 +65,8 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Email already in use");
         }
         
-        // Create user account
+        // Create user account only - profile creation (Student/Teacher) is handled by controller
         AppUser user = userService.createUser(request);
-        
-        if (request.getAvatarUrl() != null && !request.getAvatarUrl().isEmpty()) {
-            user.setAvatarUrl(request.getAvatarUrl());
-        }
-
-        // Create profile based on role
-        if ("STUDENT".equalsIgnoreCase(request.getRole())) {
-            if (request.getDateOfBirth() == null) {
-                throw new IllegalArgumentException("Date of birth is required for students");
-            }
-            if (request.getGuardianFirstName() == null || request.getGuardianFirstName().trim().isEmpty()) {
-                throw new IllegalArgumentException("Guardian first name is required for students");
-            }
-            if (request.getGuardianLastName() == null || request.getGuardianLastName().trim().isEmpty()) {
-                throw new IllegalArgumentException("Guardian last name is required for students");
-            }
-            if (request.getGuardianEmail() == null || request.getGuardianEmail().trim().isEmpty()) {
-                throw new IllegalArgumentException("Guardian email is required for students");
-            }
-            if (request.getGuardianPhone() == null || request.getGuardianPhone().trim().isEmpty()) {
-                throw new IllegalArgumentException("Guardian phone is required for students");
-            }
-            if (request.getGuardianRelationship() == null || request.getGuardianRelationship().trim().isEmpty()) {
-                throw new IllegalArgumentException("Guardian relationship is required for students");
-            }
-            
-            // Create student profile
-            CreateStudentRequest studentRequest = new CreateStudentRequest();
-            studentRequest.setFirstName(request.getFirstName());
-            studentRequest.setLastName(request.getLastName());
-            studentRequest.setEmail(request.getEmail());
-            studentRequest.setDateOfBirth(request.getDateOfBirth());
-            studentRequest.setAvatarUrl(request.getAvatarUrl());
-            studentRequest.setGuardianFirstName(request.getGuardianFirstName());
-            studentRequest.setGuardianLastName(request.getGuardianLastName());
-            studentRequest.setGuardianEmail(request.getGuardianEmail());
-            studentRequest.setGuardianPhone(request.getGuardianPhone());
-            studentRequest.setGuardianRelationship(request.getGuardianRelationship());
-            
-            studentService.createStudent(studentRequest);
-        } else if ("TEACHER".equalsIgnoreCase(request.getRole())) {
-            // Create teacher profile (phone and bio are optional)
-            CreateTeacherRequest teacherRequest = new CreateTeacherRequest();
-            teacherRequest.setFirstName(request.getFirstName());
-            teacherRequest.setLastName(request.getLastName());
-            teacherRequest.setEmail(request.getEmail());
-            teacherRequest.setAvatarUrl(request.getAvatarUrl());
-            teacherRequest.setPhone(request.getPhone());
-            teacherRequest.setBio(request.getBio());
-            
-            teacherService.createTeacher(teacherRequest);
-        }
-
-        // Send welcome email after successful signup
-        emailService.sendWelcomeEmail(
-            request.getEmail(),
-            request.getFirstName(),
-            request.getLastName()
-        );
 
         return SignupResponse.builder()
             .id(user.getId())
@@ -148,13 +79,22 @@ public class AuthServiceImpl implements AuthService {
     public LoginResponse signin(LoginRequest request) {
         Optional<AppUser> userOpt = userService.findByEmail(request.getEmail());
         
-        if (userOpt.isEmpty() || !passwordEncoder.matches(request.getPassword(), userOpt.get().getPasswordHash())) {
+        if (userOpt.isEmpty()) {
+            logger.warn("User not found for email: {}", request.getEmail());
             throw new IllegalArgumentException("Invalid email or password");
         }
         
         AppUser user = userOpt.get();
+        boolean passwordMatches = passwordEncoder.matches(request.getPassword(), user.getPasswordHash());
+        logger.info("Password match result for user {}: {}", user.getEmail(), passwordMatches);
+        
+        if (!passwordMatches) {
+            logger.warn("Password mismatch for email: {}", request.getEmail());
+            throw new IllegalArgumentException("Invalid email or password");
+        }
         
         if (!user.isActive()) {
+            logger.warn("Inactive account login attempt for email: {}", request.getEmail());
             throw new IllegalArgumentException("Account is inactive. Please contact support.");
         }
 
@@ -212,12 +152,6 @@ public class AuthServiceImpl implements AuthService {
 
         String rawToken = tokenService.generateToken();
         String hash = tokenService.hashToken(rawToken);
-
-        // TODO: REMOVE BEFORE PRODUCTION! Logging for testing purposes
-        System.out.println("=================================================");
-        System.out.println("PASSWORD RESET TOKEN FOR: " + email);
-        System.out.println("TOKEN: " + rawToken);
-        System.out.println("=================================================");
 
         UserToken token = new UserToken();
         token.setUser(user);

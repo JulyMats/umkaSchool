@@ -21,9 +21,9 @@ const NavMenuItem: React.FC<NavMenuItemProps> = ({
   const isActive = location.pathname === path;
 
   const baseClasses = 'flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer mb-1 transition-colors';
-  const activeClasses = isActive ? 'bg-gray-100 font-semibold' : 'hover:bg-gray-50';
-  const iconClasses = isActive ? 'text-blue-500' : '';
-  const textClasses = isActive ? 'text-blue-500' : '';
+  const activeClasses = isActive ? 'bg-gray-100 dark:bg-gray-700 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-gray-700';
+  const iconClasses = isActive ? 'text-blue-500 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300';
+  const textClasses = isActive ? 'text-blue-500 dark:text-blue-400' : 'text-gray-900 dark:text-gray-100';
 
   const handleClick = () => {
     if (onClick) {

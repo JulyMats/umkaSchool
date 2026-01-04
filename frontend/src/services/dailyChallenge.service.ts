@@ -1,29 +1,14 @@
-import axios from 'axios';
+import axiosInstance from './axios.config';
 import { DailyChallenge, CreateDailyChallengeRequest } from '../types/dailyChallenge';
 import { extractErrorMessage } from '../utils/error.utils';
 
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-
-const api = axios.create({
-  baseURL: `${baseURL}/api/daily-challenges`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+const API_BASE = '/api/daily-challenges';
 
 export const dailyChallengeService = {
 
   async getTodayChallenge(): Promise<DailyChallenge> {
     try {
-      const response = await api.get<DailyChallenge>('/today');
+      const response = await axiosInstance.get<DailyChallenge>(`${API_BASE}/today`);
       return response.data;
     } catch (error) {
       throw new Error(extractErrorMessage(error, 'Failed to fetch today\'s challenge'));
@@ -32,7 +17,7 @@ export const dailyChallengeService = {
 
   async getDailyChallengeByDate(date: string): Promise<DailyChallenge> {
     try {
-      const response = await api.get<DailyChallenge>(`/date/${date}`);
+      const response = await axiosInstance.get<DailyChallenge>(`${API_BASE}/date/${date}`);
       return response.data;
     } catch (error) {
       throw new Error(extractErrorMessage(error, 'Failed to fetch daily challenge'));
@@ -41,7 +26,7 @@ export const dailyChallengeService = {
 
   async getDailyChallengeById(challengeId: string): Promise<DailyChallenge> {
     try {
-      const response = await api.get<DailyChallenge>(`/${challengeId}`);
+      const response = await axiosInstance.get<DailyChallenge>(`${API_BASE}/${challengeId}`);
       return response.data;
     } catch (error) {
       throw new Error(extractErrorMessage(error, 'Failed to fetch daily challenge'));
@@ -50,7 +35,7 @@ export const dailyChallengeService = {
 
   async getAllDailyChallenges(): Promise<DailyChallenge[]> {
     try {
-      const response = await api.get<DailyChallenge[]>('');
+      const response = await axiosInstance.get<DailyChallenge[]>(API_BASE);
       return response.data;
     } catch (error) {
       throw new Error(extractErrorMessage(error, 'Failed to fetch daily challenges'));
@@ -59,7 +44,7 @@ export const dailyChallengeService = {
 
   async createDailyChallenge(request: CreateDailyChallengeRequest): Promise<DailyChallenge> {
     try {
-      const response = await api.post<DailyChallenge>('', request);
+      const response = await axiosInstance.post<DailyChallenge>(API_BASE, request);
       return response.data;
     } catch (error) {
       throw new Error(extractErrorMessage(error, 'Failed to create daily challenge'));
@@ -68,7 +53,7 @@ export const dailyChallengeService = {
 
   async deleteDailyChallenge(challengeId: string): Promise<void> {
     try {
-      await api.delete(`/${challengeId}`);
+      await axiosInstance.delete(`${API_BASE}/${challengeId}`);
     } catch (error) {
       throw new Error(extractErrorMessage(error, 'Failed to delete daily challenge'));
     }

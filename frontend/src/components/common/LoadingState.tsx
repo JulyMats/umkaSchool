@@ -25,7 +25,7 @@ const LoadingState: React.FC<LoadingStateProps> = ({
   const content = (
     <div className={`flex flex-col items-center justify-center gap-4 ${className}`}>
       <Loader2 className={`${sizeClasses[size]} animate-spin text-pink-500`} />
-      {displayText && <p className="text-gray-600">{displayText}</p>}
+      {displayText && <p className="text-gray-600 dark:text-gray-400">{displayText}</p>}
     </div>
   );
 

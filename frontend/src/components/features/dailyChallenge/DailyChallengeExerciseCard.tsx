@@ -35,17 +35,17 @@ const DailyChallengeExerciseCard: React.FC<DailyChallengeExerciseCardProps> = ({
   const difficultyLevel = getDifficultyLevel(exercise.difficulty);
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
       <div className="flex items-start gap-3 mb-4">
-        <div className="bg-gradient-to-br from-pink-50 to-purple-50 p-2 rounded-lg shrink-0">
-          <Target className="w-5 h-5 text-pink-600" />
+        <div className="bg-gradient-to-br from-pink-50 to-purple-50 dark:from-pink-900/30 dark:to-purple-900/30 p-2 rounded-lg shrink-0">
+          <Target className="w-5 h-5 text-pink-600 dark:text-pink-400" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-lg truncate">{exercise.exerciseTypeName}</h3>
+            <h3 className="font-semibold text-lg truncate text-gray-900 dark:text-gray-100">{exercise.exerciseTypeName}</h3>
             <DifficultyBadge difficulty={difficultyLevel} />
           </div>
-          <p className="text-gray-500 text-sm">Exercise #{index + 1}</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Exercise #{index + 1}</p>
         </div>
       </div>
 
@@ -55,7 +55,7 @@ const DailyChallengeExerciseCard: React.FC<DailyChallengeExerciseCardProps> = ({
       </div>
       
       <div className="space-y-4 mt-auto">
-        <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+        <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
           <span className="flex items-center gap-1">
             <Clock className="w-4 h-4" />
             Difficulty: {exercise.difficulty}/10

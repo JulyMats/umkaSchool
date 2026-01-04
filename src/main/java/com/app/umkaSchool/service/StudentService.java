@@ -27,6 +27,8 @@ public interface StudentService {
 
     void assignToTeacher(UUID studentId, UUID teacherId);
 
+    void unassignFromTeacher(UUID studentId);
+
     void assignToGroup(UUID studentId, UUID groupId);
 
     void updateLastActivity(UUID studentId);

@@ -1,5 +1,6 @@
 package com.app.umkaSchool.dto.student;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,6 +38,9 @@ public class StudentResponse {
 
     // Avatar URL from user
     private String avatarUrl;
+    
+    @JsonProperty("isActive")
+    private boolean isActive;
 
     @Data
     @Builder

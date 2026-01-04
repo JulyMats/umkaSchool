@@ -50,7 +50,8 @@ export interface DashboardMetrics {
   totalStudents: number;
   totalGroups: number;
   activeAssignmentsCount: number;
-  upcomingAssignments: HomeworkAssignmentDetail[];
+  upcomingDeadlinesCount: number; 
+  upcomingAssignments: HomeworkAssignmentDetail[]; 
   recentStudents: Student[];
 }
 
@@ -62,21 +63,31 @@ export const calculateDashboardMetrics = (
   teacherTotalGroups?: number
 ): DashboardMetrics => {
   const activeAssignments = assignments.filter(
-    (assignment) => assignment.status !== 'COMPLETED'
+    (assignment) => assignment.status !== 'COMPLETED' && assignment.status !== 'OVERDUE'
   );
 
   const now = new Date();
-  const upcomingAssignments = [...activeAssignments]
+  const oneWeekFromNow = new Date();
+  oneWeekFromNow.setDate(oneWeekFromNow.getDate() + 7);
+  
+  const upcomingDeadlinesCount = activeAssignments.filter((assignment) => {
+    if (!assignment.dueDate) return false;
+    const dueDate = new Date(assignment.dueDate);
+    return dueDate >= now && dueDate <= oneWeekFromNow && assignment.status !== 'OVERDUE';
+  }).length;
+  
+  const upcomingAssignments = assignments
     .filter((assignment) => {
+      if (assignment.status !== 'PENDING') return false;
       if (!assignment.dueDate) return false;
       const dueDate = new Date(assignment.dueDate);
-      return dueDate >= now && assignment.status !== 'OVERDUE';
+      return dueDate >= now;
     })
     .sort(
       (a, b) =>
         new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
     )
-    .slice(0, 5);
+    .slice(0, 3);
 
   const recentStudents = [...students]
     .filter((student) => student.lastActivityAt)
@@ -91,6 +102,7 @@ export const calculateDashboardMetrics = (
     totalStudents: teacherTotalStudents ?? students.length,
     totalGroups: teacherTotalGroups ?? groups.length,
     activeAssignmentsCount: activeAssignments.length,
+    upcomingDeadlinesCount,
     upcomingAssignments,
     recentStudents
   };

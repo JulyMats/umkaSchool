@@ -18,10 +18,10 @@ const HomeworkListItem: React.FC<HomeworkListItemProps> = ({
 }) => {
   if (variant === 'compact') {
     return (
-      <div className={`flex justify-between items-center bg-pink-100 p-2 rounded-lg ${className}`}>
+      <div className={`flex justify-between items-center bg-pink-100 dark:bg-pink-900/30 p-2 rounded-lg ${className}`}>
         <div className="text-left flex-1 min-w-0">
-          <p className="font-semibold text-sm truncate">{homework.title}</p>
-          <p className="text-xs text-gray-500">{formatDueDate(homework.dueDate)}</p>
+          <p className="font-semibold text-sm truncate text-gray-900 dark:text-gray-100">{homework.title}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{formatDueDate(homework.dueDate)}</p>
         </div>
         <Button
           onClick={onStart}
@@ -36,10 +36,10 @@ const HomeworkListItem: React.FC<HomeworkListItemProps> = ({
   }
 
   return (
-    <li className={`flex justify-between items-center bg-pink-100 p-3 rounded-xl mb-2 ${className}`}>
+    <li className={`flex justify-between items-center bg-pink-100 dark:bg-pink-900/30 p-3 rounded-xl mb-2 ${className}`}>
       <div className="text-left flex-1 min-w-0">
-        <p className="font-semibold">{homework.title}</p>
-        <p className="text-xs text-gray-500">{formatDueDate(homework.dueDate)}</p>
+        <p className="font-semibold text-gray-900 dark:text-gray-100">{homework.title}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{formatDueDate(homework.dueDate)}</p>
       </div>
       <button
         onClick={onStart}

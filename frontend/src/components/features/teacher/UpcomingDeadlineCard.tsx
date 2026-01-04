@@ -30,21 +30,21 @@ const UpcomingDeadlineCard: React.FC<UpcomingDeadlineCardProps> = ({
     .filter(Boolean) as string[];
 
   return (
-    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <h3 className="text-base font-semibold text-gray-900 mb-2">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">
             {homeworkTitle || 'Homework Assignment'}
           </h3>
-          <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
+              <Calendar className="w-4 h-4 text-gray-400 dark:text-gray-500" />
               <span>
                 Due <DateDisplay date={assignment.dueDate} format="short" />
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
+              <Calendar className="w-4 h-4 text-gray-400 dark:text-gray-500" />
               <span>
                 Assigned <DateDisplay date={assignment.assignedAt} format="short" />
               </span>
@@ -54,22 +54,22 @@ const UpcomingDeadlineCard: React.FC<UpcomingDeadlineCardProps> = ({
       </div>
 
       {(assignedGroups.length > 0 || assignedStudents.length > 0) && (
-        <div className="mt-3 pt-3 border-t border-gray-200 space-y-2">
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 space-y-2">
           {assignedGroups.length > 0 && (
             <div className="flex items-start gap-2">
-              <Users className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+              <Users className="w-4 h-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <span className="text-xs font-medium text-gray-500">Groups: </span>
-                <span className="text-sm text-gray-700">{assignedGroups.join(', ')}</span>
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Groups: </span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{assignedGroups.join(', ')}</span>
               </div>
             </div>
           )}
           {assignedStudents.length > 0 && (
             <div className="flex items-start gap-2">
-              <User className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+              <User className="w-4 h-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <span className="text-xs font-medium text-gray-500">Students: </span>
-                <span className="text-sm text-gray-700">{assignedStudents.join(', ')}</span>
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Students: </span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{assignedStudents.join(', ')}</span>
               </div>
             </div>
           )}

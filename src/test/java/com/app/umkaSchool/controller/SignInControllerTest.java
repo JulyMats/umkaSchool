@@ -1,5 +1,6 @@
 package com.app.umkaSchool.controller;
 
+import com.app.umkaSchool.config.TestContainersConfiguration;
 import com.app.umkaSchool.dto.auth.LoginRequest;
 import com.app.umkaSchool.dto.auth.RegisterRequest;
 import com.app.umkaSchool.repository.AppUserRepository;
@@ -19,8 +20,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional // Rollback changes after each test
-class SignInControllerTest {
+@org.springframework.test.context.ActiveProfiles("test")
+@Transactional 
+class SignInControllerTest extends TestContainersConfiguration  {
 
     @Autowired
     private MockMvc mockMvc;
@@ -36,17 +38,23 @@ class SignInControllerTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        // Create test user before each test
         RegisterRequest registerRequest = new RegisterRequest();
         registerRequest.setFirstName("Test");
         registerRequest.setLastName("User");
         registerRequest.setEmail(testEmail);
         registerRequest.setPassword(testPassword);
         registerRequest.setRole("STUDENT");
+        registerRequest.setDateOfBirth(java.time.LocalDate.of(2010, 1, 1));
+        registerRequest.setGuardianFirstName("Guardian");
+        registerRequest.setGuardianLastName("Name");
+        registerRequest.setGuardianEmail("guardian.signin@example.com");
+        registerRequest.setGuardianPhone("123456789");
+        registerRequest.setGuardianRelationship("MOTHER");
 
         mockMvc.perform(post("/api/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(registerRequest)));
+                .content(objectMapper.writeValueAsString(registerRequest)))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -60,7 +68,7 @@ class SignInControllerTest {
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.emptyString()))); // Verify token is not empty
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.emptyString()))); 
     }
 
     @Test
@@ -73,7 +81,7 @@ class SignInControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Expect 400 for wrong password
+                .andExpect(status().isBadRequest()); 
     }
 
     @Test
@@ -86,7 +94,7 @@ class SignInControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Expect 400 for non-existent user
+                .andExpect(status().isBadRequest()); 
     }
 
     @Test
@@ -99,7 +107,7 @@ class SignInControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Validation should reject empty email
+                .andExpect(status().isBadRequest()); 
     }
 
     @Test
@@ -112,31 +120,31 @@ class SignInControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Validation should reject empty password
+                .andExpect(status().isBadRequest()); 
     }
 
     @Test
     void testSignin_ShortPassword() throws Exception {
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setEmail(testEmail);
-        loginRequest.setPassword("12345"); // Less than 6 characters
+        loginRequest.setPassword("12345");
 
         mockMvc.perform(post("/api/auth/signin")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Validation should reject short password
+                .andExpect(status().isBadRequest()); 
     }
 
     @Test
     void testSignin_MissingFields() throws Exception {
         LoginRequest loginRequest = new LoginRequest();
-        // Don't set email and password
+      
 
         mockMvc.perform(post("/api/auth/signin")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andDo(print())
-                .andExpect(status().isBadRequest()); // Validation should reject request without fields
+                .andExpect(status().isBadRequest()); 
     }
 }

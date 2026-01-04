@@ -1,5 +1,6 @@
 package com.app.umkaSchool.controller;
 
+import com.app.umkaSchool.config.TestContainersConfiguration;
 import com.app.umkaSchool.dto.auth.RegisterRequest;
 import com.app.umkaSchool.repository.AppUserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,8 +19,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional // Rollback changes after each test
-class AuthControllerTest {
+@org.springframework.test.context.ActiveProfiles("test")
+@Transactional 
+class AuthControllerTest extends TestContainersConfiguration {
 
     @Autowired
     private MockMvc mockMvc;
@@ -32,8 +34,6 @@ class AuthControllerTest {
 
     @BeforeEach
     void setUp() {
-        // Clean up data before each test (optional)
-        // appUserRepository.deleteAll();
     }
 
     @Test
@@ -44,11 +44,17 @@ class AuthControllerTest {
         request.setEmail("ivan.test@example.com");
         request.setPassword("password123");
         request.setRole("STUDENT");
+        request.setDateOfBirth(java.time.LocalDate.of(2010, 1, 1));
+        request.setGuardianFirstName("Guardian");
+        request.setGuardianLastName("Name");
+        request.setGuardianEmail("guardian.ivan@example.com");
+        request.setGuardianPhone("123456789");
+        request.setGuardianRelationship("MOTHER");
 
         mockMvc.perform(post("/api/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andDo(print()) // Prints request and response details
+                .andDo(print()) 
                 .andExpect(status().isOk());
     }
 
@@ -57,7 +63,7 @@ class AuthControllerTest {
         RegisterRequest request = new RegisterRequest();
         request.setFirstName("Ivan");
         request.setLastName("Ivanov");
-        request.setEmail("invalid-email"); // Invalid email
+        request.setEmail("invalid-email"); 
         request.setPassword("password123");
         request.setRole("STUDENT");
 
@@ -74,7 +80,7 @@ class AuthControllerTest {
         request.setFirstName("Ivan");
         request.setLastName("Ivanov");
         request.setEmail("ivan.test2@example.com");
-        request.setPassword("12345"); // Too short password (minimum 6 characters)
+        request.setPassword("12345"); 
         request.setRole("STUDENT");
 
         mockMvc.perform(post("/api/auth/signup")
@@ -88,7 +94,6 @@ class AuthControllerTest {
     void testSignup_MissingFields() throws Exception {
         RegisterRequest request = new RegisterRequest();
         request.setEmail("test@example.com");
-        // firstName, lastName, password, role are missing
 
         mockMvc.perform(post("/api/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -99,32 +104,35 @@ class AuthControllerTest {
 
     @Test
     void testSignup_DuplicateEmail() throws Exception {
-        // First registration
         RegisterRequest request1 = new RegisterRequest();
         request1.setFirstName("Peter");
         request1.setLastName("Petrov");
         request1.setEmail("duplicate@example.com");
         request1.setPassword("password123");
         request1.setRole("STUDENT");
+        request1.setDateOfBirth(java.time.LocalDate.of(2010, 1, 1));
+        request1.setGuardianFirstName("Guardian");
+        request1.setGuardianLastName("Name");
+        request1.setGuardianEmail("guardian.duplicate@example.com");
+        request1.setGuardianPhone("123456789");
+        request1.setGuardianRelationship("MOTHER");
 
         mockMvc.perform(post("/api/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request1)))
                 .andExpect(status().isOk());
 
-        // Attempt to register with the same email
         RegisterRequest request2 = new RegisterRequest();
         request2.setFirstName("Anna");
         request2.setLastName("Sidorova");
-        request2.setEmail("duplicate@example.com"); // Same email
+        request2.setEmail("duplicate@example.com"); 
         request2.setPassword("password456");
         request2.setRole("TEACHER");
 
-        // Should return 400 Bad Request for duplicate email
         mockMvc.perform(post("/api/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request2)))
                 .andDo(print())
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isConflict());
     }
 }

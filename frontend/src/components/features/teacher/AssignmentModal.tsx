@@ -64,7 +64,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
       title={mode === 'create' ? 'Create Assignment' : 'Edit Assignment'}
       size="xl"
     >
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
         Schedule homework for specific groups or individual students.
       </p>
       <form onSubmit={onSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -90,7 +90,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
           />
 
           <div className="space-y-2">
-            <label className="text-xs uppercase text-gray-500">Due date</label>
+            <label className="text-xs uppercase text-gray-500 dark:text-gray-400">Due date</label>
             <input
               type="date"
               required
@@ -99,7 +99,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
               onChange={(event) =>
                 onChange((prev) => ({ ...prev, dueDate: event.target.value }))
               }
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             />
           </div>
         </section>
@@ -107,34 +107,34 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
         <section className="space-y-4">
           <div>
             <div className="flex items-center justify-between">
-              <label className="text-xs uppercase text-gray-500">
+              <label className="text-xs uppercase text-gray-500 dark:text-gray-400">
                 Assign to groups
               </label>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
                 {formState.selectedGroupIds.length} selected
               </span>
             </div>
-            <div className="mt-2 max-h-40 overflow-y-auto border border-gray-100 rounded-xl divide-y divide-gray-100">
+            <div className="mt-2 max-h-40 overflow-y-auto border border-gray-100 dark:border-gray-700 rounded-xl divide-y divide-gray-100 dark:divide-gray-700">
               {groupOptions.map((group) => (
                 <label
                   key={group.id}
-                  className="flex items-center justify-between gap-3 px-4 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+                  className="flex items-center justify-between gap-3 px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer bg-white dark:bg-gray-800"
                 >
-                  <span>
+                  <span className="text-gray-900 dark:text-gray-100">
                     {group.name}{' '}
-                    <span className="text-xs text-gray-400">({group.code})</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">({group.code})</span>
                   </span>
                   <input
                     type="checkbox"
                     checked={formState.selectedGroupIds.includes(group.id)}
                     onChange={() => toggleSelection('selectedGroupIds', group.id)}
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
                   />
                 </label>
               ))}
 
               {groupOptions.length === 0 && (
-                <div className="px-4 py-4 text-center text-gray-400 text-sm">
+                <div className="px-4 py-4 text-center text-gray-400 dark:text-gray-500 text-sm">
                   No groups available.
                 </div>
               )}
@@ -143,23 +143,23 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
 
           <div>
             <div className="flex items-center justify-between">
-              <label className="text-xs uppercase text-gray-500">
+              <label className="text-xs uppercase text-gray-500 dark:text-gray-400">
                 Assign to individual students
               </label>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
                 {formState.selectedStudentIds.length} selected
               </span>
             </div>
-            <div className="mt-2 max-h-40 overflow-y-auto border border-gray-100 rounded-xl divide-y divide-gray-100">
+            <div className="mt-2 max-h-40 overflow-y-auto border border-gray-100 dark:border-gray-700 rounded-xl divide-y divide-gray-100 dark:divide-gray-700">
               {studentOptions.map((student) => (
                 <label
                   key={student.id}
-                  className="flex items-center justify-between gap-3 px-4 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+                  className="flex items-center justify-between gap-3 px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer bg-white dark:bg-gray-800"
                 >
-                  <span>
+                  <span className="text-gray-900 dark:text-gray-100">
                     {student.firstName} {student.lastName}
                     {student.groupName && (
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-gray-400 dark:text-gray-500">
                         {' '}
                         ({student.groupName})
                       </span>
@@ -169,13 +169,13 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
                     type="checkbox"
                     checked={formState.selectedStudentIds.includes(student.id)}
                     onChange={() => toggleSelection('selectedStudentIds', student.id)}
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
                   />
                 </label>
               ))}
 
               {studentOptions.length === 0 && (
-                <div className="px-4 py-4 text-center text-gray-400 text-sm">
+                <div className="px-4 py-4 text-center text-gray-400 dark:text-gray-500 text-sm">
                   No students available.
                 </div>
               )}
@@ -183,7 +183,7 @@ const AssignmentModal: React.FC<AssignmentModalProps> = ({
           </div>
         </section>
 
-        <div className="lg:col-span-2 flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
+        <div className="lg:col-span-2 flex items-center justify-end gap-3 border-t border-gray-100 dark:border-gray-700 pt-4">
           <Button
             type="button"
             onClick={onClose}

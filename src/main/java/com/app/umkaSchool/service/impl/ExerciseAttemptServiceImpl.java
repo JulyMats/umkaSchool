@@ -9,10 +9,8 @@ import com.app.umkaSchool.exception.ResourceNotFoundException;
 import com.app.umkaSchool.model.Exercise;
 import com.app.umkaSchool.model.ExerciseAttempt;
 import com.app.umkaSchool.model.Student;
-import com.app.umkaSchool.model.HomeworkAssignment;
 import com.app.umkaSchool.repository.ExerciseAttemptRepository;
 import com.app.umkaSchool.repository.ExerciseRepository;
-import com.app.umkaSchool.repository.HomeworkAssignmentRepository;
 import com.app.umkaSchool.repository.StudentRepository;
 import com.app.umkaSchool.service.AchievementService;
 import com.app.umkaSchool.service.HomeworkAssignmentService;
@@ -40,7 +38,6 @@ public class ExerciseAttemptServiceImpl implements ExerciseAttemptService {
     private final ProgressSnapshotService progressSnapshotService;
     private final AchievementService achievementService;
     private final HomeworkAssignmentService homeworkAssignmentService;
-    private final HomeworkAssignmentRepository homeworkAssignmentRepository;
 
     @Autowired
     public ExerciseAttemptServiceImpl(ExerciseAttemptRepository exerciseAttemptRepository,
@@ -48,15 +45,13 @@ public class ExerciseAttemptServiceImpl implements ExerciseAttemptService {
                                      ExerciseRepository exerciseRepository,
                                      ProgressSnapshotService progressSnapshotService,
                                      AchievementService achievementService,
-                                     HomeworkAssignmentService homeworkAssignmentService,
-                                     HomeworkAssignmentRepository homeworkAssignmentRepository) {
+                                     HomeworkAssignmentService homeworkAssignmentService) {
         this.exerciseAttemptRepository = exerciseAttemptRepository;
         this.studentRepository = studentRepository;
         this.exerciseRepository = exerciseRepository;
         this.progressSnapshotService = progressSnapshotService;
         this.achievementService = achievementService;
         this.homeworkAssignmentService = homeworkAssignmentService;
-        this.homeworkAssignmentRepository = homeworkAssignmentRepository;
     }
 
     @Transactional
@@ -167,23 +162,10 @@ public class ExerciseAttemptServiceImpl implements ExerciseAttemptService {
         // and update their status if all exercises are done
         if (shouldUpdateSnapshot && attempt.getCompletedAt() != null) {
             try {
-                List<HomeworkAssignment> assignments = homeworkAssignmentRepository.findByExerciseIdAndStudentId(
+                homeworkAssignmentService.checkAndUpdateAssignmentsByExerciseAndStudent(
                     attempt.getExercise().getId(),
                     attempt.getStudent().getId()
                 );
-
-                if (!assignments.isEmpty()) {
-                    for (HomeworkAssignment assignment : assignments) {
-                        try {
-                            homeworkAssignmentService.checkAndUpdateAssignmentStatus(assignment.getId(), attempt.getStudent().getId());
-                        } catch (Exception e) {
-                            logger.error("Error checking assignment {} for student {}: {}",
-                                assignment.getId(), attempt.getStudent().getId(), e.getMessage());
-                        }
-                    }
-                    logger.info("Checked homework assignment status for exercise: {}, student: {} ({} assignments)",
-                        attempt.getExercise().getId(), attempt.getStudent().getId(), assignments.size());
-                }
             } catch (Exception e) {
                 logger.error("Error checking homework assignment status: {}", e.getMessage());
             }

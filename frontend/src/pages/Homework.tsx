@@ -4,9 +4,10 @@ import { Book } from 'lucide-react';
 import Layout from "../components/layout";
 import { homeworkService } from '../services/homework.service';
 import { exerciseService } from '../services/exercise.service';
-import { HomeworkDetail } from '../types/homework';
+import { HomeworkDetail, Homework } from '../types/homework';
 import { Exercise } from '../types/exercise';
 import { useHomework } from '../hooks/useHomework';
+import { useAuth } from '../contexts/AuthContext';
 import { filterHomework, convertExerciseToConfig, HomeworkFilter } from '../utils/homework.utils';
 import { LoadingState, ErrorState, FilterTabs, EmptyState } from '../components/common';
 import { HomeworkCardWithActions, HomeworkDetailsModal, ExerciseSelectionModal } from '../components/features/homework';
@@ -15,9 +16,12 @@ import { useModal } from '../hooks';
 export default function Homework() {
   const navigate = useNavigate();
   const { homework, loading, error } = useHomework();
+  const { student } = useAuth();
   const [filter, setFilter] = useState<HomeworkFilter>('all');
   const [selectedHomework, setSelectedHomework] = useState<HomeworkDetail | null>(null);
   const [selectedHomeworkExercises, setSelectedHomeworkExercises] = useState<Exercise[]>([]);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
+  const [completedExerciseIds, setCompletedExerciseIds] = useState<string[]>([]);
   const { isOpen: showDetailsModal, open: openDetailsModal, close: closeDetailsModal } = useModal();
   const { isOpen: showExerciseSelectionModal, open: openExerciseSelectionModal, close: closeExerciseSelectionModal } = useModal();
   const [loadingExercise, setLoadingExercise] = useState(false);
@@ -78,21 +82,41 @@ export default function Homework() {
     }
   };
 
-  const handleStartHomework = async (homeworkId: string) => {
+  const handleStartHomework = async (homeworkItem: Homework) => {
     try {
       setLoadingExercise(true);
-      const { homeworkDetail, exercises } = await loadHomeworkDetails(homeworkId);
+      const { homeworkDetail, exercises } = await loadHomeworkDetails(homeworkItem.id);
+      setSelectedAssignmentId(homeworkItem.assignmentId);
 
       if (!homeworkDetail.exercises || homeworkDetail.exercises.length === 0) {
         throw new Error('This homework has no exercises assigned.');
       }
 
+      let completedIds: string[] = [];
+      if (homeworkItem.assignmentId && student?.id) {
+        try {
+          completedIds = await homeworkService.getCompletedExerciseIds(
+            homeworkItem.assignmentId,
+            student.id
+          );
+          setCompletedExerciseIds(completedIds);
+        } catch (err) {
+          console.error('Failed to load completed exercises:', err);
+          setCompletedExerciseIds([]);
+        }
+      } else {
+        setCompletedExerciseIds([]);
+      }
+
       if (homeworkDetail.exercises.length === 1) {
         const exerciseId = homeworkDetail.exercises[0].exerciseId;
-        const exercise = exercises.find(ex => ex.id === exerciseId);
-        if (exercise) {
-          const config = convertExerciseToConfig(exercise);
-          navigate('/exercises/play', { state: { config } });
+        const isCompleted = completedIds.includes(exerciseId);
+        if (!isCompleted) {
+          const exercise = exercises.find(ex => ex.id === exerciseId);
+          if (exercise) {
+            const config = convertExerciseToConfig(exercise);
+            navigate('/exercises/play', { state: { config, returnPath: '/homework' } });
+          }
         }
       } else {
         openExerciseSelectionModal();
@@ -106,11 +130,14 @@ export default function Homework() {
 
   const handleSelectExercise = async (exerciseId: string) => {
     try {
+      if (completedExerciseIds.includes(exerciseId)) {
+        return;
+      }
       setLoadingExercise(true);
       const exercise = await exerciseService.getExerciseById(exerciseId);
       const config = convertExerciseToConfig(exercise);
       closeExerciseSelectionModal();
-      navigate('/exercises/play', { state: { config } });
+      navigate('/exercises/play', { state: { config, returnPath: '/homework' } });
     } catch (err: unknown) {
       console.error('Failed to load exercise:', err);
     } finally {
@@ -120,8 +147,11 @@ export default function Homework() {
 
   const handleStartFromDetails = () => {
     closeDetailsModal();
-    if (selectedHomework) {
-      handleStartHomework(selectedHomework.id);
+    if (selectedHomework && selectedAssignmentId) {
+      const homeworkItem = homework.find(h => h.id === selectedHomework.id);
+      if (homeworkItem) {
+        handleStartHomework(homeworkItem);
+      }
     }
   };
 
@@ -143,13 +173,13 @@ export default function Homework() {
             key={item.assignmentId || item.id}
             homework={item}
             onSeeDetails={() => handleSeeDetails(item.id)}
-            onStart={() => handleStartHomework(item.id)}
+            onStart={() => handleStartHomework(item)}
             isLoading={loadingExercise}
           />
         ))}
 
         {filteredHomework.length === 0 && (
-          <div className="col-span-full bg-white rounded-2xl py-12">
+          <div className="col-span-full bg-white dark:bg-gray-800 rounded-2xl py-12">
             <EmptyState
               icon={Book}
               message={
@@ -171,8 +201,6 @@ export default function Homework() {
         onClose={closeDetailsModal}
         homework={selectedHomework}
         exercises={selectedHomeworkExercises}
-        onStart={handleStartFromDetails}
-        isLoading={loadingExercise}
       />
 
       <ExerciseSelectionModal
@@ -181,6 +209,7 @@ export default function Homework() {
         homework={selectedHomework}
         exercises={selectedHomeworkExercises}
         onSelectExercise={handleSelectExercise}
+        completedExerciseIds={completedExerciseIds}
       />
     </Layout>
   );

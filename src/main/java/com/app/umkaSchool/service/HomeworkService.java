@@ -24,5 +24,7 @@ public interface HomeworkService {
     void deleteHomework(UUID homeworkId);
 
     Homework getHomeworkEntity(UUID homeworkId);
+
+    Homework cloneHomework(UUID homeworkId);
 }
 

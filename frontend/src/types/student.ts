@@ -23,6 +23,7 @@ export interface Student {
     groupCode: string | null;
     avatarUrl: string;
     guardian: GuardianInfo | null;
+    isActive: boolean;
 }
 
 export interface CreateStudentPayload {

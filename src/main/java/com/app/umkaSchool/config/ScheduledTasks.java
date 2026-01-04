@@ -3,6 +3,7 @@ package com.app.umkaSchool.config;
 import com.app.umkaSchool.service.DailyChallengeService;
 import com.app.umkaSchool.service.HomeworkAssignmentService;
 import com.app.umkaSchool.service.ProgressSnapshotService;
+import com.app.umkaSchool.service.WeeklyReportService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,13 +15,16 @@ public class ScheduledTasks {
     private final ProgressSnapshotService progressSnapshotService;
     private final HomeworkAssignmentService homeworkAssignmentService;
     private final DailyChallengeService dailyChallengeService;
+    private final WeeklyReportService weeklyReportService;
 
     public ScheduledTasks(ProgressSnapshotService progressSnapshotService,
                          HomeworkAssignmentService homeworkAssignmentService,
-                         DailyChallengeService dailyChallengeService) {
+                         DailyChallengeService dailyChallengeService,
+                         WeeklyReportService weeklyReportService) {
         this.progressSnapshotService = progressSnapshotService;
         this.homeworkAssignmentService = homeworkAssignmentService;
         this.dailyChallengeService = dailyChallengeService;
+        this.weeklyReportService = weeklyReportService;
     }
 
     /**
@@ -68,6 +72,22 @@ public class ScheduledTasks {
             logger.info("Daily challenge creation check completed successfully");
         } catch (Exception e) {
             logger.error("Error during scheduled daily challenge creation: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Runs every Monday at 10:00 AM to send weekly reports to all guardians about their children's progress
+     * for the previous week (Monday to Sunday).
+     * Cron format: second, minute, hour, day of month, month, day of week (0=Sunday, 1=Monday, ..., 4=Thursday)
+     */
+    @Scheduled(cron = "0 0 10 * * 1")
+    public void sendWeeklyReports() {
+        logger.info("Starting scheduled weekly reports sending to all guardians");
+        try {
+            weeklyReportService.sendWeeklyReportsToAllGuardians();
+            logger.info("Weekly reports sending completed successfully");
+        } catch (Exception e) {
+            logger.error("Error during scheduled weekly reports sending: {}", e.getMessage(), e);
         }
     }
 }

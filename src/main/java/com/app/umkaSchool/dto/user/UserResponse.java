@@ -1,5 +1,6 @@
 package com.app.umkaSchool.dto.user;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,7 +22,10 @@ public class UserResponse {
     private String appLanguage;
     private String avatarUrl;
     private String appTheme;
+    
+    @JsonProperty("isActive")
     private boolean isActive;
+    
     private ZonedDateTime createdAt;
     private ZonedDateTime lastLoginAt;
 }

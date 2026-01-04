@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -43,9 +45,9 @@ public class HomeworkAssignment {
     @Column(name = "due_date", nullable = false)
     private ZonedDateTime dueDate;
 
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Enumerated(EnumType.STRING)
-    @Column(name = "homework_assignment_status", nullable = false)
-    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.NAMED_ENUM)
+    @Column(name = "homework_assignment_status", nullable = false, columnDefinition = "homework_status")
     private HomeworkStatus status = HomeworkStatus.PENDING;
 
     @JsonIgnore

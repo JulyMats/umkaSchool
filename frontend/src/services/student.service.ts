@@ -72,6 +72,10 @@ export const studentService = {
         await axiosInstance.put(`/api/students/${studentId}/teacher/${teacherId}`);
     },
 
+    unassignFromTeacher: async (studentId: string): Promise<void> => {
+        await axiosInstance.delete(`/api/students/${studentId}/teacher`);
+    },
+
     assignToGroup: async (studentId: string, groupId: string): Promise<void> => {
         await axiosInstance.put(`/api/students/${studentId}/group/${groupId}`);
     },

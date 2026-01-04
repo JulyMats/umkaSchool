@@ -30,8 +30,6 @@ export const achievementService = {
     getStudentAchievements: async (studentId: string): Promise<StudentAchievement[]> => {
         try {
             const response = await axiosInstance.get<AchievementResponse[]>(`/api/achievements/student/${studentId}`);
-            console.log('[AchievementService] Raw API response:', response.data);
-            console.log('[AchievementService] Response length:', response.data?.length);
             
             const mapped = response.data
                 .filter(achievement => achievement.earnedAt !== null) 
@@ -45,7 +43,6 @@ export const achievementService = {
                     isNew: achievement.isNew ?? false
                 }));
             
-            console.log('[AchievementService] Mapped achievements:', mapped);
             return mapped;
         } catch (error) {
             console.error('[AchievementService] Error fetching student achievements:', error);

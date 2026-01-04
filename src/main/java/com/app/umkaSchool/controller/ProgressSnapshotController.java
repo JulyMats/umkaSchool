@@ -29,6 +29,11 @@ public class ProgressSnapshotController {
     @GetMapping("/student/{studentId}")
     public ResponseEntity<List<ProgressSnapshotResponse>> getSnapshotsByStudent(
             @PathVariable UUID studentId) {
+        try {
+            studentService.getStudentEntity(studentId); 
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
         List<ProgressSnapshotResponse> snapshots = progressSnapshotService.getSnapshotsByStudentId(studentId);
         return ResponseEntity.ok(snapshots);
     }

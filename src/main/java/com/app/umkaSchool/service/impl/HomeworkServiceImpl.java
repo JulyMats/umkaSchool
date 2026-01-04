@@ -137,20 +137,29 @@ public class HomeworkServiceImpl implements HomeworkService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public HomeworkResponse getHomeworkById(UUID homeworkId) {
         Homework homework = homeworkRepository.findById(homeworkId)
                 .orElseThrow(() -> new ResourceNotFoundException("Homework not found"));
+        if (homework.getTeacher() != null && homework.getTeacher().getUser() != null) {
+            homework.getTeacher().getUser().getFirstName();
+        }
         return mapToResponse(homework);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public HomeworkResponse getHomeworkByTitle(String title) {
         Homework homework = homeworkRepository.findByTitle(title)
                 .orElseThrow(() -> new ResourceNotFoundException("Homework not found"));
+        if (homework.getTeacher() != null && homework.getTeacher().getUser() != null) {
+            homework.getTeacher().getUser().getFirstName();
+        }
         return mapToResponse(homework);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<HomeworkResponse> getAllHomework() {
         return homeworkRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(this::mapToResponse)
@@ -158,6 +167,7 @@ public class HomeworkServiceImpl implements HomeworkService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<HomeworkResponse> getHomeworkByTeacher(UUID teacherId) {
         return homeworkRepository.findByTeacher_IdOrderByCreatedAtDesc(teacherId).stream()
                 .map(this::mapToResponse)
@@ -180,6 +190,46 @@ public class HomeworkServiceImpl implements HomeworkService {
     public Homework getHomeworkEntity(UUID homeworkId) {
         return homeworkRepository.findById(homeworkId)
                 .orElseThrow(() -> new IllegalArgumentException("Homework not found"));
+    }
+
+    @Override
+    @Transactional
+    public Homework cloneHomework(UUID homeworkId) {
+        logger.info("Cloning homework: {}", homeworkId);
+
+        Homework originalHomework = homeworkRepository.findByIdWithExercises(homeworkId)
+                .orElseThrow(() -> new ResourceNotFoundException("Homework not found"));
+
+        Set<HomeworkExercise> originalExercises = originalHomework.getExercises();
+        Homework clonedHomework = new Homework();
+        clonedHomework.setTitle(originalHomework.getTitle());
+        clonedHomework.setDescription(originalHomework.getDescription());
+        clonedHomework.setTeacher(originalHomework.getTeacher());
+        clonedHomework.setExercises(new HashSet<>());
+
+        clonedHomework = homeworkRepository.saveAndFlush(clonedHomework);
+        if (!originalExercises.isEmpty()) {
+            for (HomeworkExercise originalHomeworkExercise : originalExercises) {
+                Exercise originalExercise = originalHomeworkExercise.getExercise();
+                Exercise clonedExercise = exerciseService.cloneExercise(originalExercise.getId());
+
+                HomeworkExercise clonedHomeworkExercise = new HomeworkExercise();
+                clonedHomeworkExercise.getId().setHomeworkId(clonedHomework.getId());
+                clonedHomeworkExercise.getId().setExerciseId(clonedExercise.getId());
+                clonedHomeworkExercise.setHomework(clonedHomework);
+                clonedHomeworkExercise.setExercise(clonedExercise);
+                clonedHomeworkExercise.setOrderIndex(originalHomeworkExercise.getOrderIndex());
+                clonedHomeworkExercise.setRequiredAttempts(originalHomeworkExercise.getRequiredAttempts() != null 
+                        ? originalHomeworkExercise.getRequiredAttempts() : 1);
+
+                clonedHomework.getExercises().add(clonedHomeworkExercise);
+            }
+            homeworkRepository.flush();
+        }
+
+        logger.info("Homework cloned successfully. Original: {}, Clone: {}", 
+                homeworkId, clonedHomework.getId());
+        return clonedHomework;
     }
 
     private HomeworkResponse mapToResponse(Homework homework) {

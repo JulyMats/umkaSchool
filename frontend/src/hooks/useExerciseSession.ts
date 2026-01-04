@@ -65,7 +65,6 @@ export const useExerciseSession = ({
 
       if (config.exerciseId) {
         exerciseIdToUse = config.exerciseId;
-        console.log('Using existing exercise ID from config:', exerciseIdToUse);
       } else {
         const exerciseParams: Record<string, unknown> = {
           cardCount: config.cardCount,
@@ -89,7 +88,6 @@ export const useExerciseSession = ({
         });
 
         exerciseIdToUse = exercise.id;
-        console.log('Created new exercise:', exerciseIdToUse);
       }
 
       setExerciseId(exerciseIdToUse);

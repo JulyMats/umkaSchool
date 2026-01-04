@@ -20,11 +20,8 @@ const mapUserResponse = (response: UserResponse): User => {
 
 export const userService = {
     getUserByEmail: async (email: string): Promise<User> => {
-        console.log('[userService] Getting user by email:', email);
         const response = await axiosInstance.get<UserResponse>(`/api/users/email/${email}`);
-        console.log('[userService] Raw user response:', response.data);
         const mappedUser = mapUserResponse(response.data);
-        console.log('[userService] Mapped user:', mappedUser);
         return mappedUser;
     },
 
@@ -36,6 +33,14 @@ export const userService = {
     updateUser: async (userId: string, payload: UpdateUserPayload): Promise<User> => {
         const response = await axiosInstance.put<UserResponse>(`/api/users/${userId}`, payload);
         return mapUserResponse(response.data);
+    },
+
+    activateUser: async (userId: string): Promise<void> => {
+        await axiosInstance.put(`/api/users/${userId}/activate`);
+    },
+
+    deactivateUser: async (userId: string): Promise<void> => {
+        await axiosInstance.put(`/api/users/${userId}/deactivate`);
     }
 };
 

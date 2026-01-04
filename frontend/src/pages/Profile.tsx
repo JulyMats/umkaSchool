@@ -1,6 +1,7 @@
 import { useAuth } from '../contexts/AuthContext';
 import StudentProfile from './StudentProfile';
 import TeacherProfile from './TeacherProfile';
+import AdminProfile from './AdminProfile';
 import Layout from '../components/layout';
 import { LoadingState, ErrorState } from '../components/common';
 
@@ -13,6 +14,10 @@ export default function Profile() {
                 <LoadingState message="Loading your profile..." size="lg" className="h-64" />
             </Layout>
         );
+    }
+
+    if (user?.role === 'ADMIN') {
+        return <AdminProfile />;
     }
 
     if (user?.role === 'TEACHER' && teacher) {

@@ -1,5 +1,6 @@
 package com.app.umkaSchool.controller;
 
+import com.app.umkaSchool.config.TestContainersConfiguration;
 import com.app.umkaSchool.dto.auth.RegisterRequest;
 import com.app.umkaSchool.dto.exercise.CreateExerciseRequest;
 import com.app.umkaSchool.dto.exercise.ExerciseResponse;
@@ -33,9 +34,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@org.springframework.test.context.ActiveProfiles("test")
 @Transactional
 @WithMockUser(roles = "TEACHER")
-class ExerciseAttemptControllerTest {
+class ExerciseAttemptControllerTest extends TestContainersConfiguration {
 
     @Autowired
     private MockMvc mockMvc;
@@ -46,49 +48,43 @@ class ExerciseAttemptControllerTest {
     @Autowired
     private ExerciseAttemptRepository exerciseAttemptRepository;
 
+    @Autowired
+    private com.app.umkaSchool.repository.AppUserRepository appUserRepository;
+
+    @Autowired
+    private com.app.umkaSchool.repository.StudentRepository studentRepository;
+
     private UUID studentId;
     private UUID exerciseId;
 
     @BeforeEach
     void setup() throws Exception {
-        // First, create user via signup
         RegisterRequest signupRequest = new RegisterRequest();
         signupRequest.setEmail("test.attempt@student.com");
         signupRequest.setFirstName("Test");
         signupRequest.setLastName("Student");
         signupRequest.setPassword("password123");
         signupRequest.setRole("STUDENT");
+        signupRequest.setDateOfBirth(LocalDate.of(2010, 5, 15));
+        signupRequest.setGuardianFirstName("Test");
+        signupRequest.setGuardianLastName("Guardian");
+        signupRequest.setGuardianEmail("test.guardian.attempt@test.com");
+        signupRequest.setGuardianPhone("+1234567890");
+        signupRequest.setGuardianRelationship("MOTHER");
 
         mockMvc.perform(post("/api/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signupRequest)))
                 .andExpect(status().isOk());
 
-        // Create a student
-        CreateStudentRequest studentRequest = new CreateStudentRequest();
-        studentRequest.setFirstName("Test");
-        studentRequest.setLastName("Student");
-        studentRequest.setEmail("test.attempt@student.com");
-        studentRequest.setDateOfBirth(LocalDate.of(2010, 5, 15));
-        studentRequest.setGuardianFirstName("Test");
-        studentRequest.setGuardianLastName("Guardian");
-        studentRequest.setGuardianEmail("test.guardian.attempt@test.com");
-        studentRequest.setGuardianPhone("+1234567890");
-        studentRequest.setGuardianRelationship("MOTHER");
-
-        String studentResponse = mockMvc.perform(post("/api/students")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(studentRequest)))
-                .andReturn().getResponse().getContentAsString();
-
-        StudentResponse student = objectMapper.readValue(studentResponse, StudentResponse.class);
+        var user = appUserRepository.findByEmail("test.attempt@student.com").orElseThrow();
+        var student = studentRepository.findByUser_Id(user.getId()).orElseThrow();
         studentId = student.getId();
 
-        // Create an exercise type
         CreateExerciseTypeRequest typeRequest = new CreateExerciseTypeRequest();
         typeRequest.setName("Test Attempt Exercise Type");
         typeRequest.setBaseDifficulty(3);
-        typeRequest.setAvgTimeSeconds(120); // Required field, will be removed later
+        typeRequest.setAvgTimeSeconds(120); 
         typeRequest.setParameterRanges("{\"cardCount\": [2, 20], \"displaySpeed\": [0.5, 3.0], \"timePerQuestion\": [2, 20]}");
 
         String typeResponse = mockMvc.perform(post("/api/exercise-types")
@@ -98,7 +94,6 @@ class ExerciseAttemptControllerTest {
 
         ExerciseTypeResponse exerciseType = objectMapper.readValue(typeResponse, ExerciseTypeResponse.class);
 
-        // Create an exercise
         CreateExerciseRequest exerciseRequest = new CreateExerciseRequest();
         exerciseRequest.setExerciseTypeId(exerciseType.getId());
         exerciseRequest.setParameters("{\"operand1\": 5, \"operand2\": 3}");
@@ -143,7 +138,6 @@ class ExerciseAttemptControllerTest {
 
     @Test
     void updateExerciseAttempt_ShouldReturnUpdatedAttempt() throws Exception {
-        // Create attempt first
         CreateExerciseAttemptRequest createRequest = new CreateExerciseAttemptRequest();
         createRequest.setStudentId(studentId);
         createRequest.setExerciseId(exerciseId);
@@ -160,7 +154,6 @@ class ExerciseAttemptControllerTest {
 
         ExerciseAttemptResponse created = objectMapper.readValue(createResponse, ExerciseAttemptResponse.class);
 
-        // Update attempt
         UpdateExerciseAttemptRequest updateRequest = new UpdateExerciseAttemptRequest();
         updateRequest.setScore(90);
         updateRequest.setTotalAttempts(100L);
@@ -180,7 +173,6 @@ class ExerciseAttemptControllerTest {
 
     @Test
     void getExerciseAttemptById_ShouldReturnAttempt() throws Exception {
-        // Create and finish an attempt
         CreateExerciseAttemptRequest createRequest = new CreateExerciseAttemptRequest();
         createRequest.setStudentId(studentId);
         createRequest.setExerciseId(exerciseId);
@@ -208,7 +200,6 @@ class ExerciseAttemptControllerTest {
                         .content(objectMapper.writeValueAsString(finish)))
                 .andReturn().getResponse().getContentAsString();
 
-        // Get attempt by ID
         mockMvc.perform(get("/api/exercise-attempts/{attemptId}", created.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -219,7 +210,6 @@ class ExerciseAttemptControllerTest {
 
     @Test
     void getAllExerciseAttempts_ShouldReturnListOfAttempts() throws Exception {
-        // Create and finish an attempt
         CreateExerciseAttemptRequest createRequest = new CreateExerciseAttemptRequest();
         createRequest.setStudentId(studentId);
         createRequest.setExerciseId(exerciseId);
@@ -247,7 +237,6 @@ class ExerciseAttemptControllerTest {
                         .content(objectMapper.writeValueAsString(finish)))
                 .andReturn().getResponse().getContentAsString();
 
-        // Get all attempts
         mockMvc.perform(get("/api/exercise-attempts"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -257,7 +246,6 @@ class ExerciseAttemptControllerTest {
 
     @Test
     void getExerciseAttemptsByStudent_ShouldReturnListOfAttempts() throws Exception {
-        // Create and finish an attempt
         CreateExerciseAttemptRequest createRequest = new CreateExerciseAttemptRequest();
         createRequest.setStudentId(studentId);
         createRequest.setExerciseId(exerciseId);
@@ -285,7 +273,6 @@ class ExerciseAttemptControllerTest {
                         .content(objectMapper.writeValueAsString(finish)))
                 .andReturn().getResponse().getContentAsString();
 
-        // Get attempts by student
         mockMvc.perform(get("/api/exercise-attempts/student/{studentId}", studentId))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -295,7 +282,6 @@ class ExerciseAttemptControllerTest {
 
     @Test
     void deleteExerciseAttempt_ShouldReturnNoContent() throws Exception {
-        // Create attempt first
         CreateExerciseAttemptRequest createRequest = new CreateExerciseAttemptRequest();
         createRequest.setStudentId(studentId);
         createRequest.setExerciseId(exerciseId);
@@ -312,7 +298,6 @@ class ExerciseAttemptControllerTest {
 
         ExerciseAttemptResponse created = objectMapper.readValue(createResponse, ExerciseAttemptResponse.class);
 
-        // Delete attempt
         mockMvc.perform(delete("/api/exercise-attempts/{attemptId}", created.getId()))
                 .andDo(print())
                 .andExpect(status().isNoContent());
@@ -320,25 +305,25 @@ class ExerciseAttemptControllerTest {
 
     @Test
     void createExerciseAttempt_WithInvalidTotals_ShouldReturnBadRequest() throws Exception {
-        CreateExerciseAttemptRequest request = new CreateExerciseAttemptRequest();
-        request.setStudentId(studentId);
-        request.setExerciseId(exerciseId);
-        request.setStartedAt(ZonedDateTime.now());
-        request.setSettings("{\"cardCount\": 5}");
-        request.setScore(85);
-        request.setTotalAttempts(-5L); // invalid: negative
-        request.setTotalCorrect(2L);
+        CreateExerciseAttemptRequest createRequest = new CreateExerciseAttemptRequest();
+        createRequest.setStudentId(studentId);
+        createRequest.setExerciseId(exerciseId);
+        createRequest.setStartedAt(ZonedDateTime.now());
+        createRequest.setSettings("{\"cardCount\": 5}");
+        createRequest.setScore(85);
+        createRequest.setTotalAttempts(5L);
+        createRequest.setTotalCorrect(2L);
 
         String createResponse = mockMvc.perform(post("/api/exercise-attempts")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(createRequest)))
                 .andReturn().getResponse().getContentAsString();
 
         ExerciseAttemptResponse created = objectMapper.readValue(createResponse, ExerciseAttemptResponse.class);
 
         UpdateExerciseAttemptRequest update = new UpdateExerciseAttemptRequest();
         update.setScore(85);
-        update.setTotalAttempts(-5L); // invalid
+        update.setTotalAttempts(-5L); 
         update.setTotalCorrect(2L);
 
         mockMvc.perform(put("/api/exercise-attempts/{attemptId}", created.getId())

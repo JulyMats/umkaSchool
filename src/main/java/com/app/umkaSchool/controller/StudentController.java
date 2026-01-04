@@ -82,6 +82,12 @@ public class StudentController {
         return ResponseEntity.ok().build();
     }
 
+    @DeleteMapping("/{studentId}/teacher")
+    public ResponseEntity<Void> unassignFromTeacher(@PathVariable UUID studentId) {
+        studentService.unassignFromTeacher(studentId);
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping("/{studentId}/group/{groupId}")
     public ResponseEntity<Void> assignToGroup(
             @PathVariable UUID studentId,

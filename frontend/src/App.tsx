@@ -1,5 +1,7 @@
+import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Sidebar } from "./components/layout";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 import Dashboard from "./pages/Dashboard";
 import Exercises from "./pages/Exercises";
 import ExerciseSetup from "./pages/ExerciseSetup";
@@ -16,6 +18,8 @@ import TeacherDashboard from "./pages/TeacherDashboard";
 import TeacherStudents from "./pages/TeacherStudents";
 import TeacherGroups from "./pages/TeacherGroups";
 import TeacherHomework from "./pages/TeacherHomework";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminTeachers from "./pages/AdminTeachers";
 import Profile from "./pages/Profile";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { SidebarProvider, useSidebar } from "./contexts/SidebarContext";
@@ -27,19 +31,50 @@ function AppContent() {
   const sidebarOpen = sidebarContext?.isOpen ?? false;
   const handleCloseSidebar = sidebarContext?.closeSidebar ?? (() => {});
 
+  React.useEffect(() => {
+    if (user?.appTheme) {
+      if (user.appTheme === 'DARK') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  }, [user?.appTheme]);
+
   const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     return isAuthenticated ? children : <Navigate to="/login" replace />;
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+      </div>
+    );
+  }
+
+  // Wait for user data to load before rendering routes
+  if (isAuthenticated && !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
       </div>
     );
   }
 
   const renderProtectedRoutes = () => {
+    if (user?.role === 'ADMIN') {
+      return (
+        <>
+          <Route path="/dashboard" element={<AdminDashboard />} />
+          <Route path="/teachers" element={<AdminTeachers />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </>
+      );
+    }
+
     if (user?.role === 'TEACHER') {
       return (
         <>
@@ -93,7 +128,7 @@ function AppContent() {
                   element={
                     <div className="flex h-screen overflow-hidden relative">
                       <Sidebar isOpen={sidebarOpen} onClose={handleCloseSidebar} />
-                      <main className="flex-1 bg-gray-50 overflow-y-auto lg:ml-64 w-full">
+                      <main className="flex-1 bg-gray-50 dark:bg-gray-900 overflow-y-auto lg:ml-64 w-full">
                         <Routes>
                           {renderProtectedRoutes()}
                         </Routes>
@@ -112,11 +147,13 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <SidebarProvider>
-        <AppContent />
-      </SidebarProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <SidebarProvider>
+          <AppContent />
+        </SidebarProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

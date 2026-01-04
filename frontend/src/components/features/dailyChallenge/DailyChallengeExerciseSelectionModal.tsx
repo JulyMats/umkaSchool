@@ -28,7 +28,7 @@ const DailyChallengeExerciseSelectionModal: React.FC<DailyChallengeExerciseSelec
       title="Choose Exercise"
       size="lg"
     >
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
         Select which exercise to start from {dailyChallenge.title}
       </p>
       <div className="space-y-3">

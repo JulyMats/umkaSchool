@@ -8,6 +8,8 @@ import com.app.umkaSchool.dto.exercise.UpdateExerciseRequest;
 import com.app.umkaSchool.dto.exercise.ValidateAnswerRequest;
 import com.app.umkaSchool.dto.exercise.ValidateAnswerResponse;
 import com.app.umkaSchool.model.Exercise;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,13 +21,13 @@ public interface ExerciseService {
 
     ExerciseResponse getExerciseById(UUID exerciseId);
 
-    List<ExerciseResponse> getAllExercises();
+    Page<ExerciseResponse> getAllExercises(Pageable pageable);
 
-    List<ExerciseResponse> getExercisesByType(UUID exerciseTypeId);
+    Page<ExerciseResponse> getExercisesByType(UUID exerciseTypeId, Pageable pageable);
 
-    List<ExerciseResponse> getExercisesByTeacher(UUID teacherId);
+    Page<ExerciseResponse> getExercisesByTeacher(UUID teacherId, Pageable pageable);
 
-    List<ExerciseResponse> getExercisesByDifficulty(Integer difficulty);
+    Page<ExerciseResponse> getExercisesByDifficulty(Integer difficulty, Pageable pageable);
 
     void deleteExercise(UUID exerciseId);
 

@@ -236,17 +236,17 @@ export default function DailyChallenge() {
       subtitle={dailyChallenge.title}
     >
       {/* Featured Challenge Header */}
-      <Card variant="blue" className="mb-8 bg-pink-50">
+      <Card variant="blue" className="mb-8 bg-pink-50 dark:bg-pink-900/20">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-3 bg-pink-100 rounded-xl">
-            <Trophy className="w-8 h-8 text-pink-600" />
+          <div className="p-3 bg-pink-100 dark:bg-pink-900/40 rounded-xl">
+            <Trophy className="w-8 h-8 text-pink-600 dark:text-pink-400" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-pink-600">Today's Challenge</h2>
-            <p className="text-pink-600">{dailyChallenge.description || 'Complete all exercises to earn bonus points!'}</p>
+            <h2 className="text-2xl font-bold text-pink-600 dark:text-pink-400">Today's Challenge</h2>
+            <p className="text-pink-600 dark:text-pink-300">{dailyChallenge.description || 'Complete all exercises to earn bonus points!'}</p>
           </div>
         </div>
-        <div className="flex items-center gap-6 text-gray-600">
+        <div className="flex items-center gap-6 text-gray-600 dark:text-gray-300">
           <div className="flex items-center gap-2">
             <Target className="w-5 h-5" />
             <span>{remainingCount} exercises remaining</span>
@@ -265,7 +265,7 @@ export default function DailyChallenge() {
       {/* Exercises List */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold text-gray-800">Exercises</h3>
+          <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Exercises</h3>
           {dailyChallenge.exercises.length > 0 && (
             <FilterTabs
               filters={filterOptions}

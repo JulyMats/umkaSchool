@@ -15,25 +15,25 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
   onManage
 }) => {
   return (
-    <tr className="hover:bg-gray-50/80 transition-colors">
+    <tr className="hover:bg-gray-50/80 dark:hover:bg-gray-700/50 transition-colors">
       <td className="px-6 py-4">
-        <div className="font-medium text-gray-900">
+        <div className="font-medium text-gray-900 dark:text-gray-100">
           {student.firstName} {student.lastName}
         </div>
-        <div className="text-gray-500 text-xs">{student.email}</div>
+        <div className="text-gray-500 dark:text-gray-400 text-xs">{student.email}</div>
       </td>
       <td className="px-6 py-4">
         {student.guardian ? (
           <div>
-            <p className="font-medium text-gray-900">
+            <p className="font-medium text-gray-900 dark:text-gray-100">
               {student.guardian.firstName} {student.guardian.lastName}
             </p>
-            <p className="text-gray-500 text-xs">
+            <p className="text-gray-500 dark:text-gray-400 text-xs">
               {student.guardian.relationship} • {student.guardian.email}
             </p>
           </div>
         ) : (
-          <span className="text-gray-400 italic text-sm">
+          <span className="text-gray-400 dark:text-gray-500 italic text-sm">
             No guardian info
           </span>
         )}
@@ -41,33 +41,33 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
       <td className="px-6 py-4">
         {student.groupName ? (
           <div>
-            <p className="font-medium text-gray-900">{student.groupName}</p>
-            <p className="text-gray-500 text-xs">
+            <p className="font-medium text-gray-900 dark:text-gray-100">{student.groupName}</p>
+            <p className="text-gray-500 dark:text-gray-400 text-xs">
               Code: {student.groupCode || '—'}
             </p>
           </div>
         ) : (
-          <span className="text-gray-400 italic text-sm">Unassigned</span>
+          <span className="text-gray-400 dark:text-gray-500 italic text-sm">Unassigned</span>
         )}
       </td>
       <td className="px-6 py-4">
         {lastAchievement ? (
           <div>
-            <p className="text-gray-900 font-medium">
+            <p className="text-gray-900 dark:text-gray-100 font-medium">
               {lastAchievement.name}
             </p>
-            <p className="text-gray-500 text-xs">
+            <p className="text-gray-500 dark:text-gray-400 text-xs">
               <DateDisplay date={lastAchievement.earnedAt} format="short" />
             </p>
           </div>
         ) : (
-          <p className="text-gray-400 italic text-sm">
+          <p className="text-gray-400 dark:text-gray-500 italic text-sm">
             No achievement
           </p>
         )}
       </td>
       <td className="px-6 py-4">
-        <p className="text-gray-900 font-medium">
+        <p className="text-gray-900 dark:text-gray-100 font-medium">
           {student.enrollmentDate ? (
             <DateDisplay date={student.enrollmentDate} format="long" />
           ) : (
@@ -79,7 +79,7 @@ const StudentTableRow: React.FC<StudentTableRowProps> = ({
         <div className="flex justify-end gap-2">
           <button
             onClick={() => onManage(student)}
-            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
           >
             Manage
           </button>

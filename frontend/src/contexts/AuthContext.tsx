@@ -34,17 +34,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const fetchUserData = async (email: string) => {
         try {
-            console.log('[AuthContext] fetchUserData called with email:', email);
             const userData = await userService.getUserByEmail(email);
-            console.log('[AuthContext] User data received:', { id: userData.id, email: userData.email, role: userData.role });
             setUser(userData);
 
             // If user is a student, fetch student data
             if (userData.role === 'STUDENT') {
                 try {
-                    console.log('[AuthContext] User is a student, fetching student data for userId:', userData.id);
                     const studentData = await studentService.getStudentByUserId(userData.id);
-                    console.log('[AuthContext] Student data received:', { id: studentData.id, firstName: studentData.firstName, lastName: studentData.lastName });
                     setStudent(studentData);
                     setTeacher(null);
                 } catch (error: unknown) {
@@ -59,9 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 }
             } else if (userData.role === 'TEACHER') {
                 try {
-                    console.log('[AuthContext] User is a teacher, fetching teacher data for userId:', userData.id);
                     const teacherData = await teacherService.getTeacherByUserId(userData.id);
-                    console.log('[AuthContext] Teacher data received:', { id: teacherData.id, firstName: teacherData.firstName, lastName: teacherData.lastName });
                     setTeacher(teacherData);
                     setStudent(null);
                 } catch (error: unknown) {
@@ -75,7 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     setStudent(null);
                 }
             } else {
-                console.log('[AuthContext] User is not a student, role:', userData.role);
                 setStudent(null);
                 setTeacher(null);
             }
@@ -91,66 +84,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const initializeAuth = async () => {
-            console.log('[AuthContext] Initializing auth...');
-            const token = localStorage.getItem('token');
-            const refreshToken = localStorage.getItem('refreshToken');
-            const storedEmail = localStorage.getItem('userEmail');
-            
-            console.log('[AuthContext] Token exists:', !!token);
-            console.log('[AuthContext] Refresh token exists:', !!refreshToken);
-            console.log('[AuthContext] Stored email:', storedEmail);
-            
-            if (token && refreshToken) {
-                authService.setAuthToken(token);
-                setIsAuthenticated(true);
-                console.log('[AuthContext] Token set, isAuthenticated = true');
-                
-                // If we have stored email, fetch user data
+            try {
+                const storedEmail = localStorage.getItem('userEmail');
                 if (storedEmail) {
                     try {
-                        console.log('[AuthContext] Fetching user data for email:', storedEmail);
                         await fetchUserData(storedEmail);
-                        console.log('[AuthContext] User data fetched successfully');
+                        setIsAuthenticated(true);
                     } catch (error: unknown) {
-                        console.error('[AuthContext] Failed to fetch user data on initialization:', error);
                         const errorStatus = extractErrorStatus(error);
                         if (errorStatus === 401) {
                             try {
-                                console.log('[AuthContext] Token expired, attempting refresh...');
-                                const refreshResponse = await authService.refreshToken(refreshToken);
-                                localStorage.setItem('token', refreshResponse.jwtToken);
-                                localStorage.setItem('refreshToken', refreshResponse.refreshToken);
-                                localStorage.setItem('userEmail', refreshResponse.user.email);
-                                authService.setAuthToken(refreshResponse.jwtToken);
-                                await fetchUserData(refreshResponse.user.email);
+                                await authService.refreshToken();
+                                await fetchUserData(storedEmail);
+                                setIsAuthenticated(true);
                             } catch (refreshError) {
                                 console.error('[AuthContext] Token refresh failed:', refreshError);
-                                localStorage.removeItem('token');
-                                localStorage.removeItem('refreshToken');
                                 localStorage.removeItem('userEmail');
                                 setIsAuthenticated(false);
                             }
                         } else {
-                            localStorage.removeItem('token');
-                            localStorage.removeItem('refreshToken');
                             localStorage.removeItem('userEmail');
                             setIsAuthenticated(false);
                         }
                     }
                 } else {
-                    console.warn('[AuthContext] No stored email found. User needs to log in again.');
+                    setIsAuthenticated(false);
                 }
-            } else {
-                console.log('[AuthContext] No tokens found');
-                localStorage.removeItem('token');
-                localStorage.removeItem('refreshToken');
-                localStorage.removeItem('userEmail');
+            } catch (error) {
+                console.error('[AuthContext] Initialization error:', error);
+                setIsAuthenticated(false);
             }
             
             setIsLoading(false);
-            console.log('[AuthContext] Initialization complete');
         };
-
         initializeAuth();
     }, []);
 
@@ -162,21 +128,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const login = async (credentials: SignInRequest) => {
         try {
-            console.log('[AuthContext] Login attempt for email:', credentials.email);
             const loginResponse = await authService.login(credentials);
-            console.log('[AuthContext] Login successful, tokens received');
-            
-            localStorage.setItem('token', loginResponse.jwtToken);
-            localStorage.setItem('refreshToken', loginResponse.refreshToken);
             localStorage.setItem('userEmail', loginResponse.user.email);
-            
-            // Set auth token for API requests
-            authService.setAuthToken(loginResponse.jwtToken);
-            
             setIsAuthenticated(true);
-            
             await fetchUserData(loginResponse.user.email);
-            console.log('[AuthContext] Login complete, user data loaded');
         } catch (error: unknown) {
             console.error('[AuthContext] Login failed:', error);
             const errorObj = error as { message?: string; response?: { data?: unknown; status?: number } };
@@ -192,7 +147,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const register = async (data: SignUpRequest) => {
         try {
             await authService.register(data);
-
         } catch (error) {
             console.error('Registration failed:', error);
             throw error;
@@ -201,17 +155,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const logout = async () => {
         try {
-            const refreshToken = localStorage.getItem('refreshToken');
-            if (refreshToken) {
-                await authService.logout(refreshToken);
-            }
+            await authService.logout();
         } catch (error) {
             console.error('[AuthContext] Logout error:', error);
         } finally {
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
             localStorage.removeItem('userEmail');
-            authService.setAuthToken(null);
             setUser(null);
             setStudent(null);
             setTeacher(null);

@@ -364,16 +364,47 @@ public class ProgressSnapshotServiceImpl implements ProgressSnapshotService {
                     latestSnapshotOpt.get().getTotalAttempts(), latestSnapshotOpt.get().getTotalCorrect());
             }
 
-            if (periodEndSnapshot != null) {
-                // Find the baseline snapshot (last snapshot before period starts)
+            if (period.toLowerCase().equals("day")) {
+                if (periodEndSnapshot == null || !periodEndSnapshot.getSnapshotDate().equals(today)) {
+                    logger.info("No activity today for 'day' period. Latest snapshot date: {}, today: {}", 
+                        periodEndSnapshot != null ? periodEndSnapshot.getSnapshotDate() : "none", today);
+                    periodProblemsSolved = 0;
+                    periodPracticeSeconds = 0;
+                    periodTotalCorrect = 0;
+                    periodTotalAttempts = 0;
+                } else {
+                    List<ProgressSnapshotResponse> allSnapshots = getSnapshotsByStudentId(student.getId());
+                    ProgressSnapshotResponse baselineSnapshot = allSnapshots.stream()
+                        .filter(s -> s.getSnapshotDate().isBefore(today))
+                        .findFirst()
+                        .orElse(null);
+                    
+                    if (baselineSnapshot != null) {
+                        logger.info("Found baseline snapshot for 'day' period (before today): date={}, totalAttempts={}, totalCorrect={}", 
+                            baselineSnapshot.getSnapshotDate(), 
+                            baselineSnapshot.getTotalAttempts(), baselineSnapshot.getTotalCorrect());
+                    } else {
+                        logger.info("No baseline snapshot found before today for 'day' period, using 0 as baseline");
+                    }
+                    
+                    long baselineAttempts = baselineSnapshot != null ? baselineSnapshot.getTotalAttempts() : 0;
+                    long baselineCorrect = baselineSnapshot != null ? baselineSnapshot.getTotalCorrect() : 0;
+                    long baselineSeconds = baselineSnapshot != null ? baselineSnapshot.getTotalPracticeSeconds() : 0;
+
+                    periodProblemsSolved = periodEndSnapshot.getTotalAttempts() - baselineAttempts;
+                    periodPracticeSeconds = periodEndSnapshot.getTotalPracticeSeconds() - baselineSeconds;
+                    periodTotalCorrect = periodEndSnapshot.getTotalCorrect() - baselineCorrect;
+                    periodTotalAttempts = periodEndSnapshot.getTotalAttempts() - baselineAttempts;
+                    
+                    logger.info("Calculated 'day' period stats: problemsSolved={}, totalCorrect={}, totalAttempts={}, accuracy={}%", 
+                        periodProblemsSolved, periodTotalCorrect, periodTotalAttempts,
+                        periodTotalAttempts > 0 ? (periodTotalCorrect * 100 / periodTotalAttempts) : 0);
+                }
+            } else if (periodEndSnapshot != null) {
+                ProgressSnapshotResponse baselineSnapshot = null;
                 LocalDate baselineDate;
                 switch (period.toLowerCase()) {
-                    case "day":
-                        // For "day", baseline is yesterday
-                        baselineDate = today.minusDays(1);
-                        break;
                     case "week":
-                        // For "week", baseline is 7 days ago (or first day of week)
                         baselineDate = today.minusDays(7);
                         break;
                     case "month":
@@ -385,7 +416,6 @@ public class ProgressSnapshotServiceImpl implements ProgressSnapshotService {
                         break;
                 }
 
-                ProgressSnapshotResponse baselineSnapshot = null;
                 if (baselineDate != null) {
                     // Get the latest snapshot for the baseline date
                     Optional<ProgressSnapshot> baselineSnapshotOpt = getSnapshotForDate(student, baselineDate);

@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-
 import java.util.UUID;
 
 @Data
@@ -29,8 +28,8 @@ public class Guardian {
     @Column(nullable = false)
     private String phone;
 
-    @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "guardian_relationship")
     private GuardianRelationship relationship;
 }

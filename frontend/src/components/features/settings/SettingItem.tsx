@@ -44,7 +44,7 @@ const SettingItem: React.FC<SettingItemProps> = ({ setting }) => {
             value={setting.value as string}
             onChange={(e) => setting.onSelect?.(setting.id, e.target.value)}
             options={selectOptions}
-            className="w-40"
+            className="w-32 text-sm"
             disabled={setting.disabled}
           />
         );
@@ -54,14 +54,14 @@ const SettingItem: React.FC<SettingItemProps> = ({ setting }) => {
   };
 
   return (
-    <div className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+    <div className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
       <div className="flex items-start gap-3 flex-1">
-        <div className="p-2 bg-blue-50 rounded-lg flex-shrink-0">
-          <Icon className="w-5 h-5 text-blue-600" />
+        <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex-shrink-0">
+          <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
         </div>
         <div className="text-left flex-1 min-w-0">
-          <h3 className="font-medium text-gray-900">{setting.label}</h3>
-          <p className="text-sm text-gray-500 mt-0.5">{setting.description}</p>
+          <h3 className="font-medium text-gray-900 dark:text-gray-100">{setting.label}</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{setting.description}</p>
         </div>
       </div>
       <div className="flex-shrink-0 ml-4">

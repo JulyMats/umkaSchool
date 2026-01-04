@@ -65,13 +65,13 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       title={mode === 'create' ? 'Create Homework Set' : 'Edit Homework Set'}
       size="xl"
     >
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
         Combine exercises into a reusable homework collection.
       </p>
       <form onSubmit={onSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section className="space-y-4">
           <div className="space-y-2">
-            <label className="text-xs uppercase text-gray-500">Title</label>
+            <label className="text-xs uppercase text-gray-500 dark:text-gray-400">Title</label>
             <input
               type="text"
               required
@@ -79,19 +79,19 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
               onChange={(event) =>
                 onChange((prev) => ({ ...prev, title: event.target.value }))
               }
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs uppercase text-gray-500">Description</label>
+            <label className="text-xs uppercase text-gray-500 dark:text-gray-400">Description</label>
             <textarea
               rows={5}
               value={formState.description}
               onChange={(event) =>
                 onChange((prev) => ({ ...prev, description: event.target.value }))
               }
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400"
               placeholder="Explain the focus of this homework set..."
             />
           </div>
@@ -99,23 +99,23 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
 
         <section className="space-y-3">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
               Exercises
             </h3>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               {formState.selectedExerciseIds.length} selected
             </span>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2 border-b border-gray-200 mb-4">
+          <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700 mb-4">
             <button
               type="button"
               onClick={() => setActiveTab('existing')}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 activeTab === 'existing'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               Select Existing
@@ -125,8 +125,8 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
               onClick={() => setActiveTab('create')}
               className={`px-4 py-2 text-sm font-medium transition-colors ${
                 activeTab === 'create'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               Create New
@@ -139,24 +139,24 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('create')}
-                className="w-full px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                className="w-full px-4 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-700 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors text-sm font-medium flex items-center justify-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Create New Exercise
               </button>
-              <div className="max-h-80 overflow-y-auto border border-gray-100 rounded-xl divide-y divide-gray-100">
+              <div className="max-h-80 overflow-y-auto border border-gray-100 dark:border-gray-700 rounded-xl divide-y divide-gray-100 dark:divide-gray-700">
                 {exercises.map((exercise) => {
                   const checked = formState.selectedExerciseIds.includes(exercise.id);
                   return (
                     <label
                       key={exercise.id}
-                      className="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-gray-50 cursor-pointer"
+                      className="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer bg-white dark:bg-gray-800"
                     >
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-gray-900 dark:text-gray-100">
                           {exercise.exerciseTypeName}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {formatExerciseParameters(exercise.parameters)}
                         </p>
                       </div>
@@ -164,14 +164,14 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggleExercise(exercise.id)}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
                       />
                     </label>
                   );
                 })}
 
                 {exercises.length === 0 && (
-                  <div className="px-4 py-6 text-center text-gray-400 text-sm">
+                  <div className="px-4 py-6 text-center text-gray-400 dark:text-gray-500 text-sm">
                     No exercises available yet. Create exercises first to build homework sets.
                   </div>
                 )}
@@ -200,7 +200,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
           )}
         </section>
 
-        <div className="lg:col-span-2 flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
+        <div className="lg:col-span-2 flex items-center justify-end gap-3 border-t border-gray-100 dark:border-gray-700 pt-4">
           <Button
             type="button"
             onClick={onClose}

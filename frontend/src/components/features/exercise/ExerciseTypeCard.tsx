@@ -31,7 +31,7 @@ const ExerciseTypeCard: React.FC<ExerciseTypeCardProps> = ({
 
   return (
     <div
-      className={`${colorScheme.bg} ${colorScheme.border} border-2 rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full transform hover:scale-105`}
+      className={`${colorScheme.bg} dark:bg-gray-800/80 ${colorScheme.border} dark:border-gray-700 border-2 rounded-3xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col h-full transform hover:scale-105`}
     >
       <div className="flex-1">
         <div className="flex flex-col items-center mb-3">

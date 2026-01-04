@@ -36,13 +36,10 @@ export const useProgress = (studentId: string | undefined, selectedPeriod: TimeP
       }
 
       try {
-        console.log('[useProgress] Fetching achievements for studentId:', studentId);
         const [earnedAchievements, allAchievementsList] = await Promise.all([
           achievementService.getStudentAchievements(studentId),
           achievementService.getAllAchievements()
         ]);
-        console.log('[useProgress] Earned achievements:', earnedAchievements);
-        console.log('[useProgress] All achievements:', allAchievementsList);
         setStudentAchievements(earnedAchievements);
         setAllAchievements(allAchievementsList);
         achievementsFetched.current = true;
@@ -75,7 +72,7 @@ export const useProgress = (studentId: string | undefined, selectedPeriod: TimeP
         // Still fetch previous period stats for comparison
         let previousPeriod: TimePeriod = 'all';
         if (selectedPeriod === 'week') {
-          previousPeriod = 'month';
+          previousPeriod = 'all';
         } else if (selectedPeriod === 'month') {
           previousPeriod = 'all';
         }
@@ -107,7 +104,7 @@ export const useProgress = (studentId: string | undefined, selectedPeriod: TimeP
         // Fetch previous period for comparison
         let previousPeriod: TimePeriod = 'all';
         if (selectedPeriod === 'week') {
-          previousPeriod = 'month';
+          previousPeriod = 'all';
         } else if (selectedPeriod === 'month') {
           previousPeriod = 'all';
         }
