@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
@@ -194,14 +195,23 @@ public class ExerciseServiceImpl implements ExerciseService {
         Integer min = request.getMin();
         Integer max = request.getMax();
         
-        // Generate numbers
-        List<Integer> numbers = generateNumbers(cardCount, digitLength, min, max);
+        String theme = null;
+        try {
+            JsonNode params = objectMapper.readTree(exercise.getParameters());
+            if (params.has("theme")) {
+                theme = params.get("theme").asText();
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to parse theme from exercise parameters: {}", e.getMessage());
+        }
+        
+        List<Integer> numbers = generateNumbers(cardCount, digitLength, min, max, theme, exerciseTypeName);
         
         // Calculate expected answer based on exercise type
         Double expectedAnswer = calculateExpectedAnswer(numbers, exerciseTypeName);
         
-        logger.info("Generated {} numbers for exercise type: {}, expected answer: {}", 
-                numbers.size(), exerciseTypeName, expectedAnswer);
+        logger.info("Generated {} numbers for exercise type: {}, theme: {}, expected answer: {}", 
+                numbers.size(), exerciseTypeName, theme != null ? theme : "none", expectedAnswer);
         
         return GenerateExerciseNumbersResponse.builder()
                 .numbers(numbers)
@@ -303,7 +313,7 @@ public class ExerciseServiceImpl implements ExerciseService {
         }
     }
 
-    private List<Integer> generateNumbers(int count, int digitLength, Integer min, Integer max) {
+    private List<Integer> generateNumbers(int count, int digitLength, Integer min, Integer max, String theme, String exerciseTypeName) {
         List<Integer> numbers = new ArrayList<>();
         int calculatedMin;
         int calculatedMax;
@@ -317,12 +327,121 @@ public class ExerciseServiceImpl implements ExerciseService {
             calculatedMax = (int) Math.pow(10, digitLength) - 1;
         }
         
-        for (int i = 0; i < count; i++) {
-            int number = random.nextInt(calculatedMax - calculatedMin + 1) + calculatedMin;
-            numbers.add(number);
+        boolean isAdditionSubtraction = exerciseTypeName.contains("addition") || 
+                                        exerciseTypeName.contains("subtraction") || 
+                                        exerciseTypeName.contains("theme");
+        
+        if (theme != null && !theme.isEmpty() && isAdditionSubtraction) {
+            numbers = generateSorobanNumbers(count, digitLength, calculatedMin, calculatedMax, theme);
+        } else {
+            for (int i = 0; i < count; i++) {
+                int number = random.nextInt(calculatedMax - calculatedMin + 1) + calculatedMin;
+                numbers.add(number);
+            }
         }
         
         return numbers;
+    }
+    
+    private List<Integer> generateSorobanNumbers(int count, int digitLength, int min, int max, String theme) {
+        List<Integer> numbers = new ArrayList<>();
+        
+        if (digitLength == 1 && min >= 1 && max <= 9) {
+            List<Integer> candidateNumbers = getSorobanCandidates(theme, min, max);
+            
+            if (candidateNumbers.isEmpty()) {
+                for (int i = 0; i < count; i++) {
+                    numbers.add(random.nextInt(max - min + 1) + min);
+                }
+            } else {
+                // Generate from candidates
+                for (int i = 0; i < count; i++) {
+                    int index = random.nextInt(candidateNumbers.size());
+                    numbers.add(candidateNumbers.get(index));
+                }
+            }
+        } else {
+            // For multi-digit numbers, extract last digit and apply methodology
+            List<Integer> lastDigitCandidates = getSorobanCandidates(theme, 1, 9);
+            
+            for (int i = 0; i < count; i++) {
+                int number;
+                if (digitLength == 1) {
+                    if (lastDigitCandidates.isEmpty()) {
+                        number = random.nextInt(max - min + 1) + min;
+                    } else {
+                        int candidate = lastDigitCandidates.get(random.nextInt(lastDigitCandidates.size()));
+                        if (candidate >= min && candidate <= max) {
+                            number = candidate;
+                        } else {
+                            // Find closest candidate in range or use random
+                            number = random.nextInt(max - min + 1) + min;
+                        }
+                    }
+                } else {
+                    // Multi-digit: generate base number and adjust last digit based on theme
+                    int baseMin = (int) Math.pow(10, digitLength - 1);
+                    int baseMax = (int) Math.pow(10, digitLength) - 10;
+                    int baseNumber = baseMin + random.nextInt(baseMax - baseMin + 1);
+                    
+                    // Adjust last digit based on theme
+                    int lastDigit = random.nextInt(10);
+                    if (!lastDigitCandidates.isEmpty()) {
+                        lastDigit = lastDigitCandidates.get(random.nextInt(lastDigitCandidates.size()));
+                    }
+                    
+                    number = baseNumber + lastDigit;
+                    
+                    // Ensure within bounds
+                    if (number < min) number = min;
+                    if (number > max) number = max;
+                }
+                
+                numbers.add(number);
+            }
+        }
+        
+        return numbers;
+    }
+    
+    private List<Integer> getSorobanCandidates(String theme, int min, int max) {
+        List<Integer> candidates = new ArrayList<>();
+        theme = theme != null ? theme.toLowerCase().trim() : "";
+        
+        // Brother method (Ako-dashi): Direct bead manipulation
+        // Numbers: 1, 2, 3, 4 (direct up), 6, 7, 8, 9 (direct down with 5-bead)
+        List<Integer> brotherNumbers = Arrays.asList(1, 2, 3, 4, 6, 7, 8, 9);
+        
+        // Friend method (Tomo-dashi): Complementary numbers
+        // Numbers: 5 (uses friend: 10-5), also numbers that commonly use friend method
+        List<Integer> friendNumbers = Arrays.asList(5, 6, 7, 8, 9);
+        
+        // All single digits
+        List<Integer> allNumbers = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9);
+        
+        if (theme.equals("brother")) {
+            candidates = new ArrayList<>(brotherNumbers);
+        } else if (theme.equals("friend")) {
+            candidates = new ArrayList<>(friendNumbers);
+        } else if (theme.equals("friend+brother") || theme.equals("friend+brat")) {
+            // Combination: prefer numbers that can use either method
+            candidates = new ArrayList<>(allNumbers);
+        } else if (theme.equals("transition")) {
+            // Transition: mix of both, but prefer numbers that can use either
+            candidates = new ArrayList<>(allNumbers);
+            // Add some preference by including all numbers (50% brother, 50% friend overlap)
+        } else if (theme.equals("simple")) {
+            // Simple: all numbers (no constraints)
+            candidates = new ArrayList<>(allNumbers);
+        } else {
+            // Unknown theme: use all numbers
+            candidates = new ArrayList<>(allNumbers);
+        }
+        
+        // Filter candidates to be within the specified range
+        candidates.removeIf(n -> n < min || n > max);
+        
+        return candidates;
     }
 
     private Double calculateExpectedAnswer(List<Integer> numbers, String exerciseTypeName) {
