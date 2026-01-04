@@ -100,7 +100,6 @@ class AuthServiceTest {
         request.setGuardianPhone("123456789");
 
         when(userService.findByEmail("new@example.com")).thenReturn(Optional.empty());
-        when(userService.createUser(any(RegisterRequest.class))).thenReturn(testUser);
 
         assertThrows(IllegalArgumentException.class, () -> {
             authService.signup(request);

@@ -1,5 +1,6 @@
 package com.app.umkaSchool.controller;
 
+import com.app.umkaSchool.config.TestContainersConfiguration;
 import com.app.umkaSchool.dto.admin.AdminDashboardResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-class AdminControllerTest {
+class AdminControllerTest extends TestContainersConfiguration {
 
     @Autowired
     private MockMvc mockMvc;

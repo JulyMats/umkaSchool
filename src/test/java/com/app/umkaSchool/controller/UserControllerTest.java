@@ -1,5 +1,6 @@
 package com.app.umkaSchool.controller;
 
+import com.app.umkaSchool.config.TestContainersConfiguration;
 import com.app.umkaSchool.dto.auth.RegisterRequest;
 import com.app.umkaSchool.dto.user.UpdateUserRequest;
 import com.app.umkaSchool.model.AppUser;
@@ -29,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Transactional
 @WithMockUser(roles = "ADMIN")
-class UserControllerTest {
+class UserControllerTest extends TestContainersConfiguration {
 
     @Autowired
     private MockMvc mockMvc;

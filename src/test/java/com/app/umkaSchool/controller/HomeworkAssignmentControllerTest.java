@@ -1,5 +1,6 @@
 package com.app.umkaSchool.controller;
 
+import com.app.umkaSchool.config.TestContainersConfiguration;
 import com.app.umkaSchool.model.enums.HomeworkStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Transactional
 @WithMockUser(username = "teacher", roles = {"TEACHER"})
-class HomeworkAssignmentControllerTest {
+class HomeworkAssignmentControllerTest extends TestContainersConfiguration {
 
     @Autowired
     private MockMvc mockMvc;

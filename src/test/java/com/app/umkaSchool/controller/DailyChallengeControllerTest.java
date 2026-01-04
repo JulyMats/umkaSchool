@@ -1,5 +1,6 @@
 package com.app.umkaSchool.controller;
 
+import com.app.umkaSchool.config.TestContainersConfiguration;
 import com.app.umkaSchool.dto.dailychallenge.CreateDailyChallengeRequest;
 import com.app.umkaSchool.dto.exercise.CreateExerciseRequest;
 import com.app.umkaSchool.dto.exercise.ExerciseResponse;
@@ -30,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Transactional
 @WithMockUser(username = "testuser", roles = {"STUDENT"})
-class DailyChallengeControllerTest {
+class DailyChallengeControllerTest extends TestContainersConfiguration {
 
     @Autowired
     private MockMvc mockMvc;

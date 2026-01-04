@@ -1,5 +1,6 @@
 package com.app.umkaSchool.controller;
 
+import com.app.umkaSchool.config.TestContainersConfiguration;
 import com.app.umkaSchool.dto.auth.RegisterRequest;
 import com.app.umkaSchool.model.AppUser;
 import com.app.umkaSchool.model.Student;
@@ -30,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Transactional
 @WithMockUser(roles = "STUDENT")
-class ProgressSnapshotControllerTest {
+class ProgressSnapshotControllerTest extends TestContainersConfiguration {
 
     @Autowired
     private MockMvc mockMvc;

@@ -1,5 +1,6 @@
 package com.app.umkaSchool.controller;
 
+import com.app.umkaSchool.config.TestContainersConfiguration;
 import com.app.umkaSchool.dto.auth.RegisterRequest;
 import com.app.umkaSchool.dto.exercise.CreateExerciseRequest;
 import com.app.umkaSchool.dto.exercise.ExerciseResponse;
@@ -39,7 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @org.springframework.test.context.ActiveProfiles("test")
 @Transactional
 @WithMockUser(roles = "TEACHER")
-class HomeworkControllerTest {
+class HomeworkControllerTest extends TestContainersConfiguration {
 
     @Autowired
     private MockMvc mockMvc;

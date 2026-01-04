@@ -1,5 +1,6 @@
 package com.app.umkaSchool;
 
+import com.app.umkaSchool.config.TestContainersConfiguration;
 import com.app.umkaSchool.repository.AppUserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
 @org.springframework.test.context.ActiveProfiles("test")
-class UmkaSchoolApplicationTests {
+class UmkaSchoolApplicationTests extends TestContainersConfiguration {
 
     @Autowired
     private AppUserRepository appUserRepository;

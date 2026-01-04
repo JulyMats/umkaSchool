@@ -1,5 +1,6 @@
 package com.app.umkaSchool.controller;
 
+import com.app.umkaSchool.config.TestContainersConfiguration;
 import com.app.umkaSchool.dto.auth.RegisterRequest;
 import com.app.umkaSchool.repository.AppUserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @org.springframework.test.context.ActiveProfiles("test")
 @Transactional 
-class AuthControllerTest {
+class AuthControllerTest extends TestContainersConfiguration {
 
     @Autowired
     private MockMvc mockMvc;

@@ -1,5 +1,6 @@
 package com.app.umkaSchool.controller;
 
+import com.app.umkaSchool.config.TestContainersConfiguration;
 import com.app.umkaSchool.dto.auth.ForgotPasswordRequest;
 import com.app.umkaSchool.dto.auth.RegisterRequest;
 import com.app.umkaSchool.dto.auth.ResetPasswordRequest;
@@ -28,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @org.springframework.test.context.ActiveProfiles("test")
 @Transactional 
-class PasswordResetControllerTest {
+class PasswordResetControllerTest extends TestContainersConfiguration {
 
     @Autowired
     private MockMvc mockMvc;
