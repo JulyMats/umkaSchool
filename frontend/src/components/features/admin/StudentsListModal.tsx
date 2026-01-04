@@ -51,15 +51,15 @@ export const StudentsListModal: React.FC<StudentsListModalProps> = ({
                         <Card key={student.id} variant="white" className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h4 className="font-medium text-gray-900">
+                                    <h4 className="font-medium text-gray-900 dark:text-gray-100">
                                         {student.firstName} {student.lastName}
                                     </h4>
-                                    <p className="text-sm text-gray-600">{student.email}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">{student.email}</p>
                                     <span
                                         className={`inline-block mt-1 px-2 py-1 text-xs font-medium rounded-full ${
                                             student.isActive
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-red-100 text-red-800'
+                                                ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                                                : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
                                         }`}
                                     >
                                         {student.isActive ? 'Active' : 'Inactive'}

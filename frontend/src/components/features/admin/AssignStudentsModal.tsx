@@ -35,12 +35,12 @@ export const AssignStudentsModal: React.FC<AssignStudentsModalProps> = ({
                         <Card key={student.id} variant="white" className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h4 className="font-medium text-gray-900">
+                                    <h4 className="font-medium text-gray-900 dark:text-gray-100">
                                         {student.firstName} {student.lastName}
                                     </h4>
-                                    <p className="text-sm text-gray-600">{student.email}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">{student.email}</p>
                                     {student.teacherName && (
-                                        <p className="text-xs text-gray-500 mt-1">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                             Current teacher: {student.teacherName}
                                         </p>
                                     )}
