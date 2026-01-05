@@ -102,36 +102,36 @@ export default function AdminProfile() {
     return (
         <Layout title="My Profile" subtitle="View and edit your profile information">
             {error && (
-                <div className="mb-4 flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3">
+                <div className="mb-4 flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3">
                     <span>{error}</span>
                 </div>
             )}
 
             {success && (
-                <div className="mb-4 flex items-center gap-3 bg-green-50 border border-green-200 text-green-700 rounded-xl px-4 py-3">
+                <div className="mb-4 flex items-center gap-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 rounded-xl px-4 py-3">
                     <span>{success}</span>
                 </div>
             )}
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-6">
                     {/* Profile Header */}
-                    <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 pb-6 border-b border-gray-100">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 pb-6 border-b border-gray-100 dark:border-gray-700">
                         <div className="relative flex-shrink-0">
                             <img
                                 src={displayAvatarUrl}
                                 alt={`${firstName} ${lastName}`}
-                                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-100 object-cover border-4 border-gray-50"
+                                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-100 dark:bg-gray-700 object-cover border-4 border-gray-50 dark:border-gray-600"
                                 onError={(e) => {
                                     (e.target as HTMLImageElement).src = avatar;
                                 }}
                             />
                         </div>
                         <div className="flex-1 text-center sm:text-left w-full sm:w-auto">
-                            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 break-words">
+                            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100 break-words">
                                 {firstName} {lastName}
                             </h2>
-                            <p className="text-sm sm:text-base text-gray-500 mt-1">Admin Account</p>
+                            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">Admin Account</p>
                         </div>
                         {!isEditing && (
                             <button
@@ -147,8 +147,8 @@ export default function AdminProfile() {
 
                     {/* Avatar Selection (only when editing) */}
                     {isEditing && (
-                        <div className="space-y-4 pb-6 border-b border-gray-100">
-                            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <div className="space-y-4 pb-6 border-b border-gray-100 dark:border-gray-700">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                                 <Image className="w-5 h-5" />
                                 Choose Your Avatar
                             </h3>
@@ -160,8 +160,8 @@ export default function AdminProfile() {
                                         onClick={() => setAvatarUrl(avatar)}
                                         className={`relative w-16 h-16 rounded-xl overflow-hidden transition-all duration-200
                                             ${avatarUrl === avatar
-                                                ? 'ring-2 ring-blue-400 ring-offset-2 scale-105'
-                                                : 'ring-1 ring-gray-200 hover:ring-blue-300 hover:scale-[1.02]'
+                                                ? 'ring-2 ring-blue-400 dark:ring-blue-500 ring-offset-2 dark:ring-offset-gray-800 scale-105'
+                                                : 'ring-1 ring-gray-200 dark:ring-gray-600 hover:ring-blue-300 dark:hover:ring-blue-600 hover:scale-[1.02]'
                                             }`}
                                     >
                                         <img
@@ -185,14 +185,14 @@ export default function AdminProfile() {
 
                     {/* Basic Information */}
                     <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                             <User className="w-5 h-5" />
                             Basic Information
                         </h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     First Name
                                 </label>
                                 <input
@@ -201,12 +201,12 @@ export default function AdminProfile() {
                                     onChange={(e) => setFirstName(e.target.value)}
                                     disabled={!isEditing}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     Last Name
                                 </label>
                                 <input
@@ -215,12 +215,12 @@ export default function AdminProfile() {
                                     onChange={(e) => setLastName(e.target.value)}
                                     disabled={!isEditing}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2 flex items-center gap-2">
                                     <Mail className="w-4 h-4" />
                                     Email
                                 </label>
@@ -230,7 +230,7 @@ export default function AdminProfile() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     disabled={!isEditing}
                                     required
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
+                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 dark:disabled:bg-gray-700/50 disabled:text-gray-500 dark:disabled:text-gray-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                                 />
                             </div>
                         </div>
@@ -238,18 +238,18 @@ export default function AdminProfile() {
 
                     {/* Additional Info (Read-only) */}
                     {!isEditing && (
-                        <div className="pt-6 border-t border-gray-100 space-y-4">
-                            <h3 className="text-lg font-semibold text-gray-900">Account Information</h3>
+                        <div className="pt-6 border-t border-gray-100 dark:border-gray-700 space-y-4">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Account Information</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                 <div>
-                                    <span className="text-gray-500">Member Since:</span>
-                                    <span className="ml-2 text-gray-900">
+                                    <span className="text-gray-500 dark:text-gray-400">Member Since:</span>
+                                    <span className="ml-2 text-gray-900 dark:text-gray-100">
                                         {new Date(user.createdAt).toLocaleDateString()}
                                     </span>
                                 </div>
                                 <div>
-                                    <span className="text-gray-500">Account Status:</span>
-                                    <span className={`ml-2 font-medium ${user.isActive ? 'text-green-600' : 'text-red-600'}`}>
+                                    <span className="text-gray-500 dark:text-gray-400">Account Status:</span>
+                                    <span className={`ml-2 font-medium ${user.isActive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                         {user.isActive ? 'Active' : 'Inactive'}
                                     </span>
                                 </div>
@@ -259,12 +259,12 @@ export default function AdminProfile() {
 
                     {/* Action Buttons */}
                     {isEditing && (
-                        <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-100">
+                        <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-100 dark:border-gray-700">
                             <button
                                 type="button"
                                 onClick={handleCancel}
                                 disabled={saving}
-                                className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                                className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                             >
                                 <X className="w-4 h-4" />
                                 Cancel

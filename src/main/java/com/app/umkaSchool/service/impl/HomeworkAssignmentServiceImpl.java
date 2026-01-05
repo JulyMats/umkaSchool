@@ -9,9 +9,11 @@ import com.app.umkaSchool.model.enums.HomeworkStatus;
 import com.app.umkaSchool.repository.*;
 import com.app.umkaSchool.service.HomeworkAssignmentService;
 import com.app.umkaSchool.service.HomeworkService;
+import com.app.umkaSchool.util.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -125,7 +127,21 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
 
         HomeworkAssignment assignment = homeworkAssignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Homework assignment not found"));
-        
+        AppUser currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser.getUserRole() != AppUser.UserRole.ADMIN) {
+            if (currentUser.getUserRole() == AppUser.UserRole.TEACHER) {
+                Teacher currentTeacher = teacherRepository.findByUser_Id(currentUser.getId())
+                        .orElseThrow(() -> new AccessDeniedException("Teacher profile not found"));
+                UUID assignmentTeacherId = assignment.getTeacher() != null ? assignment.getTeacher().getId() : null;
+                UUID homeworkTeacherId = assignment.getHomework().getTeacher() != null ? assignment.getHomework().getTeacher().getId() : null;
+                if ((assignmentTeacherId == null || !assignmentTeacherId.equals(currentTeacher.getId())) &&
+                    (homeworkTeacherId == null || !homeworkTeacherId.equals(currentTeacher.getId()))) {
+                    throw new AccessDeniedException("You do not have permission to update this homework assignment");
+                }
+            } else {
+                throw new AccessDeniedException("You do not have permission to update homework assignments");
+            }
+        }
         HomeworkStatus oldStatus = assignment.getStatus();
 
         if (request.getDueDate() != null) {
@@ -268,6 +284,21 @@ public class HomeworkAssignmentServiceImpl implements HomeworkAssignmentService 
         HomeworkAssignment assignment = homeworkAssignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Homework assignment not found"));
 
+        AppUser currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser.getUserRole() != AppUser.UserRole.ADMIN) {
+            if (currentUser.getUserRole() == AppUser.UserRole.TEACHER) {
+                Teacher currentTeacher = teacherRepository.findByUser_Id(currentUser.getId())
+                        .orElseThrow(() -> new AccessDeniedException("Teacher profile not found"));
+                UUID assignmentTeacherId = assignment.getTeacher() != null ? assignment.getTeacher().getId() : null;
+                UUID homeworkTeacherId = assignment.getHomework().getTeacher() != null ? assignment.getHomework().getTeacher().getId() : null;
+                if ((assignmentTeacherId == null || !assignmentTeacherId.equals(currentTeacher.getId())) &&
+                    (homeworkTeacherId == null || !homeworkTeacherId.equals(currentTeacher.getId()))) {
+                    throw new AccessDeniedException("You do not have permission to delete this homework assignment");
+                }
+            } else {
+                throw new AccessDeniedException("You do not have permission to delete homework assignments");
+            }
+        }
         homeworkAssignmentRepository.delete(assignment);
         logger.info("Homework assignment deleted successfully: {}", assignmentId);
     }

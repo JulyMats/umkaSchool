@@ -10,9 +10,11 @@ import com.app.umkaSchool.repository.HomeworkRepository;
 import com.app.umkaSchool.repository.TeacherRepository;
 import com.app.umkaSchool.service.ExerciseService;
 import com.app.umkaSchool.service.HomeworkService;
+import com.app.umkaSchool.util.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -93,6 +95,18 @@ public class HomeworkServiceImpl implements HomeworkService {
         Homework homework = homeworkRepository.findById(homeworkId)
                 .orElseThrow(() -> new ResourceNotFoundException("Homework not found"));
 
+        AppUser currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser.getUserRole() != AppUser.UserRole.ADMIN) {
+            if (currentUser.getUserRole() == AppUser.UserRole.TEACHER) {
+                Teacher currentTeacher = teacherRepository.findByUser_Id(currentUser.getId())
+                        .orElseThrow(() -> new AccessDeniedException("Teacher profile not found"));
+                if (homework.getTeacher() == null || !homework.getTeacher().getId().equals(currentTeacher.getId())) {
+                    throw new AccessDeniedException("You do not have permission to update this homework");
+                }
+            } else {
+                throw new AccessDeniedException("You do not have permission to update homework");
+            }
+        }
         if (request.getTitle() != null && !request.getTitle().equals(homework.getTitle())) {
             if (homeworkRepository.existsByTitle(request.getTitle())) {
                 throw new IllegalArgumentException("Homework with this title already exists");
@@ -182,6 +196,18 @@ public class HomeworkServiceImpl implements HomeworkService {
         Homework homework = homeworkRepository.findById(homeworkId)
                 .orElseThrow(() -> new ResourceNotFoundException("Homework not found"));
 
+        AppUser currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser.getUserRole() != AppUser.UserRole.ADMIN) {
+            if (currentUser.getUserRole() == AppUser.UserRole.TEACHER) {
+                Teacher currentTeacher = teacherRepository.findByUser_Id(currentUser.getId())
+                        .orElseThrow(() -> new AccessDeniedException("Teacher profile not found"));
+                if (homework.getTeacher() == null || !homework.getTeacher().getId().equals(currentTeacher.getId())) {
+                    throw new AccessDeniedException("You do not have permission to delete this homework");
+                }
+            } else {
+                throw new AccessDeniedException("You do not have permission to delete homework");
+            }
+        }
         homeworkRepository.delete(homework);
         logger.info("Homework deleted successfully: {}", homeworkId);
     }

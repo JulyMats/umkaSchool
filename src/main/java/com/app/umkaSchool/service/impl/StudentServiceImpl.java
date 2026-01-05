@@ -8,9 +8,11 @@ import com.app.umkaSchool.model.*;
 import com.app.umkaSchool.model.enums.GuardianRelationship;
 import com.app.umkaSchool.repository.*;
 import com.app.umkaSchool.service.StudentService;
+import com.app.umkaSchool.util.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -223,6 +225,19 @@ public class StudentServiceImpl implements StudentService {
         logger.info("Deleting student: {}", studentId);
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
+
+        AppUser currentUser = SecurityUtils.getCurrentUser();
+        if (currentUser.getUserRole() != AppUser.UserRole.ADMIN) {
+            if (currentUser.getUserRole() == AppUser.UserRole.TEACHER) {
+                Teacher currentTeacher = teacherRepository.findByUser_Id(currentUser.getId())
+                        .orElseThrow(() -> new AccessDeniedException("Teacher profile not found"));
+                if (student.getTeacher() == null || !student.getTeacher().getId().equals(currentTeacher.getId())) {
+                    throw new AccessDeniedException("You do not have permission to delete this student");
+                }
+            } else {
+                throw new AccessDeniedException("You do not have permission to delete students");
+            }
+        }
 
         AppUser user = student.getUser();
         studentRepository.delete(student);

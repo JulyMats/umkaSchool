@@ -23,27 +23,27 @@ export const TeacherCard: React.FC<TeacherCardProps> = ({
             <div className="flex items-start justify-between">
                 <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                             {teacher.firstName} {teacher.lastName}
                         </h3>
                         <span
                             className={`px-2 py-1 text-xs font-medium rounded-full ${
                                 teacher.isActive
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
+                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                                    : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400'
                             }`}
                         >
                             {teacher.isActive ? 'Active' : 'Inactive'}
                         </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-1">{teacher.email}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{teacher.email}</p>
                     {teacher.phone && (
-                        <p className="text-sm text-gray-600 mb-1">Phone: {teacher.phone}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Phone: {teacher.phone}</p>
                     )}
                     {teacher.bio && (
-                        <p className="text-sm text-gray-600 mb-2">{teacher.bio}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{teacher.bio}</p>
                     )}
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                         <span className="flex items-center gap-1">
                             <Users className="w-4 h-4" />
                             {teacher.totalStudents} students

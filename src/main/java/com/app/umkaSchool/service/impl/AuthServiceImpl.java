@@ -65,6 +65,11 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Email already in use");
         }
         
+        // Validate dateOfBirth for STUDENT role
+        if ("STUDENT".equalsIgnoreCase(request.getRole()) && request.getDateOfBirth() == null) {
+            throw new IllegalArgumentException("Date of birth is required for student registration");
+        }
+        
         // Create user account only - profile creation (Student/Teacher) is handled by controller
         AppUser user = userService.createUser(request);
 

@@ -185,7 +185,7 @@ export default function AdminTeachers() {
     return (
         <Layout title="Manage Teachers" subtitle="View and manage all teachers">
             {error && (
-                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
                     {error}
                 </div>
             )}
