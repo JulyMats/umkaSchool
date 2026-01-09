@@ -5,6 +5,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,24 +23,43 @@ public class CookieServiceImpl implements CookieService {
     @Value("${app.cookie.secure:false}")
     private boolean cookieSecure;
 
+    @Value("${app.cookie.same-site:None}")
+    private String cookieSameSite;
+
+    private String getSameSiteValue() {
+        String normalized = cookieSameSite.trim();
+        if (normalized.equalsIgnoreCase("None") || normalized.equalsIgnoreCase("Lax") || normalized.equalsIgnoreCase("Strict")) {
+            return normalized.substring(0, 1).toUpperCase() + normalized.substring(1).toLowerCase();
+        }
+        return "None"; 
+    }
+
     @Override
     public void setJwtCookie(HttpServletResponse response, String token) {
-        Cookie jwtCookie = new Cookie(JWT_COOKIE_NAME, token);
-        jwtCookie.setHttpOnly(true);
-        jwtCookie.setSecure(cookieSecure);
-        jwtCookie.setPath("/");
-        jwtCookie.setMaxAge((int) (jwtExpirationMs / 1000));
-        response.addCookie(jwtCookie);
+        ResponseCookie.ResponseCookieBuilder cookieBuilder = ResponseCookie.from(JWT_COOKIE_NAME, token)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/")
+                .maxAge(jwtExpirationMs / 1000);
+        
+        String cookieString = cookieBuilder.build().toString();
+        cookieString += "; SameSite=" + getSameSiteValue();
+        
+        response.addHeader("Set-Cookie", cookieString);
     }
 
     @Override
     public void setRefreshTokenCookie(HttpServletResponse response, String token) {
-        Cookie refreshCookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, token);
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(cookieSecure);
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge(refreshTokenExpirationDays * 24 * 60 * 60);
-        response.addCookie(refreshCookie);
+        ResponseCookie.ResponseCookieBuilder cookieBuilder = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, token)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/")
+                .maxAge(refreshTokenExpirationDays * 24 * 60 * 60);
+        
+        String cookieString = cookieBuilder.build().toString();
+        cookieString += "; SameSite=" + getSameSiteValue();
+        
+        response.addHeader("Set-Cookie", cookieString);
     }
 
     @Override
@@ -57,19 +77,23 @@ public class CookieServiceImpl implements CookieService {
 
     @Override
     public void clearAuthCookies(HttpServletResponse response) {
-        Cookie jwtCookie = new Cookie(JWT_COOKIE_NAME, null);
-        jwtCookie.setHttpOnly(true);
-        jwtCookie.setSecure(cookieSecure);
-        jwtCookie.setPath("/");
-        jwtCookie.setMaxAge(0);
-        response.addCookie(jwtCookie);
-
-        Cookie refreshCookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, null);
-        refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(cookieSecure);
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge(0);
-        response.addCookie(refreshCookie);
+        ResponseCookie.ResponseCookieBuilder jwtCookieBuilder = ResponseCookie.from(JWT_COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/")
+                .maxAge(0);
+        
+        ResponseCookie.ResponseCookieBuilder refreshCookieBuilder = ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/")
+                .maxAge(0);
+        
+        String jwtCookieString = jwtCookieBuilder.build().toString() + "; SameSite=" + getSameSiteValue();
+        String refreshCookieString = refreshCookieBuilder.build().toString() + "; SameSite=" + getSameSiteValue();
+        
+        response.addHeader("Set-Cookie", jwtCookieString);
+        response.addHeader("Set-Cookie", refreshCookieString);
     }
 }
 
