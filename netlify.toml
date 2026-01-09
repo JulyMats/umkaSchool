@@ -3,8 +3,6 @@
   from = "/api/*"
   to = "https://umkaschool.up.railway.app/api/:splat"
   status = 200
-  force = true
-  headers = {X-From = "Netlify"}
 
 # SPA fallback
 [[redirects]]
